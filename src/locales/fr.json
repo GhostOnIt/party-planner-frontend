@@ -1,0 +1,268 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "save": "Sauvegarder",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Creer",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "export": "Exporter",
+    "import": "Importer",
+    "refresh": "Actualiser",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Precedent",
+    "yes": "Oui",
+    "no": "Non",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "actions": "Actions",
+    "status": "Statut",
+    "date": "Date",
+    "name": "Nom",
+    "email": "Email",
+    "phone": "Telephone",
+    "description": "Description",
+    "noResults": "Aucun resultat",
+    "error": "Erreur",
+    "success": "Succes",
+    "warning": "Attention",
+    "info": "Information"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "events": "Mes evenements",
+    "collaborations": "Collaborations",
+    "invitations": "Invitations",
+    "subscriptions": "Abonnements",
+    "notifications": "Notifications",
+    "profile": "Mon profil",
+    "settings": "Parametres",
+    "logout": "Deconnexion",
+    "admin": "Administration",
+    "users": "Utilisateurs",
+    "adminDashboard": "Tableau de bord",
+    "adminUsers": "Utilisateurs",
+    "adminEvents": "Evenements",
+    "adminPayments": "Paiements",
+    "adminSubscriptions": "Abonnements",
+    "adminTemplates": "Templates",
+    "adminActivityLogs": "Journal d'activite"
+  },
+  "auth": {
+    "login": "Connexion",
+    "register": "Inscription",
+    "logout": "Deconnexion",
+    "forgotPassword": "Mot de passe oublie",
+    "resetPassword": "Reinitialiser le mot de passe",
+    "email": "Email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "currentPassword": "Mot de passe actuel",
+    "newPassword": "Nouveau mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "noAccount": "Pas encore de compte ?",
+    "hasAccount": "Deja un compte ?",
+    "signUp": "S'inscrire",
+    "signIn": "Se connecter",
+    "loginSuccess": "Connexion reussie",
+    "loginError": "Email ou mot de passe incorrect",
+    "registerSuccess": "Inscription reussie",
+    "passwordChanged": "Mot de passe modifie avec succes"
+  },
+  "events": {
+    "title": "Evenements",
+    "create": "Creer un evenement",
+    "edit": "Modifier l'evenement",
+    "delete": "Supprimer l'evenement",
+    "details": "Details de l'evenement",
+    "noEvents": "Aucun evenement",
+    "createFirst": "Creez votre premier evenement",
+    "eventName": "Nom de l'evenement",
+    "eventType": "Type d'evenement",
+    "eventDate": "Date de l'evenement",
+    "eventTime": "Heure",
+    "location": "Lieu",
+    "expectedGuests": "Nombre d'invites prevu",
+    "budget": "Budget",
+    "theme": "Theme",
+    "types": {
+      "mariage": "Mariage",
+      "anniversaire": "Anniversaire",
+      "baby_shower": "Baby Shower",
+      "soiree": "Soiree",
+      "brunch": "Brunch",
+      "autre": "Autre"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "planning": "En preparation",
+      "confirmed": "Confirme",
+      "completed": "Termine",
+      "cancelled": "Annule"
+    }
+  },
+  "guests": {
+    "title": "Invites",
+    "add": "Ajouter un invite",
+    "edit": "Modifier l'invite",
+    "import": "Importer des invites",
+    "export": "Exporter la liste",
+    "noGuests": "Aucun invite",
+    "sendInvitation": "Envoyer l'invitation",
+    "resendInvitation": "Renvoyer l'invitation",
+    "checkIn": "Enregistrer l'arrivee",
+    "plusOne": "Accompagnant",
+    "dietaryRestrictions": "Restrictions alimentaires",
+    "tableNumber": "Numero de table",
+    "notes": "Notes",
+    "rsvpStatus": {
+      "pending": "En attente",
+      "accepted": "Confirme",
+      "declined": "Decline",
+      "maybe": "Peut-etre"
+    },
+    "stats": {
+      "total": "Total invites",
+      "confirmed": "Confirmes",
+      "pending": "En attente",
+      "declined": "Declines"
+    }
+  },
+  "tasks": {
+    "title": "Taches",
+    "add": "Ajouter une tache",
+    "edit": "Modifier la tache",
+    "noTasks": "Aucune tache",
+    "assignTo": "Assigner a",
+    "dueDate": "Date limite",
+    "priority": {
+      "low": "Basse",
+      "medium": "Moyenne",
+      "high": "Haute"
+    },
+    "status": {
+      "todo": "A faire",
+      "in_progress": "En cours",
+      "completed": "Terminee",
+      "cancelled": "Annulee"
+    }
+  },
+  "budget": {
+    "title": "Budget",
+    "addItem": "Ajouter une depense",
+    "editItem": "Modifier la depense",
+    "noItems": "Aucune depense",
+    "estimated": "Estime",
+    "actual": "Reel",
+    "paid": "Paye",
+    "unpaid": "Non paye",
+    "markAsPaid": "Marquer comme paye",
+    "vendor": "Fournisseur",
+    "category": {
+      "location": "Lieu",
+      "catering": "Traiteur",
+      "decoration": "Decoration",
+      "entertainment": "Animation",
+      "photography": "Photographie",
+      "transportation": "Transport",
+      "other": "Autre"
+    },
+    "stats": {
+      "totalEstimated": "Total estime",
+      "totalActual": "Total reel",
+      "totalPaid": "Total paye",
+      "remaining": "Restant"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAsRead": "Marquer comme lu",
+    "markAllAsRead": "Tout marquer comme lu",
+    "noNotifications": "Aucune notification",
+    "settings": "Parametres de notification",
+    "email": "Notifications par email",
+    "push": "Notifications push",
+    "types": {
+      "eventReminder": "Rappels d'evenements",
+      "taskReminder": "Rappels de taches",
+      "guestReminder": "Rappels d'invites",
+      "budgetAlert": "Alertes budget",
+      "collaborationInvite": "Invitations de collaboration"
+    }
+  },
+  "profile": {
+    "title": "Mon profil",
+    "editProfile": "Modifier le profil",
+    "changePassword": "Changer le mot de passe",
+    "changeAvatar": "Changer la photo",
+    "deleteAvatar": "Supprimer la photo",
+    "fullName": "Nom complet",
+    "avatarHint": "JPG, PNG ou GIF. Max 2 Mo.",
+    "emailHint": "L'email ne peut pas etre modifie"
+  },
+  "settings": {
+    "title": "Parametres",
+    "description": "Gerez votre compte et vos preferences",
+    "profile": "Profil",
+    "security": "Securite",
+    "notifications": "Notifications",
+    "account": "Compte",
+    "language": "Langue",
+    "theme": "Theme",
+    "dangerZone": "Zone de danger",
+    "deleteAccount": "Supprimer mon compte",
+    "deleteAccountWarning": "La suppression de votre compte est definitive. Toutes vos donnees seront perdues.",
+    "deleteAccountConfirm": "Cette action est irreversible. Entrez votre mot de passe pour confirmer.",
+    "activeSessions": "Sessions actives",
+    "currentSession": "Session actuelle"
+  },
+  "errors": {
+    "generic": "Une erreur est survenue",
+    "notFound": "Page non trouvee",
+    "unauthorized": "Non autorise",
+    "forbidden": "Acces refuse",
+    "serverError": "Erreur serveur",
+    "networkError": "Erreur reseau",
+    "validationError": "Erreur de validation",
+    "tryAgain": "Reessayer",
+    "goBack": "Retour",
+    "goHome": "Retour a l'accueil",
+    "sessionExpired": "Votre session a expire",
+    "invalidCredentials": "Identifiants invalides"
+  },
+  "validation": {
+    "required": "Ce champ est requis",
+    "email": "Email invalide",
+    "minLength": "Minimum {{count}} caracteres",
+    "maxLength": "Maximum {{count}} caracteres",
+    "passwordMatch": "Les mots de passe ne correspondent pas",
+    "invalidDate": "Date invalide",
+    "invalidPhone": "Numero de telephone invalide"
+  },
+  "dashboard": {
+    "welcome": "Bienvenue",
+    "upcomingEvents": "Evenements a venir",
+    "urgentTasks": "Taches urgentes",
+    "recentActivity": "Activite recente",
+    "stats": {
+      "events": "Evenements",
+      "guests": "Invites confirmes",
+      "tasks": "Taches en attente",
+      "budget": "Budget total"
+    }
+  },
+  "collaborations": {
+    "title": "Collaborations",
+    "invite": "Inviter un collaborateur",
+    "pending": "En attente",
+    "accepted": "Accepte",
+    "role": {
+      "owner": "Proprietaire",
+      "editor": "Editeur",
+      "viewer": "Lecteur"
+    }
+  }
+}

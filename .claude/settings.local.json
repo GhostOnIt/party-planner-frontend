@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(pnpm exec tsc:*)",
+      "Bash(npx shadcn@latest init:*)",
+      "Bash(npx shadcn@latest add card badge avatar dialog dropdown-menu -y)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(cat:*)",
+      "Bash(pnpm run build:*)",
+      "Bash(tree:*)"
+    ]
+  }
+}

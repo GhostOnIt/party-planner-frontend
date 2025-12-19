@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: party-planner-frontend
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000/api
+      VITE_APP_NAME: Party Planner
+      VITE_PAYMENT_ENV: sandbox
+    networks:
+      - party-planner-frontend-network
+
+networks:
+  party-planner-frontend-network:
+    driver: bridge
