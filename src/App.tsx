@@ -17,6 +17,9 @@ import {
   RegisterPage,
   ForgotPasswordPage,
   ResetPasswordPage,
+  OtpPage,
+  SendOtpPage,
+  ResetPasswordOtpPage,
 } from '@/pages/auth';
 
 // Main pages
@@ -75,6 +78,9 @@ function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/otp" element={<OtpPage />} />
+              <Route path="/send-otp" element={<SendOtpPage />} />
+              <Route path="/reset-password-otp" element={<ResetPasswordOtpPage />} />
             </Route>
           </Route>
 

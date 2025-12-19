@@ -70,6 +70,62 @@ api.interceptors.response.use(
 );
 ```
 
+### 2.2.1 Authentification OTP (One-Time Password)
+
+Le système supporte l'authentification par code OTP à 6 chiffres pour :
+- **Verification a l'inscription** : Verification de l'email ou telephone avant activation du compte
+- **Connexion (2FA)** : Authentification a deux facteurs optionnelle
+- **Recuperation de compte** : Alternative au lien de reinitialisation par email
+
+#### Canaux d'envoi supportes
+| Canal | Service | Description |
+|-------|---------|-------------|
+| Email | Mailhog (dev) / SMTP (prod) | Code envoye par email |
+| SMS | Twilio | Code envoye par SMS |
+| WhatsApp | Twilio | Code envoye via WhatsApp |
+
+#### Endpoints API
+```typescript
+// Envoyer un OTP
+POST /auth/otp/send
+{
+  identifier: string;  // email ou telephone
+  type: 'registration' | 'login' | 'password_reset';
+  channel: 'email' | 'sms' | 'whatsapp';
+}
+
+// Verifier un OTP
+POST /auth/otp/verify
+{
+  identifier: string;
+  code: string;  // 6 chiffres
+  type: 'registration' | 'login' | 'password_reset';
+}
+
+// Renvoyer un OTP
+POST /auth/otp/resend
+{
+  otp_id: number;
+}
+
+// Reinitialiser mot de passe apres OTP
+POST /auth/otp/reset-password
+{
+  identifier: string;
+  reset_token: string;
+  password: string;
+  password_confirmation: string;
+}
+```
+
+#### Flow utilisateur
+```
+1. Utilisateur choisit le canal (email/SMS/WhatsApp)
+2. Systeme envoie un code a 6 chiffres (expire en 10 min)
+3. Utilisateur saisit le code
+4. Verification et action selon le type (login, reset, etc.)
+```
+
 ### 2.3 Variables d'Environnement
 ```env
 VITE_API_URL=http://localhost:8000/api
@@ -451,6 +507,94 @@ Body: { email }
 ```typescript
 POST /api/auth/reset-password
 Body: { token, email, password, password_confirmation }
+```
+
+#### 5.1.5 Envoi OTP (`/send-otp`)
+
+**Fonctionnalités :**
+- Selection du canal d'envoi (Email, SMS, WhatsApp)
+- Saisie de l'identifiant (email ou telephone)
+- Type d'OTP selon le contexte (?type=registration|login|password_reset)
+
+**API :**
+```typescript
+POST /api/auth/otp/send
+Body: { identifier, type, channel }
+Response: { message, otp_id, expires_in }
+```
+
+**Wireframe :**
+```
+┌─────────────────────────────────────┐
+│        Reinitialiser le mot         │
+│           de passe                  │
+│                                     │
+│  ┌─────────────────────────────┐   │
+│  │ Email ou telephone          │   │
+│  └─────────────────────────────┘   │
+│                                     │
+│  Recevoir le code par :             │
+│  ┌─────┐ ┌─────┐ ┌─────────┐       │
+│  │Email│ │ SMS │ │WhatsApp │       │
+│  └─────┘ └─────┘ └─────────┘       │
+│                                     │
+│  ┌─────────────────────────────┐   │
+│  │      Envoyer le code         │   │
+│  └─────────────────────────────┘   │
+│                                     │
+│  ← Retour a la connexion            │
+└─────────────────────────────────────┘
+```
+
+#### 5.1.6 Verification OTP (`/otp`)
+
+**Fonctionnalités :**
+- Saisie du code a 6 chiffres
+- Auto-submit quand le code est complet
+- Bouton de renvoi avec countdown (60s)
+- Affichage du canal et identifiant masque
+
+**API :**
+```typescript
+POST /api/auth/otp/verify
+Body: { identifier, code, type }
+Response: { success, message, verified, verification_token?, reset_token?, user?, token? }
+```
+
+**Wireframe :**
+```
+┌─────────────────────────────────────┐
+│        Verification OTP             │
+│                                     │
+│     Un code a ete envoye a          │
+│     vo***@email.com                 │
+│                                     │
+│    ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐ ┌─┐         │
+│    │ │ │ │ │ │ │ │ │ │ │ │         │
+│    └─┘ └─┘ └─┘ └─┘ └─┘ └─┘         │
+│                                     │
+│  ┌─────────────────────────────┐   │
+│  │      Verifier le code        │   │
+│  └─────────────────────────────┘   │
+│                                     │
+│  Pas recu ? Renvoyer (45s)          │
+│                                     │
+│  ← Retour a la connexion            │
+└─────────────────────────────────────┘
+```
+
+#### 5.1.7 Nouveau mot de passe OTP (`/reset-password-otp`)
+
+**Fonctionnalités :**
+- Formulaire de nouveau mot de passe apres verification OTP
+- Validation de la confirmation
+- Connexion automatique apres reinitialisation
+
+**API :**
+```typescript
+POST /api/auth/otp/reset-password
+Body: { identifier, reset_token, password, password_confirmation }
+Response: { success, message, user, token }
 ```
 
 ---

@@ -1,6 +1,7 @@
 export { useAuth } from './useAuth';
 export { useLogin } from './useLogin';
 export { useRegister } from './useRegister';
+export { useOtp, useSendOtp, useVerifyOtp, useResendOtp, useOtpResetPassword } from './useOtp';
 export { useDashboard, useDashboardStats, useUpcomingEvents, useUrgentTasks } from './useDashboard';
 export { useRsvpChartData, useBudgetChartData, useDashboardChartData } from './useChartData';
 export { useEvents, useEvent, useCreateEvent, useUpdateEvent, useDeleteEvent, useDuplicateEvent } from './useEvents';

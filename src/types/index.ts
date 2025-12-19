@@ -230,6 +230,49 @@ export interface AuthResponse {
   token: string;
 }
 
+// OTP Types
+export type OtpChannel = 'email' | 'sms' | 'whatsapp';
+export type OtpType = 'registration' | 'login' | 'password_reset';
+
+export interface OtpSendRequest {
+  identifier: string;
+  type: OtpType;
+  channel: OtpChannel;
+}
+
+export interface OtpVerifyRequest {
+  identifier: string;
+  code: string;
+  type: OtpType;
+}
+
+export interface OtpResendRequest {
+  otp_id: number;
+}
+
+export interface OtpSendResponse {
+  message: string;
+  otp_id: number;
+  expires_in: number;
+}
+
+export interface OtpVerifyResponse {
+  success: boolean;
+  message: string;
+  verified?: boolean;
+  verification_token?: string;
+  reset_token?: string;
+  user?: User;
+  token?: string;
+}
+
+export interface OtpResetPasswordRequest {
+  identifier: string;
+  reset_token: string;
+  password: string;
+  password_confirmation: string;
+}
+
 // Dashboard Stats
 export interface DashboardStats {
   events_count: number;
