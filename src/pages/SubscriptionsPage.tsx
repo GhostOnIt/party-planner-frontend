@@ -225,6 +225,25 @@ function ActivatePlanTab() {
     setPaymentId(null);
   };
 
+  const handlePaymentSuccess = () => {
+    if (!selectedEventId) return;
+
+    // Afficher un message de succès
+    toast({
+      title: 'Paiement réussi',
+      description: 'Votre abonnement a été activé avec succès.',
+    });
+
+    // Fermer le modal
+    setShowPaymentModal(false);
+    resetFlow();
+
+    // Rediriger vers le détail de l'événement après un court délai
+    setTimeout(() => {
+      navigate(`/events/${selectedEventId}`);
+    }, 500);
+  };
+
   if (isLoadingEvents) {
     return (
       <Card>
@@ -384,7 +403,10 @@ function ActivatePlanTab() {
               {paymentId && (
                 <div className="mt-4 w-full">
                   <ErrorBoundary>
-                    <PaymentStatusComponent paymentId={paymentId} />
+                    <PaymentStatusComponent 
+                      paymentId={paymentId}
+                      onSuccess={handlePaymentSuccess}
+                    />
                   </ErrorBoundary>
                 </div>
               )}

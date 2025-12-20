@@ -31,6 +31,9 @@
     "warning": "Attention",
     "info": "Information"
   },
+  "app": {
+    "name": "Party Planner"
+  },
   "nav": {
     "dashboard": "Tableau de bord",
     "events": "Mes evenements",

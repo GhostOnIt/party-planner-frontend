@@ -64,8 +64,8 @@ export function Sidebar({ isAdmin = false, onLogout }: SidebarProps) {
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6">
         <NavLink to="/dashboard" className="flex items-center gap-2">
-          <img src={logo} alt="Party Planner" className="h-8 w-8 object-contain" />
-          <span className="text-lg font-semibold">Party Planner</span>
+          <img src={logo} alt={t('app.name')} className="h-8 w-8 object-contain" />
+          <span className="text-lg font-semibold">{t('app.name')}</span>
         </NavLink>
       </div>
 
