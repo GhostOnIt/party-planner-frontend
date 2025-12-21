@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
+import { logger } from '@/lib/logger';
 import type { Payment, PaymentMethod, PaymentStatus, PlanType } from '@/types';
 
 // Response types
@@ -70,14 +71,14 @@ export function usePaymentStatus(paymentId: number | null, pollInterval?: number
 
 // Poll payment status (real-time)
 export function usePollPaymentStatus(paymentId: number | null, enabled: boolean = true) {
-  console.log('usePollPaymentStatus called with:', { paymentId, enabled });
+  logger.log('usePollPaymentStatus called with:', { paymentId, enabled });
 
   return useQuery({
     queryKey: ['payments', paymentId, 'poll'],
     queryFn: async (): Promise<PaymentPollResponse> => {
-      console.log('Polling payment status for ID:', paymentId);
+      logger.log('Polling payment status for ID:', paymentId);
       const response = await api.get(`/payments/${paymentId}/poll`);
-      console.log('Poll response:', response.data);
+      logger.log('Poll response:', response.data);
       return response.data;
     },
     enabled: !!paymentId && enabled,
@@ -103,7 +104,7 @@ export function useInitiatePayment() {
         endpoint = '/payments/airtel/initiate';
       }
 
-      console.log('Payment request:', { endpoint, data: paymentData });
+      logger.log('Payment request:', { endpoint, data: paymentData });
       const response = await api.post(endpoint, paymentData);
       return response.data;
     },

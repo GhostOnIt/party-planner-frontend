@@ -45,10 +45,6 @@ export function OtpPage() {
   const [otpId, setOtpId] = useState(state?.otp_id ?? 0);
   const [countdown, setCountdown] = useState(0);
   const [verified, setVerified] = useState(false);
-  const [verificationData, setVerificationData] = useState<{
-    verification_token?: string;
-    reset_token?: string;
-  } | null>(null);
 
   const verifyOtp = useVerifyOtp();
   const resendOtp = useResendOtp();
@@ -88,10 +84,6 @@ export function OtpPage() {
         onSuccess: (data) => {
           if (data.verified) {
             setVerified(true);
-            setVerificationData({
-              verification_token: data.verification_token,
-              reset_token: data.reset_token,
-            });
 
             // Handle different types
             if (state.type === 'password_reset' && data.reset_token) {

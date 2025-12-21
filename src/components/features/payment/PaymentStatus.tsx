@@ -3,6 +3,7 @@ import { CheckCircle2, XCircle, Loader2, Clock, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import { usePollPaymentStatus } from '@/hooks/usePayment';
 import type { PaymentStatus as PaymentStatusType } from '@/types';
 
@@ -61,7 +62,7 @@ export function PaymentStatus({
 
   // Handle polling error
   if (isError) {
-    console.error('Payment polling error:', error);
+    logger.error('Payment polling error:', error);
     return (
       <Card className="border-2 bg-red-50">
         <CardContent className="flex flex-col items-center p-6 text-center">
@@ -84,7 +85,7 @@ export function PaymentStatus({
   }
 
   // Debug log
-  console.log('PaymentStatus polling data:', data);
+  logger.log('PaymentStatus polling data:', data);
 
   // Derive status from poll response flags
   const getStatus = (): PaymentStatusType => {
@@ -129,11 +130,11 @@ export function PaymentStatus({
   // Trigger callbacks on status change (only once)
   useEffect(() => {
     if (status === 'completed' && onSuccess && !hasCalledSuccess.current) {
-      console.log('PaymentStatus: Calling onSuccess (once)');
+      logger.log('PaymentStatus: Calling onSuccess (once)');
       hasCalledSuccess.current = true;
       onSuccess();
     } else if (status === 'failed' && onFailure && !hasCalledFailure.current) {
-      console.log('PaymentStatus: Calling onFailure (once)');
+      logger.log('PaymentStatus: Calling onFailure (once)');
       hasCalledFailure.current = true;
       onFailure();
     }

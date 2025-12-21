@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import api, { publicApi } from '@/api/client';
+import { publicApi } from '@/api/client';
 import { useAuthStore } from '@/stores/authStore';
 import type {
   OtpSendRequest,

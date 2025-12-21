@@ -54,12 +54,9 @@ export function SendOtpPage() {
     register,
     handleSubmit,
     formState: { errors },
-    watch,
   } = useForm<SendOtpFormValues>({
     resolver: zodResolver(sendOtpSchema),
   });
-
-  const identifier = watch('identifier');
 
   const onSubmit = (data: SendOtpFormValues) => {
     sendOtp.mutate(
