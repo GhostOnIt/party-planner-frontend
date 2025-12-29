@@ -365,6 +365,7 @@ export interface EventFilters {
   search?: string;
   per_page?: number;
   page?: number;
+  to?: number;
 }
 
 export interface GuestFilters {

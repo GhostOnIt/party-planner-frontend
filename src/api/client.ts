@@ -1,4 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { useAuthStore } from '@/stores/authStore';
 
 // Custom event for server errors
 export const SERVER_ERROR_EVENT = 'server-connection-error';
@@ -47,10 +48,14 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     // Handle network errors (server is down, no connection, timeout)
     if (!error.response) {
-      if (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK' || error.message.includes('timeout')) {
-        dispatchServerError('Le serveur ne répond pas. Vérifiez votre connexion ou réessayez plus tard.');
-      } else if (error.code === 'ERR_NETWORK') {
-        dispatchServerError('Impossible de se connecter au serveur. Vérifiez que le serveur est démarré.');
+      if (
+        error.code === 'ECONNABORTED' ||
+        error.code === 'ERR_NETWORK' ||
+        error.message?.includes('timeout')
+      ) {
+        dispatchServerError(
+          'Le serveur ne répond pas. Vérifiez votre connexion ou réessayez plus tard.'
+        );
       } else {
         dispatchServerError('Une erreur de connexion est survenue. Veuillez réessayer.');
       }
@@ -60,8 +65,9 @@ api.interceptors.response.use(
     // Handle 401 Unauthorized
     if (error.response?.status === 401) {
       // Clear auth data and redirect to login
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user');
+      const logout = useAuthStore.getState().logout;
+      logout();
+
       window.location.href = '/login';
     }
 
