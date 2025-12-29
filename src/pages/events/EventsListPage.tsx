@@ -41,9 +41,13 @@ export function EventsListPage() {
   const { data: subscriptions = [] } = useSubscriptions();
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
   const { mutate: duplicateEvent } = useDuplicateEvent();
-
   const events = data?.data || [];
-  const meta = data ? { current_page: data.current_page, last_page: data.last_page, total: data.total } : undefined;
+
+  // Synchroniser currentPage avec la réponse API ou les filtres
+  const currentPage = data?.current_page ?? filters.page ?? 1;
+
+  // Utiliser data.last_page au lieu de data.to
+  const meta = data ? { last_page: data.last_page, total: data.total } : undefined;
 
   // Create a map of eventId -> subscription for quick lookup
   const subscriptionsByEventId = useMemo(() => {
@@ -60,6 +64,8 @@ export function EventsListPage() {
 
   const handlePageChange = (page: number) => {
     setFilters((prev) => ({ ...prev, page }));
+    // Remonter en haut de la page lors du changement de page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleEdit = (event: Event) => {
@@ -120,9 +126,7 @@ export function EventsListPage() {
         <div
           className={cn(
             'grid gap-4',
-            viewMode === 'grid'
-              ? 'sm:grid-cols-2 lg:grid-cols-3'
-              : 'grid-cols-1'
+            viewMode === 'grid' ? 'sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'
           )}
         >
           {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -158,9 +162,7 @@ export function EventsListPage() {
           <div
             className={cn(
               'grid gap-4',
-              viewMode === 'grid'
-                ? 'sm:grid-cols-2 lg:grid-cols-3'
-                : 'grid-cols-1'
+              viewMode === 'grid' ? 'sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'
             )}
           >
             {events.map((event) => (
@@ -176,21 +178,19 @@ export function EventsListPage() {
           </div>
 
           {/* Pagination */}
-          {meta && meta.last_page > 1 && (
+          {meta && meta.last_page && meta.last_page > 1 && (
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
-                    onClick={() => handlePageChange(meta.current_page - 1)}
-                    className={cn(
-                      meta.current_page === 1 && 'pointer-events-none opacity-50'
-                    )}
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    className={cn(currentPage === 1 && 'pointer-events-none opacity-50')}
                   />
                 </PaginationItem>
 
                 {Array.from({ length: meta.last_page }, (_, i) => i + 1)
                   .filter((page) => {
-                    const current = meta.current_page;
+                    const current = currentPage;
                     return (
                       page === 1 ||
                       page === meta.last_page ||
@@ -204,7 +204,7 @@ export function EventsListPage() {
                       )}
                       <PaginationLink
                         onClick={() => handlePageChange(page)}
-                        isActive={page === meta.current_page}
+                        isActive={page === currentPage}
                       >
                         {page}
                       </PaginationLink>
@@ -213,10 +213,9 @@ export function EventsListPage() {
 
                 <PaginationItem>
                   <PaginationNext
-                    onClick={() => handlePageChange(meta.current_page + 1)}
+                    onClick={() => handlePageChange(currentPage + 1)}
                     className={cn(
-                      meta.current_page === meta.last_page &&
-                        'pointer-events-none opacity-50'
+                      currentPage === meta.last_page && 'pointer-events-none opacity-50'
                     )}
                   />
                 </PaginationItem>
@@ -232,9 +231,9 @@ export function EventsListPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer l'evenement</AlertDialogTitle>
             <AlertDialogDescription>
-              Etes-vous sur de vouloir supprimer "{eventToDelete?.title}" ? Cette
-              action est irreversible et supprimera egalement tous les invites,
-              taches et autres donnees associees.
+              Etes-vous sur de vouloir supprimer "{eventToDelete?.title}" ? Cette action est
+              irreversible et supprimera egalement tous les invites, taches et autres donnees
+              associees.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
