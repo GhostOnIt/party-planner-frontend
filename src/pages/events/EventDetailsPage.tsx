@@ -48,11 +48,19 @@ export function EventDetailsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  
-  const validTabs = ["overview", "guests", "tasks", "budget", "photos", "collaborators", "subscription"];
-  const tabFromUrl = searchParams.get("tab");
-  const activeTab = validTabs.includes(tabFromUrl || "") ? tabFromUrl : "overview";
-  
+
+  const validTabs = [
+    'overview',
+    'guests',
+    'tasks',
+    'budget',
+    'photos',
+    'collaborators',
+    'subscription',
+  ];
+  const tabFromUrl = searchParams.get('tab');
+  const activeTab = validTabs.includes(tabFromUrl || '') ? tabFromUrl : 'overview';
+
   const handleTabChange = (value: string) => {
     setSearchParams({ tab: value });
   };
@@ -82,7 +90,9 @@ export function EventDetailsPage() {
         <EmptyState
           icon={Calendar}
           title="Evenement introuvable"
-          description={error ? getApiErrorMessage(error) : "Cet evenement n'existe pas ou a ete supprime"}
+          description={
+            error ? getApiErrorMessage(error) : "Cet evenement n'existe pas ou a ete supprime"
+          }
           action={{
             label: 'Retour aux evenements',
             onClick: () => navigate('/events'),
@@ -105,10 +115,7 @@ export function EventDetailsPage() {
     <div className="space-y-6">
       <PageHeader
         title={event.title}
-        breadcrumbs={[
-          { label: 'Evenements', href: '/events' },
-          { label: event.title },
-        ]}
+        breadcrumbs={[{ label: 'Evenements', href: '/events' }, { label: event.title }]}
         actions={
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleDuplicate}>
@@ -121,11 +128,7 @@ export function EventDetailsPage() {
                 Modifier
               </Button>
             </Link>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setShowDeleteDialog(true)}
-            >
+            <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
               <Trash2 className="mr-2 h-4 w-4" />
               Supprimer
             </Button>
@@ -206,7 +209,7 @@ export function EventDetailsPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab || "overview"} onValueChange={handleTabChange} className="space-y-4">
+      <Tabs value={activeTab || 'overview'} onValueChange={handleTabChange} className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
           <TabsTrigger value="guests" className="gap-2">
@@ -243,13 +246,9 @@ export function EventDetailsPage() {
               </CardHeader>
               <CardContent>
                 {event.description ? (
-                  <p className="text-muted-foreground whitespace-pre-wrap">
-                    {event.description}
-                  </p>
+                  <p className="text-muted-foreground whitespace-pre-wrap">{event.description}</p>
                 ) : (
-                  <p className="text-muted-foreground italic">
-                    Aucune description
-                  </p>
+                  <p className="text-muted-foreground italic">Aucune description</p>
                 )}
               </CardContent>
             </Card>
@@ -313,9 +312,8 @@ export function EventDetailsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer l'evenement</AlertDialogTitle>
             <AlertDialogDescription>
-              Etes-vous sur de vouloir supprimer "{event.title}" ? Cette action
-              est irreversible et supprimera egalement tous les invites, taches
-              et autres donnees associees.
+              Etes-vous sur de vouloir supprimer "{event.title}" ? Cette action est irreversible et
+              supprimera egalement tous les invites, taches et autres donnees associees.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

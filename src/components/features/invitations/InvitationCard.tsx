@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getStorageUrl } from '@/api/client';
 import type { Invitation, CollaboratorRole } from '@/types';
+import { resolveUrl } from '@/lib/utils';
 
 interface InvitationCardProps {
   invitation: Invitation;
@@ -44,27 +44,26 @@ export function InvitationCard({
     ? format(parseISO(invitation.event.date), 'dd MMMM yyyy', { locale: fr })
     : null;
 
-  const inviterInitials = invitation.inviter?.name
-    ?.split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase() || '?';
+  const inviterInitials =
+    invitation.inviter?.name
+      ?.split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase() || '?';
 
   return (
     <Card>
       <CardContent className="p-4">
         <div className="flex items-start gap-4">
           <Avatar className="h-12 w-12">
-            <AvatarImage src={getStorageUrl(invitation.inviter?.avatar_url)} />
+            <AvatarImage src={resolveUrl(invitation.inviter?.avatar_url)} />
             <AvatarFallback>{inviterInitials}</AvatarFallback>
           </Avatar>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="font-medium">
-                  {invitation.inviter?.name || 'Utilisateur inconnu'}
-                </p>
+                <p className="font-medium">{invitation.inviter?.name || 'Utilisateur inconnu'}</p>
                 <p className="text-sm text-muted-foreground">
                   vous invite a collaborer sur un evenement
                 </p>
@@ -85,17 +84,13 @@ export function InvitationCard({
                       {eventDate}
                     </span>
                   )}
-                  {invitation.event.location && (
-                    <span>{invitation.event.location}</span>
-                  )}
+                  {invitation.event.location && <span>{invitation.event.location}</span>}
                 </div>
               </div>
             )}
 
             {invitation.message && (
-              <p className="mt-2 text-sm text-muted-foreground italic">
-                "{invitation.message}"
-              </p>
+              <p className="mt-2 text-sm text-muted-foreground italic">"{invitation.message}"</p>
             )}
 
             <div className="mt-4 flex items-center justify-between">

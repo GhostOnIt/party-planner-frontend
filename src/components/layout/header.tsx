@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { LanguageSelector } from '@/components/LanguageSelector';
-import { getStorageUrl } from '@/api/client';
+import { resolveUrl } from '@/lib/utils';
 
 interface HeaderProps {
   user: {
@@ -48,12 +48,7 @@ export function Header({
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-card px-4 lg:px-6">
       {/* Mobile menu button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="lg:hidden"
-        onClick={onMenuClick}
-      >
+      <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenuClick}>
         <Menu className="h-5 w-5" />
         <span className="sr-only">Menu</span>
       </Button>
@@ -67,12 +62,7 @@ export function Header({
         <LanguageSelector />
 
         {/* Notifications */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
-          onClick={onNotificationsClick}
-        >
+        <Button variant="ghost" size="icon" className="relative" onClick={onNotificationsClick}>
           <Bell className="h-5 w-5" />
           {unreadNotifications > 0 && (
             <Badge
@@ -90,7 +80,7 @@ export function Header({
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={getStorageUrl(user.avatar_url)} alt={user.name} />
+                <AvatarImage src={resolveUrl(user.avatar_url)} alt={user.name} />
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
             </Button>
@@ -99,9 +89,7 @@ export function Header({
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{user.name}</p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {user.email}
-                </p>
+                <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
