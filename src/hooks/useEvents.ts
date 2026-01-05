@@ -34,9 +34,54 @@ export function useCreateEvent() {
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: async (data: CreateEventFormData) => {
-      const response = await api.post<Event>('/events', data);
-      return response.data;
+    mutationFn: async (data: CreateEventFormData & { cover_photo?: File }) => {
+      const { cover_photo, ...eventData } = data;
+
+      // Si une photo de couverture est fournie, utiliser FormData
+      if (cover_photo) {
+        const formData = new FormData();
+
+        // Ajouter les données de l'événement
+        Object.entries(eventData).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            if (key === 'budget' && typeof value === 'number') {
+              formData.append('estimated_budget', value.toString());
+            } else if (key === 'expected_guests' && typeof value === 'number') {
+              formData.append('expected_guests_count', value.toString());
+            } else {
+              formData.append(key, value.toString());
+            }
+          }
+        });
+
+        // Ajouter la photo de couverture
+        formData.append('cover_photo', cover_photo);
+
+        const response = await api.post<Event>('/events', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        return response.data;
+      } else {
+        // Sinon, envoyer en JSON normal
+        const jsonData: Record<string, string | number | undefined> = {
+          ...eventData,
+        };
+
+        // Mapper les noms de champs pour correspondre au backend
+        if (jsonData.budget !== undefined) {
+          jsonData.estimated_budget = jsonData.budget;
+          delete jsonData.budget;
+        }
+        if (jsonData.expected_guests !== undefined) {
+          jsonData.expected_guests_count = jsonData.expected_guests;
+          delete jsonData.expected_guests;
+        }
+
+        const response = await api.post<Event>('/events', jsonData);
+        return response.data;
+      }
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });

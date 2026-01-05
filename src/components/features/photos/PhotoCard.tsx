@@ -9,8 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
-import { getStorageUrl } from '@/api/client';
+import { resolveUrl, cn } from '@/lib/utils';
 import type { Photo } from '@/types';
 
 interface PhotoCardProps {
@@ -44,7 +43,7 @@ export function PhotoCard({
       onView(photo);
     }
   };
-
+  console.log(resolveUrl(photo.thumbnail_url || photo.url));
   return (
     <div
       className={cn(
@@ -57,13 +56,14 @@ export function PhotoCard({
       onClick={handleClick}
     >
       {/* Image */}
+
       {imageError ? (
         <div className="flex h-full w-full items-center justify-center bg-muted">
           <span className="text-sm text-muted-foreground">Image non disponible</span>
         </div>
       ) : (
         <img
-          src={getStorageUrl(photo.thumbnail_url || photo.url)}
+          src={resolveUrl(photo.thumbnail_url || photo.url)}
           alt={photo.caption || photo.original_name}
           className="h-full w-full object-cover transition-transform group-hover:scale-105"
           onError={() => setImageError(true)}

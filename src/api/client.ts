@@ -82,25 +82,6 @@ api.interceptors.response.use(
 
 export default api;
 
-// Get the base URL for storage/media files
-export const getStorageUrl = (path: string | null | undefined): string | undefined => {
-  if (!path) return undefined;
-
-  // If already a full URL, return as is
-  if (path.startsWith('http://') || path.startsWith('https://')) {
-    return path;
-  }
-
-  // Get base URL without /api suffix
-  const apiUrl = import.meta.env.VITE_API_URL || '';
-  const baseUrl = apiUrl.replace(/\/api\/?$/, '');
-
-  // Ensure path starts with /
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-
-  return `${baseUrl}${normalizedPath}`;
-};
-
 // Type for API error response
 export interface ApiError {
   message: string;
