@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { getValidationErrors } from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,6 +36,7 @@ interface GuestFormProps {
   guest?: Guest;
   onSubmit: (data: CreateGuestFormData) => void;
   isSubmitting?: boolean;
+  submitError?: unknown;
 }
 
 export function GuestForm({
@@ -43,6 +45,7 @@ export function GuestForm({
   guest,
   onSubmit,
   isSubmitting = false,
+  submitError,
 }: GuestFormProps) {
   const {
     register,
@@ -50,6 +53,7 @@ export function GuestForm({
     watch,
     setValue,
     reset,
+    setError,
     formState: { errors },
   } = useForm<GuestFormValues>({
     resolver: zodResolver(guestFormSchema),
@@ -63,6 +67,25 @@ export function GuestForm({
       notes: guest?.notes || '',
     },
   });
+
+  // Handle backend validation errors
+  useEffect(() => {
+    if (submitError && open) {
+      const validationErrors = getValidationErrors(submitError);
+      if (validationErrors) {
+        Object.keys(validationErrors).forEach((field) => {
+          const fieldName = field as keyof GuestFormValues;
+          const errorMessage = validationErrors[field]?.[0];
+          if (errorMessage) {
+            setError(fieldName, {
+              type: 'server',
+              message: errorMessage,
+            });
+          }
+        });
+      }
+    }
+  }, [submitError, open, setError]);
 
   const plusOne = watch('plus_one');
 
@@ -102,10 +125,10 @@ export function GuestForm({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{guest ? 'Modifier l\'invite' : 'Ajouter un invite'}</DialogTitle>
+          <DialogTitle>{guest ? "Modifier l'invite" : 'Ajouter un invite'}</DialogTitle>
           <DialogDescription>
             {guest
-              ? 'Modifiez les informations de l\'invite'
+              ? "Modifiez les informations de l'invite"
               : 'Remplissez les informations pour ajouter un nouvel invite'}
           </DialogDescription>
         </DialogHeader>
@@ -119,9 +142,7 @@ export function GuestForm({
               {...register('name')}
               aria-invalid={!!errors.name}
             />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
-            )}
+            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -134,9 +155,7 @@ export function GuestForm({
                 {...register('email')}
                 aria-invalid={!!errors.email}
               />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -145,7 +164,9 @@ export function GuestForm({
                 id="phone"
                 placeholder="+237 6XX XXX XXX"
                 {...register('phone')}
+                aria-invalid={!!errors.phone}
               />
+              {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
             </div>
           </div>
 
@@ -202,8 +223,8 @@ export function GuestForm({
                   ? 'Modification...'
                   : 'Ajout...'
                 : guest
-                ? 'Modifier'
-                : 'Ajouter'}
+                  ? 'Modifier'
+                  : 'Ajouter'}
             </Button>
           </DialogFooter>
         </form>

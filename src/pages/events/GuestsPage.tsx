@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/hooks/use-toast';
+import { getApiErrorMessage } from '@/api/client';
 import {
   GuestStats,
   GuestFilters,
@@ -107,7 +108,10 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
     setShowForm(true);
   };
 
+  const [submitError, setSubmitError] = useState<unknown>(null);
+
   const handleFormSubmit = (data: CreateGuestFormData) => {
+    setSubmitError(null);
     if (editingGuest) {
       updateGuest(
         { guestId: editingGuest.id, data },
@@ -115,9 +119,19 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
           onSuccess: () => {
             setShowForm(false);
             setEditingGuest(undefined);
+            setSubmitError(null);
             toast({
               title: 'Invite modifie',
               description: 'L\'invite a ete modifie avec succes.',
+            });
+          },
+          onError: (error) => {
+            setSubmitError(error);
+            const errorMessage = getApiErrorMessage(error);
+            toast({
+              title: 'Erreur',
+              description: errorMessage,
+              variant: 'destructive',
             });
           },
         }
@@ -126,9 +140,19 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
       createGuest(data, {
         onSuccess: () => {
           setShowForm(false);
+          setSubmitError(null);
           toast({
             title: 'Invite ajoute',
             description: 'L\'invite a ete ajoute avec succes.',
+          });
+        },
+        onError: (error) => {
+          setSubmitError(error);
+          const errorMessage = getApiErrorMessage(error);
+          toast({
+            title: 'Erreur',
+            description: errorMessage,
+            variant: 'destructive',
           });
         },
       });
@@ -366,10 +390,16 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
       {/* Guest Form Modal */}
       <GuestForm
         open={showForm}
-        onOpenChange={setShowForm}
+        onOpenChange={(open) => {
+          setShowForm(open);
+          if (open) {
+            setSubmitError(null);
+          }
+        }}
         guest={editingGuest}
         onSubmit={handleFormSubmit}
         isSubmitting={isCreating || isUpdating}
+        submitError={submitError}
       />
 
       {/* Guest Import Modal */}
