@@ -2,6 +2,20 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
 import type { Guest, GuestFilters, CreateGuestFormData, GuestStats } from '@/types';
 
+// Helper function to transform backend stats format to frontend format
+function transformStats(rawStats: any): GuestStats | undefined {
+  if (!rawStats) return undefined;
+  
+  return {
+    total: rawStats.total || 0,
+    accepted: rawStats.by_status?.accepted || 0,
+    declined: rawStats.by_status?.declined || 0,
+    pending: rawStats.by_status?.pending || 0,
+    maybe: rawStats.by_status?.maybe || 0,
+    checked_in: rawStats.check_in?.checked_in || 0,
+  };
+}
+
 interface GuestsApiResponse {
   data: Guest[];
   meta?: {
@@ -37,7 +51,7 @@ export function useGuests(eventId: number | string, filters: GuestFilters = {}) 
             per_page: guestsData.per_page || 20,
             total: guestsData.total || 0,
           } : undefined,
-          stats: responseData.stats,
+          stats: transformStats(responseData.stats),
         };
       }
 
@@ -45,7 +59,7 @@ export function useGuests(eventId: number | string, filters: GuestFilters = {}) 
       return {
         data: responseData.data || [],
         meta: responseData.meta,
-        stats: responseData.stats,
+        stats: transformStats(responseData.stats),
       };
     },
     enabled: !!eventId,
