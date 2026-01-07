@@ -36,7 +36,6 @@ export function BulkActionsBar({
   selectedGuests,
   onDeselectAll,
   onSendInvitations,
-  onSendReminders,
   onUpdateRsvp,
   onCheckIn,
   onUndoCheckIn,

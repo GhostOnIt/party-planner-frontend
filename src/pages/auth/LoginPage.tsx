@@ -35,18 +35,9 @@ export function LoginPage() {
   });
 
   const onSubmit = (data: LoginFormValues) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/e5db8a79-cefc-4fef-9e25-d5a65a71a32e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'pages/auth/LoginPage.tsx:37',message:'Login form - onSubmit called',data:{email:data.email,hasPassword:!!data.password},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     login(data, {
       onError: (err) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/e5db8a79-cefc-4fef-9e25-d5a65a71a32e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'pages/auth/LoginPage.tsx:40',message:'Login form - onError callback',data:{errorType:err?.constructor?.name,hasResponse:!!err?.response,status:err?.response?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         const validationErrors = getValidationErrors(err);
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/e5db8a79-cefc-4fef-9e25-d5a65a71a32e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'pages/auth/LoginPage.tsx:44',message:'Login form - validation errors extracted',data:{hasValidationErrors:!!validationErrors,errors:validationErrors},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         if (validationErrors) {
           Object.entries(validationErrors).forEach(([field, messages]) => {
             setError(field as keyof LoginFormValues, {

@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { RsvpBadge, rsvpConfig } from './RsvpBadge';
+import { RsvpBadge } from './RsvpBadge';
 import type { RsvpStatus } from '@/types';
 
 export interface ExportFilters {
