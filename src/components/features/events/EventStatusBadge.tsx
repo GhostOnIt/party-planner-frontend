@@ -3,25 +3,21 @@ import { cn } from '@/lib/utils';
 import type { EventStatus } from '@/types';
 
 const statusConfig: Record<EventStatus, { label: string; className: string }> = {
-  draft: {
-    label: 'Brouillon',
-    className: 'bg-muted text-muted-foreground',
+  upcoming: {
+    label: 'À venir',
+    className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
   },
-  planning: {
-    label: 'En preparation',
-    className: 'bg-info text-white',
-  },
-  confirmed: {
-    label: 'Confirme',
-    className: 'bg-success text-white',
+  ongoing: {
+    label: 'En cours',
+    className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
   },
   completed: {
-    label: 'Termine',
-    className: 'bg-primary text-white',
+    label: 'Terminé',
+    className: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
   },
   cancelled: {
-    label: 'Annule',
-    className: 'bg-destructive text-white',
+    label: 'Annulé',
+    className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
   },
 };
 
@@ -31,7 +27,7 @@ interface EventStatusBadgeProps {
 }
 
 export function EventStatusBadge({ status, className }: EventStatusBadgeProps) {
-  const config = statusConfig[status] || statusConfig.draft;
+  const config = statusConfig[status] || statusConfig.upcoming;
 
   return (
     <Badge className={cn(config.className, className)}>

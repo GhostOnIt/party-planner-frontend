@@ -10,5 +10,12 @@ export function resolveUrl(path: string | null | undefined): string | undefined 
   if (path.startsWith('http')) {
     return path;
   }
-  return `${import.meta.env.VITE_BACKEND_URL}${path}`;
+
+   const viteApiUrl = import.meta.env.VITE_API_URL as string;
+   if (!viteApiUrl) {
+     return undefined;
+   }
+
+   const backendUrl = viteApiUrl.replace('/api', '');
+   return `${backendUrl}${path}`;
 }
