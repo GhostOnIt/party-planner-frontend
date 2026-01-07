@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -35,21 +35,24 @@ const responseOptions = [
     value: 'accepted' as const,
     label: 'Je participe',
     icon: Check,
-    className: 'border-green-200 bg-green-50 hover:bg-green-100 data-[selected=true]:border-green-500 data-[selected=true]:bg-green-100',
+    className:
+      'border-green-200 bg-green-50 hover:bg-green-100 data-[selected=true]:border-green-500 data-[selected=true]:bg-green-100',
     iconClass: 'text-green-600',
   },
   {
     value: 'declined' as const,
     label: 'Je ne peux pas',
     icon: X,
-    className: 'border-red-200 bg-red-50 hover:bg-red-100 data-[selected=true]:border-red-500 data-[selected=true]:bg-red-100',
+    className:
+      'border-red-200 bg-red-50 hover:bg-red-100 data-[selected=true]:border-red-500 data-[selected=true]:bg-red-100',
     iconClass: 'text-red-600',
   },
   {
     value: 'maybe' as const,
     label: 'Peut-etre',
     icon: HelpCircle,
-    className: 'border-yellow-200 bg-yellow-50 hover:bg-yellow-100 data-[selected=true]:border-yellow-500 data-[selected=true]:bg-yellow-100',
+    className:
+      'border-yellow-200 bg-yellow-50 hover:bg-yellow-100 data-[selected=true]:border-yellow-500 data-[selected=true]:bg-yellow-100',
     iconClass: 'text-yellow-600',
   },
 ];
@@ -63,7 +66,10 @@ export function RsvpForm({
   onSubmit,
   isSubmitting = false,
 }: RsvpFormProps) {
-  const [showPlusOne, setShowPlusOne] = useState(Boolean(hasPlusOne) && currentStatus === 'accepted');
+  // Si hasPlusOne est true et qu'il y a déjà un nom, ou si le statut est accepted, activer par défaut
+  const [showPlusOne, setShowPlusOne] = useState(
+    hasPlusOne && (currentStatus === 'accepted' || Boolean(currentPlusOneName))
+  );
 
   const {
     register,
@@ -84,9 +90,45 @@ export function RsvpForm({
 
   const selectedResponse = watch('response');
 
+  // Mettre à jour showPlusOne quand la réponse change
+  useEffect(() => {
+    if (selectedResponse === 'accepted' && hasPlusOne) {
+      // Si l'utilisateur accepte et a le droit d'avoir un accompagnateur, activer par défaut
+      setShowPlusOne(true);
+      setValue('plus_one_attending', true);
+    } else if (selectedResponse !== 'accepted') {
+      setShowPlusOne(false);
+      setValue('plus_one_attending', false);
+    }
+  }, [selectedResponse, hasPlusOne, setValue]);
+
   const handleResponseSelect = (value: 'accepted' | 'declined' | 'maybe') => {
     setValue('response', value);
-    if (value !== 'accepted') {
+    // Mettre à jour showPlusOne immédiatement lors de la sélection
+    if (value === 'accepted' && hasPlusOne) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/e5db8a79-cefc-4fef-9e25-d5a65a71a32e', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'RsvpForm.tsx:169',
+          message: 'handleResponseSelect - setting showPlusOne to true',
+          data: {
+            value,
+            hasPlusOne,
+            before: showPlusOne,
+            after: true,
+          },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run2',
+          hypothesisId: 'H',
+        }),
+      }).catch(() => {});
+      // #endregion
+      setShowPlusOne(true);
+      setValue('plus_one_attending', true);
+    } else if (value !== 'accepted') {
       setShowPlusOne(false);
       setValue('plus_one_attending', false);
     }
@@ -132,44 +174,23 @@ export function RsvpForm({
           </div>
 
           {/* Plus One Section (only if hasPlusOne is true) */}
-          {hasPlusOne && (
+          {hasPlusOne && showPlusOne && (
             <div className="space-y-4 rounded-lg border p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <UserPlus className="h-5 w-5 text-muted-foreground" />
                   <Label htmlFor="plus_one_attending">Accompagnateur</Label>
                 </div>
-                {selectedResponse === 'accepted' ? (
-                  <Switch
-                    id="plus_one_attending"
-                    checked={showPlusOne}
-                    onCheckedChange={(checked) => {
-                      setShowPlusOne(checked);
-                      setValue('plus_one_attending', checked);
-                    }}
-                  />
-                ) : (
-                  <span className="text-sm text-muted-foreground">
-                    Disponible si vous acceptez
-                  </span>
-                )}
               </div>
 
-              {selectedResponse === 'accepted' && showPlusOne && (
-                <div className="space-y-2">
-                  <Label htmlFor="plus_one_name">Nom de l'accompagnateur</Label>
-                  <Input
-                    id="plus_one_name"
-                    placeholder="Prénom et nom"
-                    {...register('plus_one_name')}
-                  />
-                </div>
-              )}
-              {selectedResponse !== 'accepted' && hasPlusOne && (
-                <p className="text-sm text-muted-foreground">
-                  Vous pourrez renseigner le nom de l'accompagnateur une fois que vous aurez accepté l'invitation.
-                </p>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="plus_one_name">Nom de l'accompagnateur</Label>
+                <Input
+                  id="plus_one_name"
+                  placeholder="Prénom et nom"
+                  {...register('plus_one_name')}
+                />
+              </div>
             </div>
           )}
 
