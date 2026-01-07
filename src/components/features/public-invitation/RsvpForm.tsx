@@ -131,33 +131,44 @@ export function RsvpForm({
             )}
           </div>
 
-          {/* Plus One Section (only if accepted) */}
-          {selectedResponse === 'accepted' && (
+          {/* Plus One Section (only if hasPlusOne is true) */}
+          {hasPlusOne && (
             <div className="space-y-4 rounded-lg border p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <UserPlus className="h-5 w-5 text-muted-foreground" />
                   <Label htmlFor="plus_one_attending">Accompagnateur</Label>
                 </div>
-                <Switch
-                  id="plus_one_attending"
-                  checked={showPlusOne}
-                  onCheckedChange={(checked) => {
-                    setShowPlusOne(checked);
-                    setValue('plus_one_attending', checked);
-                  }}
-                />
+                {selectedResponse === 'accepted' ? (
+                  <Switch
+                    id="plus_one_attending"
+                    checked={showPlusOne}
+                    onCheckedChange={(checked) => {
+                      setShowPlusOne(checked);
+                      setValue('plus_one_attending', checked);
+                    }}
+                  />
+                ) : (
+                  <span className="text-sm text-muted-foreground">
+                    Disponible si vous acceptez
+                  </span>
+                )}
               </div>
 
-              {showPlusOne && (
+              {selectedResponse === 'accepted' && showPlusOne && (
                 <div className="space-y-2">
                   <Label htmlFor="plus_one_name">Nom de l'accompagnateur</Label>
                   <Input
                     id="plus_one_name"
-                    placeholder="Prenom et nom"
+                    placeholder="Prénom et nom"
                     {...register('plus_one_name')}
                   />
                 </div>
+              )}
+              {selectedResponse !== 'accepted' && hasPlusOne && (
+                <p className="text-sm text-muted-foreground">
+                  Vous pourrez renseigner le nom de l'accompagnateur une fois que vous aurez accepté l'invitation.
+                </p>
               )}
             </div>
           )}

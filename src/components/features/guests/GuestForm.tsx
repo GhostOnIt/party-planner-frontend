@@ -61,7 +61,7 @@ export function GuestForm({
       name: guest?.name || '',
       email: guest?.email || '',
       phone: guest?.phone || '',
-      plus_one: guest?.plus_one || false,
+      plus_one: guest?.plus_one ?? true, // Par défaut coché lors de la création
       plus_one_name: guest?.plus_one_name || '',
       dietary_restrictions: guest?.dietary_restrictions || '',
       notes: guest?.notes || '',
@@ -96,7 +96,7 @@ export function GuestForm({
         name: guest?.name || '',
         email: guest?.email || '',
         phone: guest?.phone || '',
-        plus_one: guest?.plus_one || false,
+        plus_one: guest?.plus_one ?? true, // Par défaut coché lors de la création
         plus_one_name: guest?.plus_one_name || '',
         dietary_restrictions: guest?.dietary_restrictions || '',
         notes: guest?.notes || '',
@@ -110,7 +110,7 @@ export function GuestForm({
       email: data.email || undefined,
       phone: data.phone || undefined,
       plus_one: data.plus_one,
-      plus_one_name: data.plus_one ? data.plus_one_name : undefined,
+      plus_one_name: data.plus_one && data.plus_one_name ? data.plus_one_name : undefined,
       dietary_restrictions: data.dietary_restrictions || undefined,
       notes: data.notes || undefined,
     });
@@ -181,7 +181,6 @@ export function GuestForm({
                 Accompagnant (+1)
               </Label>
             </div>
-
             {plusOne && (
               <div className="space-y-2 pl-6">
                 <Label htmlFor="plus_one_name">Nom de l'accompagnant</Label>
@@ -190,6 +189,12 @@ export function GuestForm({
                   placeholder="Nom de l'accompagnant"
                   {...register('plus_one_name')}
                 />
+                {!guest && (
+                  <p className="text-xs text-muted-foreground">
+                    Vous pouvez laisser ce champ vide. L'invité pourra le renseigner lors de sa
+                    réponse à l'invitation.
+                  </p>
+                )}
               </div>
             )}
           </div>

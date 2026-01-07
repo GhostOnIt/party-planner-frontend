@@ -51,42 +51,53 @@ export function BulkActionDialog({
   const statusBreakdown =
     action === 'update_rsvp' ? currentStatusBreakdown || getStatusBreakdown(eligible) : null;
 
+  const isDestructive = action === 'delete';
+
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
-      <AlertDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-300">
-        <AlertDialogHeader className="animate-in slide-in-from-top-2 fade-in-0 duration-300">
-          <AlertDialogTitle className="text-xl">{actionLabel}</AlertDialogTitle>
+      <AlertDialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{actionLabel}</AlertDialogTitle>
           <AlertDialogDescription className="space-y-4 mt-4">
             {/* Eligible guests section */}
             {eligible.length > 0 && (
-              <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-4 border border-green-200 dark:border-green-800 animate-in fade-in-0 slide-in-from-left-2 duration-500 delay-75 shadow-sm">
-                <p className="font-medium text-green-900 dark:text-green-100 flex items-center gap-2">
-                  <span className="text-lg animate-in zoom-in-0 duration-300">✓</span>
+              <div
+                className={`rounded-m p-4 ${isDestructive ? 'bg-destructive/5 border-destructive/20' : 'bg-muted/50'}`}
+              >
+                <p className="font-medium flex items-center gap-2 mb-2">
+                  <span
+                    className={
+                      isDestructive ? 'text-destructive' : 'text-green-600 dark:text-green-400'
+                    }
+                  >
+                    {isDestructive ? '⚠' : '✓'}
+                  </span>
                   {eligible.length} invité{eligible.length > 1 ? 's' : ''} éligible
                   {eligible.length > 1 ? 's' : ''}
                 </p>
-                <p className="text-sm text-green-700 dark:text-green-300 mt-2 animate-in fade-in-0 duration-500 delay-150">
+                <p
+                  className={`text-sm ${isDestructive ? 'text-destructive/90' : 'text-muted-foreground'}`}
+                >
                   {action === 'update_rsvp' && newRsvpStatus
                     ? `Cette action modifiera le statut RSVP de ces invités en "${rsvpConfig[newRsvpStatus].label}".`
                     : action === 'send_invitations'
                       ? "Les invités recevront une invitation s'ils n'en ont pas encore, ou un rappel s'ils en ont déjà une."
-                      : 'Cette action sera appliquée à ces invités.'}
+                      : action === 'delete'
+                        ? 'Ces invités seront définitivement supprimés. Cette action est irréversible.'
+                        : 'Cette action sera appliquée à ces invités.'}
                 </p>
               </div>
             )}
 
             {/* Status breakdown for RSVP update */}
             {action === 'update_rsvp' && statusBreakdown && (
-              <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4 border border-blue-200 dark:border-blue-800 animate-in fade-in-0 slide-in-from-left-2 duration-500 delay-150 shadow-sm">
-                <p className="font-medium text-blue-900 dark:text-blue-100 mb-3">
-                  Répartition actuelle par statut :
-                </p>
+              <div className="rounded-md bg-muted/30 p-4 border">
+                <p className="font-medium mb-3">Répartition actuelle par statut :</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(statusBreakdown).map(([status, count], index) => (
+                  {Object.entries(statusBreakdown).map(([status, count]) => (
                     <div
                       key={status}
-                      className="flex items-center justify-between p-2.5 rounded bg-white dark:bg-gray-800 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
-                      style={{ animationDelay: `${200 + index * 50}ms` }}
+                      className="flex items-center justify-between p-2 rounded bg-background border"
                     >
                       <RsvpBadge status={status as RsvpStatus} />
                       <span className="text-sm font-medium">{count}</span>
@@ -98,24 +109,20 @@ export function BulkActionDialog({
 
             {/* Ineligible guests section */}
             {ineligible.length > 0 && (
-              <div className="rounded-lg bg-yellow-50 dark:bg-yellow-900/20 p-4 border border-yellow-200 dark:border-yellow-800 animate-in fade-in-0 slide-in-from-left-2 duration-500 delay-200 shadow-sm">
-                <p className="font-medium text-yellow-900 dark:text-yellow-100 flex items-center gap-2">
-                  <span className="text-lg animate-in zoom-in-0 duration-300">⚠</span>
+              <div className="rounded-md bg-muted/50 p-4 border">
+                <p className="font-medium flex items-center gap-2 mb-3">
+                  <span className="text-amber-600 dark:text-amber-400">⚠</span>
                   {ineligible.length} invité{ineligible.length > 1 ? 's' : ''} ignoré
                   {ineligible.length > 1 ? 's' : ''}
                 </p>
-                <div className="mt-3 space-y-2 max-h-48 overflow-y-auto">
-                  {ineligible.map((guest, index) => (
-                    <div
-                      key={guest.id}
-                      className="text-sm text-yellow-700 dark:text-yellow-300 bg-white dark:bg-gray-800 rounded p-2.5 animate-in fade-in-0 slide-in-from-right-2 duration-300"
-                      style={{ animationDelay: `${250 + index * 50}ms` }}
-                    >
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {ineligible.map((guest) => (
+                    <div key={guest.id} className="text-sm bg-background rounded p-2 border">
                       <div className="flex items-center gap-2 mb-1">
                         <strong>{guest.name}</strong>
                         <RsvpBadge status={guest.rsvp_status} />
                       </div>
-                      <span className="text-xs">
+                      <span className="text-xs text-muted-foreground">
                         {ineligibleReasons[guest.id] || 'Non éligible'}
                       </span>
                     </div>
@@ -126,23 +133,25 @@ export function BulkActionDialog({
 
             {/* No eligible guests warning */}
             {eligible.length === 0 && (
-              <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800 animate-in fade-in-0 slide-in-from-left-2 duration-500 delay-75 shadow-sm">
-                <p className="font-medium text-red-900 dark:text-red-100">Aucun invité éligible</p>
-                <p className="text-sm text-red-700 dark:text-red-300 mt-2 animate-in fade-in-0 duration-500 delay-150">
+              <div className="rounded-md bg-muted/50 p-4 border border-destructive/20">
+                <p className="font-medium text-destructive">Aucun invité éligible</p>
+                <p className="text-sm text-muted-foreground mt-2">
                   Aucun des invités sélectionnés ne peut recevoir cette action.
                 </p>
               </div>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300 delay-300">
-          <AlertDialogCancel className="transition-all duration-200 hover:scale-105">
-            Annuler
-          </AlertDialogCancel>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Annuler</AlertDialogCancel>
           {eligible.length > 0 && (
             <AlertDialogAction
               onClick={onConfirm}
-              className="transition-all duration-200 hover:scale-105"
+              className={
+                isDestructive
+                  ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                  : ''
+              }
             >
               Confirmer ({eligible.length} invité{eligible.length > 1 ? 's' : ''})
             </AlertDialogAction>
