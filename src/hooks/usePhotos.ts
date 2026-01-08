@@ -193,20 +193,43 @@ export function useDeletePhotos(eventId: string) {
 export function useDownloadPhoto(eventId: string) {
   return useMutation({
     mutationFn: async ({ photoId, filename }: { photoId: number; filename: string }) => {
-      const response = await api.get(
-        `/events/${eventId}/photos/${photoId}/download`,
-        { responseType: 'blob' }
-      );
+      try {
+        const response = await api.get(
+          `/events/${eventId}/photos/${photoId}/download`,
+          { responseType: 'blob' }
+        );
 
-      // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+        // Check if response is actually a blob
+        if (!(response.data instanceof Blob)) {
+          throw new Error('Réponse invalide du serveur');
+        }
+
+        // Create download link
+        const url = window.URL.createObjectURL(response.data);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', filename || `photo-${photoId}.jpg`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        
+        // Clean up the URL after a short delay to ensure download starts
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+        }, 100);
+      } catch (error: any) {
+        // If error response is a blob (JSON error), try to parse it
+        if (error.response?.data instanceof Blob) {
+          const text = await error.response.data.text();
+          try {
+            const jsonError = JSON.parse(text);
+            throw new Error(jsonError.message || 'Erreur lors du téléchargement');
+          } catch {
+            throw new Error('Erreur lors du téléchargement de la photo');
+          }
+        }
+        throw error;
+      }
     },
   });
 }

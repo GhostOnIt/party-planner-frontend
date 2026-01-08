@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { Plus, Trash2, Image, CheckSquare, XSquare } from 'lucide-react';
+import { Plus, Trash2, Image, CheckSquare, XSquare, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Pagination,
@@ -35,6 +35,7 @@ import {
   useDeletePhoto,
   useDeletePhotos,
   useDownloadPhoto,
+  useDownloadMultiplePhotos,
   useSetFeaturedPhoto,
 } from '@/hooks/usePhotos';
 import type { Photo, PhotoFilters as PhotoFiltersType } from '@/types';
@@ -66,6 +67,8 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
   const { mutate: deletePhoto, isPending: isDeleting } = useDeletePhoto(eventId!);
   const { mutate: deletePhotos, isPending: isDeletingBatch } = useDeletePhotos(eventId!);
   const { mutate: downloadPhoto } = useDownloadPhoto(eventId!);
+  const { mutate: downloadMultiplePhotos, isPending: isDownloadingMultiple } =
+    useDownloadMultiplePhotos(eventId!);
   const { mutate: setFeaturedPhoto } = useSetFeaturedPhoto(eventId!);
 
   const photos = useMemo(() => photosData?.data || [], [photosData?.data]);
@@ -168,6 +171,36 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
             description: 'Le telechargement a demarre.',
           });
         },
+        onError: (error) => {
+          toast({
+            title: 'Erreur',
+            description: error instanceof Error ? error.message : 'Erreur lors du telechargement.',
+            variant: 'destructive',
+          });
+        },
+      }
+    );
+  };
+
+  const handleDownloadSelected = () => {
+    if (selectedIds.length === 0) return;
+
+    downloadMultiplePhotos(
+      { photoIds: selectedIds },
+      {
+        onSuccess: () => {
+          toast({
+            title: 'Telechargement',
+            description: `Le telechargement de ${selectedIds.length} photo(s) a demarre.`,
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: 'Erreur',
+            description: error instanceof Error ? error.message : 'Erreur lors du telechargement.',
+            variant: 'destructive',
+          });
+        },
       }
     );
   };
@@ -223,6 +256,15 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
               <Button variant="outline" size="sm" onClick={selectAll}>
                 <CheckSquare className="mr-2 h-4 w-4" />
                 Tout
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadSelected}
+                disabled={isDownloadingMultiple}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {isDownloadingMultiple ? 'Telechargement...' : 'Telecharger'}
               </Button>
               <Button
                 variant="destructive"

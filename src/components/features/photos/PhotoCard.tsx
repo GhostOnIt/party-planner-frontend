@@ -35,6 +35,7 @@ export function PhotoCard({
 }: PhotoCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleClick = (e: React.MouseEvent) => {
     // Don't handle click if clicking on interactive elements (buttons, menus, etc.)
@@ -109,7 +110,7 @@ export function PhotoCard({
       )}
 
       {/* Hover Overlay */}
-      {(isHovered || isSelected) && !selectionMode && (
+      {(isHovered || isSelected || isDropdownOpen) && !selectionMode && (
         <div className="absolute inset-0 bg-black/40 transition-opacity">
           {/* Quick Actions */}
           <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
@@ -127,7 +128,7 @@ export function PhotoCard({
             </Button>
 
             <div onClick={(e) => e.stopPropagation()}>
-              <DropdownMenu>
+              <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="secondary" size="icon" className="h-8 w-8">
                     <MoreHorizontal className="h-4 w-4" />
