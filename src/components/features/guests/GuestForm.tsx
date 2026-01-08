@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { getValidationErrors } from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,6 +36,7 @@ interface GuestFormProps {
   guest?: Guest;
   onSubmit: (data: CreateGuestFormData) => void;
   isSubmitting?: boolean;
+  submitError?: unknown;
 }
 
 export function GuestForm({
@@ -43,6 +45,7 @@ export function GuestForm({
   guest,
   onSubmit,
   isSubmitting = false,
+  submitError,
 }: GuestFormProps) {
   const {
     register,
@@ -50,6 +53,7 @@ export function GuestForm({
     watch,
     setValue,
     reset,
+    setError,
     formState: { errors },
   } = useForm<GuestFormValues>({
     resolver: zodResolver(guestFormSchema),
@@ -57,12 +61,31 @@ export function GuestForm({
       name: guest?.name || '',
       email: guest?.email || '',
       phone: guest?.phone || '',
-      plus_one: guest?.plus_one || false,
+      plus_one: guest?.plus_one ?? true, // Par défaut coché lors de la création
       plus_one_name: guest?.plus_one_name || '',
       dietary_restrictions: guest?.dietary_restrictions || '',
       notes: guest?.notes || '',
     },
   });
+
+  // Handle backend validation errors
+  useEffect(() => {
+    if (submitError && open) {
+      const validationErrors = getValidationErrors(submitError);
+      if (validationErrors) {
+        Object.keys(validationErrors).forEach((field) => {
+          const fieldName = field as keyof GuestFormValues;
+          const errorMessage = validationErrors[field]?.[0];
+          if (errorMessage) {
+            setError(fieldName, {
+              type: 'server',
+              message: errorMessage,
+            });
+          }
+        });
+      }
+    }
+  }, [submitError, open, setError]);
 
   const plusOne = watch('plus_one');
 
@@ -73,7 +96,7 @@ export function GuestForm({
         name: guest?.name || '',
         email: guest?.email || '',
         phone: guest?.phone || '',
-        plus_one: guest?.plus_one || false,
+        plus_one: guest?.plus_one ?? true, // Par défaut coché lors de la création
         plus_one_name: guest?.plus_one_name || '',
         dietary_restrictions: guest?.dietary_restrictions || '',
         notes: guest?.notes || '',
@@ -87,7 +110,7 @@ export function GuestForm({
       email: data.email || undefined,
       phone: data.phone || undefined,
       plus_one: data.plus_one,
-      plus_one_name: data.plus_one ? data.plus_one_name : undefined,
+      plus_one_name: data.plus_one && data.plus_one_name ? data.plus_one_name : undefined,
       dietary_restrictions: data.dietary_restrictions || undefined,
       notes: data.notes || undefined,
     });
@@ -102,10 +125,10 @@ export function GuestForm({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{guest ? 'Modifier l\'invite' : 'Ajouter un invite'}</DialogTitle>
+          <DialogTitle>{guest ? "Modifier l'invite" : 'Ajouter un invite'}</DialogTitle>
           <DialogDescription>
             {guest
-              ? 'Modifiez les informations de l\'invite'
+              ? "Modifiez les informations de l'invite"
               : 'Remplissez les informations pour ajouter un nouvel invite'}
           </DialogDescription>
         </DialogHeader>
@@ -119,9 +142,7 @@ export function GuestForm({
               {...register('name')}
               aria-invalid={!!errors.name}
             />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
-            )}
+            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -134,9 +155,7 @@ export function GuestForm({
                 {...register('email')}
                 aria-invalid={!!errors.email}
               />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -145,7 +164,9 @@ export function GuestForm({
                 id="phone"
                 placeholder="+237 6XX XXX XXX"
                 {...register('phone')}
+                aria-invalid={!!errors.phone}
               />
+              {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
             </div>
           </div>
 
@@ -160,7 +181,6 @@ export function GuestForm({
                 Accompagnant (+1)
               </Label>
             </div>
-
             {plusOne && (
               <div className="space-y-2 pl-6">
                 <Label htmlFor="plus_one_name">Nom de l'accompagnant</Label>
@@ -169,6 +189,12 @@ export function GuestForm({
                   placeholder="Nom de l'accompagnant"
                   {...register('plus_one_name')}
                 />
+                {!guest && (
+                  <p className="text-xs text-muted-foreground">
+                    Vous pouvez laisser ce champ vide. L'invité pourra le renseigner lors de sa
+                    réponse à l'invitation.
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -202,8 +228,8 @@ export function GuestForm({
                   ? 'Modification...'
                   : 'Ajout...'
                 : guest
-                ? 'Modifier'
-                : 'Ajouter'}
+                  ? 'Modifier'
+                  : 'Ajouter'}
             </Button>
           </DialogFooter>
         </form>

@@ -6,6 +6,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -28,12 +29,18 @@ import {
 } from '@/components/ui/alert-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/hooks/use-toast';
+import { getApiErrorMessage } from '@/api/client';
 import {
   GuestStats,
   GuestFilters,
   GuestList,
   GuestForm,
   GuestImportModal,
+  BulkActionsBar,
+  BulkActionDialog,
+  InvitationDetailsSheet,
+  ExportGuestsModal,
+  type ExportFilters,
 } from '@/components/features/guests';
 import { SubscriptionRequired, LimitStatus } from '@/components/features/subscription';
 import {
@@ -43,13 +50,24 @@ import {
   useUpdateGuest,
   useDeleteGuest,
   useSendInvitation,
+  useSendReminder,
   useCheckInGuest,
   useUndoCheckIn,
   useExportGuests,
 } from '@/hooks/useGuests';
 import { useEventSubscription, useCheckLimits } from '@/hooks/useSubscription';
-import type { Guest, GuestFilters as GuestFiltersType, CreateGuestFormData } from '@/types';
+import type {
+  Guest,
+  GuestFilters as GuestFiltersType,
+  CreateGuestFormData,
+  RsvpStatus,
+} from '@/types';
 import { cn } from '@/lib/utils';
+import {
+  getEligibilityForAction,
+  getStatusBreakdown,
+  type BulkActionType,
+} from '@/utils/bulkActionUtils';
 
 interface GuestsPageProps {
   eventId?: string;
@@ -66,6 +84,17 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
   const [showImport, setShowImport] = useState(false);
   const [editingGuest, setEditingGuest] = useState<Guest | undefined>();
   const [guestToDelete, setGuestToDelete] = useState<Guest | null>(null);
+  const [guestForInvitationDetails, setGuestForInvitationDetails] = useState<Guest | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [bulkActionDialog, setBulkActionDialog] = useState<{
+    open: boolean;
+    action: BulkActionType;
+    eligible: Guest[];
+    ineligible: Guest[];
+    reasons: Record<number, string>;
+    newRsvpStatus?: RsvpStatus;
+    currentStatusBreakdown?: Record<string, number>;
+  } | null>(null);
 
   const { data: guestsData, isLoading: isLoadingGuests } = useGuests(eventId!, filters);
   const { data: separateStats, isLoading: isLoadingStats } = useGuestStats(eventId!);
@@ -75,6 +104,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
   const { mutate: updateGuest, isPending: isUpdating } = useUpdateGuest(eventId!);
   const { mutate: deleteGuest, isPending: isDeleting } = useDeleteGuest(eventId!);
   const { mutate: sendInvitation } = useSendInvitation(eventId!);
+  const { mutate: sendReminder } = useSendReminder(eventId!);
   const { mutate: checkInGuest } = useCheckInGuest(eventId!);
   const { mutate: undoCheckIn } = useUndoCheckIn(eventId!);
   const { mutate: exportGuests, isPending: isExporting } = useExportGuests(eventId!);
@@ -107,7 +137,10 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
     setShowForm(true);
   };
 
+  const [submitError, setSubmitError] = useState<unknown>(null);
+
   const handleFormSubmit = (data: CreateGuestFormData) => {
+    setSubmitError(null);
     if (editingGuest) {
       updateGuest(
         { guestId: editingGuest.id, data },
@@ -115,9 +148,20 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
           onSuccess: () => {
             setShowForm(false);
             setEditingGuest(undefined);
+            setSubmitError(null);
             toast({
               title: 'Invite modifie',
               description: "L'invite a ete modifie avec succes.",
+            });
+          },
+          onError: (_error) => {
+            setSubmitError(_error);
+            const errorMessage = getApiErrorMessage(_error);
+            toast({
+              title: 'Erreur',
+              description: errorMessage,
+              variant: 'destructive',
+
             });
           },
         }
@@ -126,9 +170,20 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
       createGuest(data, {
         onSuccess: () => {
           setShowForm(false);
+          setSubmitError(null);
           toast({
             title: 'Invite ajoute',
             description: "L'invite a ete ajoute avec succes.",
+          });
+        },
+        onError: (_error) => {
+          setSubmitError(_error);
+          const errorMessage = getApiErrorMessage(_error);
+          toast({
+            title: 'Erreur',
+            description: errorMessage,
+            variant: 'destructive',
+
           });
         },
       });
@@ -151,10 +206,20 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
 
   const handleSendInvitation = (guest: Guest) => {
     sendInvitation(guest.id, {
-      onSuccess: () => {
+      onSuccess: (data) => {
+        const isReminder = data?.type === 'reminder';
         toast({
-          title: 'Invitation envoyee',
-          description: `L'invitation a ete envoyee a ${guest.name}.`,
+          title: isReminder ? 'Rappel envoyé' : 'Invitation envoyée',
+          description: isReminder
+            ? `Le rappel a été envoyé à ${guest.name}.`
+            : `L'invitation a été envoyée à ${guest.name}.`,
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: 'Erreur',
+          description: `Erreur lors de l'envoi: ${getApiErrorMessage(error)}`,
+          variant: 'destructive',
         });
       },
     });
@@ -164,8 +229,15 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
     checkInGuest(guest.id, {
       onSuccess: () => {
         toast({
-          title: 'Check-in effectue',
-          description: `${guest.name} a ete enregistre.`,
+          title: 'Check-in effectué',
+          description: `${guest.name} a été enregistré.`,
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: 'Erreur',
+          description: `Erreur lors du check-in: ${getApiErrorMessage(error)}`,
+          variant: 'destructive',
         });
       },
     });
@@ -175,22 +247,40 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
     undoCheckIn(guest.id, {
       onSuccess: () => {
         toast({
-          title: 'Check-in annule',
-          description: `Le check-in de ${guest.name} a ete annule.`,
+          title: 'Check-in annulé',
+          description: `Le check-in de ${guest.name} a été annulé.`,
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: 'Erreur',
+          description: `Erreur lors de l'annulation du check-in: ${getApiErrorMessage(error)}`,
+          variant: 'destructive',
         });
       },
     });
   };
 
-  const handleExport = (format: 'csv' | 'pdf' | 'xlsx') => {
-    exportGuests(format, {
-      onSuccess: () => {
-        toast({
-          title: 'Export reussi',
-          description: `La liste des invites a ete exportee en ${format.toUpperCase()}.`,
-        });
-      },
-    });
+  const handleExport = (format: 'csv' | 'pdf' | 'xlsx', filters: ExportFilters = {}) => {
+    exportGuests(
+      { format, filters },
+      {
+        onSuccess: () => {
+          setShowExportModal(false);
+          toast({
+            title: 'Export réussi',
+            description: `La liste des invités a été exportée en ${format.toUpperCase()}.`,
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: 'Erreur',
+            description: `Erreur lors de l'export: ${getApiErrorMessage(error)}`,
+            variant: 'destructive',
+          });
+        },
+      }
+    );
   };
 
   const handleImportSuccess = () => {
@@ -198,6 +288,408 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
       title: 'Import reussi',
       description: 'Les invites ont ete importes avec succes.',
     });
+  };
+
+  // Bulk action handlers
+  const selectedGuests = guests.filter((g) => selectedIds.includes(g.id));
+
+  const handleBulkSendInvitations = () => {
+    const { eligible, ineligible, reasons } = getEligibilityForAction(
+      selectedGuests,
+      'send_invitations'
+    );
+
+    if (eligible.length === 0) {
+      toast({
+        title: 'Aucun invité éligible',
+        description: 'Aucun invité sélectionné ne peut recevoir une invitation.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (ineligible.length > 0) {
+      setBulkActionDialog({
+        open: true,
+        action: 'send_invitations',
+        eligible,
+        ineligible,
+        reasons,
+      });
+    } else {
+      // All eligible, proceed directly
+      eligible.forEach((guest) => {
+        sendInvitation(guest.id, {
+          onSuccess: () => {
+            if (eligible.indexOf(guest) === eligible.length - 1) {
+              setSelectedIds([]);
+              toast({
+                title: 'Invitations envoyées',
+                description: `${eligible.length} invitation(s) envoyée(s) avec succès.`,
+              });
+            }
+          },
+        });
+      });
+    }
+  };
+
+  const handleBulkSendReminders = () => {
+    const { eligible, ineligible, reasons } = getEligibilityForAction(
+      selectedGuests,
+      'send_reminders'
+    );
+
+    if (eligible.length === 0) {
+      toast({
+        title: 'Aucun invité éligible',
+        description: 'Aucun invité sélectionné ne peut recevoir un rappel.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (ineligible.length > 0) {
+      setBulkActionDialog({
+        open: true,
+        action: 'send_reminders',
+        eligible,
+        ineligible,
+        reasons,
+      });
+    } else {
+      // All eligible, proceed directly
+      eligible.forEach((guest) => {
+        sendReminder(guest.id, {
+          onSuccess: () => {
+            if (eligible.indexOf(guest) === eligible.length - 1) {
+              setSelectedIds([]);
+              toast({
+                title: 'Rappels envoyés',
+                description: `${eligible.length} rappel(s) envoyé(s) avec succès.`,
+              });
+            }
+          },
+          onError: (_error) => {
+            toast({
+              title: 'Erreur',
+              description: `Erreur lors de l'envoi du rappel à ${guest.name}.`,
+              variant: 'destructive',
+            });
+          },
+        });
+      });
+    }
+  };
+
+  const handleBulkUpdateRsvp = (newStatus: RsvpStatus) => {
+    const { eligible, ineligible, reasons } = getEligibilityForAction(
+      selectedGuests,
+      'update_rsvp',
+      newStatus
+    );
+
+    // Filter out guests that already have the target status
+    const guestsToUpdate = eligible.filter((g) => g.rsvp_status !== newStatus);
+
+    if (guestsToUpdate.length === 0) {
+      toast({
+        title: 'Aucun changement',
+        description: 'Tous les invités sélectionnés ont déjà ce statut.',
+        variant: 'default',
+      });
+      return;
+    }
+
+    const currentStatusBreakdown = getStatusBreakdown(selectedGuests);
+
+    setBulkActionDialog({
+      open: true,
+      action: 'update_rsvp',
+      eligible: guestsToUpdate,
+      ineligible,
+      reasons,
+      newRsvpStatus: newStatus,
+      currentStatusBreakdown,
+    });
+  };
+
+  const handleBulkCheckIn = () => {
+    const { eligible, ineligible, reasons } = getEligibilityForAction(selectedGuests, 'check_in');
+
+    if (eligible.length === 0) {
+      toast({
+        title: 'Aucun invité éligible',
+        description: 'Aucun invité sélectionné ne peut être enregistré.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (ineligible.length > 0) {
+      setBulkActionDialog({
+        open: true,
+        action: 'check_in',
+        eligible,
+        ineligible,
+        reasons,
+      });
+    } else {
+      // All eligible, proceed directly
+      eligible.forEach((guest) => {
+        checkInGuest(guest.id, {
+          onSuccess: () => {
+            if (eligible.indexOf(guest) === eligible.length - 1) {
+              setSelectedIds([]);
+              toast({
+                title: 'Check-in effectué',
+                description: `${eligible.length} invité(s) enregistré(s) avec succès.`,
+              });
+            }
+          },
+          onError: (error) => {
+            toast({
+              title: 'Erreur',
+              description: `Erreur lors du check-in de ${guest.name}: ${getApiErrorMessage(error)}`,
+              variant: 'destructive',
+            });
+          },
+        });
+      });
+    }
+  };
+
+  const handleBulkUndoCheckIn = () => {
+    const { eligible, ineligible, reasons } = getEligibilityForAction(
+      selectedGuests,
+      'undo_check_in'
+    );
+
+    if (eligible.length === 0) {
+      toast({
+        title: 'Aucun invité éligible',
+        description: "Aucun invité sélectionné n'a été enregistré.",
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (ineligible.length > 0) {
+      setBulkActionDialog({
+        open: true,
+        action: 'undo_check_in',
+        eligible,
+        ineligible,
+        reasons,
+      });
+    } else {
+      // All eligible, proceed directly
+      eligible.forEach((guest) => {
+        undoCheckIn(guest.id, {
+          onSuccess: () => {
+            if (eligible.indexOf(guest) === eligible.length - 1) {
+              setSelectedIds([]);
+              toast({
+                title: 'Check-in annulé',
+                description: `Le check-in de ${eligible.length} invité(s) a été annulé.`,
+              });
+            }
+          },
+          onError: (error) => {
+            toast({
+              title: 'Erreur',
+              description: `Erreur lors de l'annulation du check-in de ${guest.name}: ${getApiErrorMessage(error)}`,
+              variant: 'destructive',
+            });
+          },
+        });
+      });
+    }
+  };
+
+  const handleBulkDelete = () => {
+    // For delete, all are eligible but show confirmation
+    setBulkActionDialog({
+      open: true,
+      action: 'delete',
+      eligible: selectedGuests,
+      ineligible: [],
+      reasons: {},
+    });
+  };
+
+  const handleExportSelected = () => {
+    // Open export modal with filters
+    setShowExportModal(true);
+  };
+
+  const handleBulkActionConfirm = () => {
+    if (!bulkActionDialog) return;
+
+    const { action, eligible, newRsvpStatus } = bulkActionDialog;
+
+    switch (action) {
+      case 'send_invitations': {
+        let successCount = 0;
+        let invitationCount = 0;
+        let reminderCount = 0;
+
+        eligible.forEach((guest) => {
+          sendInvitation(guest.id, {
+            onSuccess: (data) => {
+              successCount++;
+              if (data?.type === 'reminder') {
+                reminderCount++;
+              } else {
+                invitationCount++;
+              }
+
+              if (successCount === eligible.length) {
+                setSelectedIds([]);
+                setBulkActionDialog(null);
+                let message = '';
+                if (invitationCount > 0 && reminderCount > 0) {
+                  message = `${invitationCount} invitation(s) et ${reminderCount} rappel(s) envoyé(s) avec succès.`;
+                } else if (invitationCount > 0) {
+                  message = `${invitationCount} invitation(s) envoyée(s) avec succès.`;
+                } else if (reminderCount > 0) {
+                  message = `${reminderCount} rappel(s) envoyé(s) avec succès.`;
+                }
+                toast({
+                  title: 'Envoi réussi',
+                  description: message,
+                });
+              }
+            },
+            onError: (error) => {
+              toast({
+                title: 'Erreur',
+                description: `Erreur lors de l'envoi à ${guest.name}: ${getApiErrorMessage(error)}`,
+                variant: 'destructive',
+              });
+            },
+          });
+        });
+        break;
+      }
+
+      case 'send_reminders':
+        eligible.forEach((guest) => {
+          sendReminder(guest.id, {
+            onSuccess: () => {
+              if (eligible.indexOf(guest) === eligible.length - 1) {
+                setSelectedIds([]);
+                setBulkActionDialog(null);
+                toast({
+                  title: 'Rappels envoyés',
+                  description: `${eligible.length} rappel(s) envoyé(s) avec succès.`,
+                });
+              }
+            },
+            onError: (_error) => {
+              toast({
+                title: 'Erreur',
+                description: `Erreur lors de l'envoi du rappel à ${guest.name}.`,
+                variant: 'destructive',
+              });
+            },
+          });
+        });
+        break;
+
+      case 'update_rsvp':
+        if (newRsvpStatus) {
+          eligible.forEach((guest) => {
+            updateGuest(
+              {
+                guestId: guest.id,
+                data: { rsvp_status: newRsvpStatus } as Partial<CreateGuestFormData> & {
+                  rsvp_status: RsvpStatus;
+                },
+              },
+              {
+                onSuccess: () => {
+                  if (eligible.indexOf(guest) === eligible.length - 1) {
+                    setSelectedIds([]);
+                    setBulkActionDialog(null);
+                    toast({
+                      title: 'Statut mis à jour',
+                      description: `${eligible.length} invité(s) mis à jour avec succès.`,
+                    });
+                  }
+                },
+              }
+            );
+          });
+        }
+        break;
+
+      case 'check_in':
+        eligible.forEach((guest) => {
+          checkInGuest(guest.id, {
+            onSuccess: () => {
+              if (eligible.indexOf(guest) === eligible.length - 1) {
+                setSelectedIds([]);
+                setBulkActionDialog(null);
+                toast({
+                  title: 'Check-in effectué',
+                  description: `${eligible.length} invité(s) enregistré(s) avec succès.`,
+                });
+              }
+            },
+            onError: (error) => {
+              toast({
+                title: 'Erreur',
+                description: `Erreur lors du check-in de ${guest.name}: ${getApiErrorMessage(error)}`,
+                variant: 'destructive',
+              });
+            },
+          });
+        });
+        break;
+
+      case 'undo_check_in':
+        eligible.forEach((guest) => {
+          undoCheckIn(guest.id, {
+            onSuccess: () => {
+              if (eligible.indexOf(guest) === eligible.length - 1) {
+                setSelectedIds([]);
+                setBulkActionDialog(null);
+                toast({
+                  title: 'Check-in annulé',
+                  description: `Le check-in de ${eligible.length} invité(s) a été annulé.`,
+                });
+              }
+            },
+            onError: (error) => {
+              toast({
+                title: 'Erreur',
+                description: `Erreur lors de l'annulation du check-in de ${guest.name}: ${getApiErrorMessage(error)}`,
+                variant: 'destructive',
+              });
+            },
+          });
+        });
+        break;
+
+      case 'delete':
+        // Delete all eligible guests
+        eligible.forEach((guest) => {
+          deleteGuest(guest.id, {
+            onSuccess: () => {
+              if (eligible.indexOf(guest) === eligible.length - 1) {
+                setSelectedIds([]);
+                setBulkActionDialog(null);
+                toast({
+                  title: 'Invités supprimés',
+                  description: `${eligible.length} invité(s) supprimé(s) avec succès.`,
+                });
+              }
+            },
+          });
+        });
+        break;
+    }
   };
 
   if (!eventId) {
@@ -239,7 +731,11 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
               <DropdownMenuItem onClick={() => handleExport('csv')}>Export CSV</DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleExport('xlsx')}>Export Excel</DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleExport('pdf')}>Export PDF</DropdownMenuItem>
-            </DropdownMenuContent>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setShowExportModal(true)}>
+                Exporter avec filtres...
+              </DropdownMenuItem>
+             </DropdownMenuContent>
           </DropdownMenu>
 
           <Button
@@ -272,6 +768,22 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
           </Button>
         </div>
       </div>
+
+      {/* Bulk Actions Bar */}
+      {selectedIds.length > 0 && (
+        <BulkActionsBar
+          selectedCount={selectedIds.length}
+          selectedGuests={selectedGuests}
+          onDeselectAll={() => setSelectedIds([])}
+          onSendInvitations={handleBulkSendInvitations}
+          onSendReminders={handleBulkSendReminders}
+          onUpdateRsvp={handleBulkUpdateRsvp}
+          onCheckIn={handleBulkCheckIn}
+          onUndoCheckIn={handleBulkUndoCheckIn}
+          onExport={handleExportSelected}
+          onDelete={handleBulkDelete}
+        />
+      )}
 
       {/* Guests List */}
       {!isLoadingGuests && guests.length === 0 ? (
@@ -306,6 +818,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
             onSendInvitation={handleSendInvitation}
             onCheckIn={handleCheckIn}
             onUndoCheckIn={handleUndoCheckIn}
+            onViewInvitationDetails={(guest) => setGuestForInvitationDetails(guest)}
           />
 
           {/* Pagination */}
@@ -359,10 +872,16 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
       {/* Guest Form Modal */}
       <GuestForm
         open={showForm}
-        onOpenChange={setShowForm}
+        onOpenChange={(open) => {
+          setShowForm(open);
+          if (open) {
+            setSubmitError(null);
+          }
+        }}
         guest={editingGuest}
         onSubmit={handleFormSubmit}
         isSubmitting={isCreating || isUpdating}
+        submitError={submitError}
       />
 
       {/* Guest Import Modal */}
@@ -395,6 +914,41 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bulk Action Dialog */}
+      {bulkActionDialog && (
+        <BulkActionDialog
+          open={bulkActionDialog.open}
+          onClose={() => setBulkActionDialog(null)}
+          onConfirm={handleBulkActionConfirm}
+          action={bulkActionDialog.action}
+          eligible={bulkActionDialog.eligible}
+          ineligible={bulkActionDialog.ineligible}
+          ineligibleReasons={bulkActionDialog.reasons}
+          newRsvpStatus={bulkActionDialog.newRsvpStatus}
+          currentStatusBreakdown={bulkActionDialog.currentStatusBreakdown}
+        />
+      )}
+
+      {/* Invitation Details Sheet */}
+      <InvitationDetailsSheet
+        open={!!guestForInvitationDetails}
+        onOpenChange={(open) => {
+          if (!open) {
+            setGuestForInvitationDetails(null);
+          }
+        }}
+        eventId={eventId!}
+        guestId={guestForInvitationDetails?.id || null}
+      />
+
+      {/* Export Guests Modal */}
+      <ExportGuestsModal
+        open={showExportModal}
+        onOpenChange={setShowExportModal}
+        onExport={handleExport}
+        isExporting={isExporting}
+      />
     </div>
   );
 }

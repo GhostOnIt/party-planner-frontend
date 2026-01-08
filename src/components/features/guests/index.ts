@@ -4,3 +4,7 @@ export { GuestForm } from './GuestForm';
 export { GuestFilters, rsvpStatuses } from './GuestFilters';
 export { GuestList } from './GuestList';
 export { GuestImportModal } from './GuestImportModal';
+export { BulkActionsBar } from './BulkActionsBar';
+export { BulkActionDialog } from './BulkActionDialog';
+export { InvitationDetailsSheet } from './InvitationDetailsSheet';
+export { ExportGuestsModal, type ExportFilters } from './ExportGuestsModal';
