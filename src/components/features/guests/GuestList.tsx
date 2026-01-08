@@ -127,9 +127,7 @@ export function GuestList({
                 <div>
                   <p className="font-medium">{guest.name}</p>
                   {guest.dietary_restrictions && (
-                    <p className="text-xs text-muted-foreground">
-                      {guest.dietary_restrictions}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{guest.dietary_restrictions}</p>
                   )}
                 </div>
               </TableCell>
@@ -157,9 +155,7 @@ export function GuestList({
                   <div>
                     <Badge variant="outline">+1</Badge>
                     {guest.plus_one_name && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {guest.plus_one_name}
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">{guest.plus_one_name}</p>
                     )}
                   </div>
                 ) : (
@@ -193,7 +189,7 @@ export function GuestList({
                     {guest.invitation_sent_at && (
                       <DropdownMenuItem onClick={() => onViewInvitationDetails(guest)}>
                         <Eye className="mr-2 h-4 w-4" />
-                        Voir les détails de l'invitation
+                        Voir les détails
                       </DropdownMenuItem>
                     )}
                     {guest.email && guest.rsvp_status !== 'accepted' && (
