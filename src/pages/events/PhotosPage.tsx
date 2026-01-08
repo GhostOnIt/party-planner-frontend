@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Plus, Trash2, Image, CheckSquare, XSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -58,6 +58,9 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
   const [photoToDelete, setPhotoToDelete] = useState<Photo | null>(null);
   const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState(false);
 
+  // Track the photo ID when setting as featured to maintain lightbox position
+  const featuredPhotoIdRef = useRef<number | null>(null);
+
   const { data: photosData, isLoading } = usePhotos(eventId!, filters);
   const { mutate: uploadPhotos, isPending: isUploading } = useUploadPhotos(eventId!);
   const { mutate: deletePhoto, isPending: isDeleting } = useDeletePhoto(eventId!);
@@ -65,8 +68,27 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
   const { mutate: downloadPhoto } = useDownloadPhoto(eventId!);
   const { mutate: setFeaturedPhoto } = useSetFeaturedPhoto(eventId!);
 
-  const photos = photosData?.data || [];
+  const photos = useMemo(() => photosData?.data || [], [photosData?.data]);
   const meta = photosData?.meta;
+
+  // Maintain lightbox position when photos list changes (e.g., after setting featured)
+  useEffect(() => {
+    if (lightboxIndex !== null && photos.length > 0) {
+      // If we're tracking a featured photo ID, find its new index
+      if (featuredPhotoIdRef.current !== null) {
+        const newIndex = photos.findIndex((p) => p.id === featuredPhotoIdRef.current);
+        if (newIndex !== -1) {
+          setLightboxIndex(newIndex);
+          featuredPhotoIdRef.current = null; // Reset after updating
+        }
+      } else {
+        // If lightbox is open but index is out of bounds, adjust it
+        if (lightboxIndex >= photos.length) {
+          setLightboxIndex(Math.max(0, photos.length - 1));
+        }
+      }
+    }
+  }, [photos, lightboxIndex]);
 
   const handlePageChange = (page: number) => {
     setFilters((prev) => ({ ...prev, page }));
@@ -151,12 +173,25 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
   };
 
   const handleSetFeatured = (photo: Photo) => {
+    // If lightbox is open, save the photo ID to track its position after reload
+    if (lightboxIndex !== null) {
+      const currentPhotoId = photos[lightboxIndex]?.id;
+      // If we're setting the current photo as featured, it will move to index 0
+      if (currentPhotoId === photo.id) {
+        featuredPhotoIdRef.current = photo.id;
+      } else {
+        // If we're setting a different photo as featured, keep tracking the current one
+        featuredPhotoIdRef.current = currentPhotoId;
+      }
+    }
+
     setFeaturedPhoto(photo.id, {
       onSuccess: () => {
         toast({
           title: 'Photo principale',
           description: 'La photo a ete definie comme photo principale.',
         });
+        // The useEffect will handle updating the lightbox index
       },
     });
   };
@@ -250,9 +285,7 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
                 <PaginationItem>
                   <PaginationPrevious
                     onClick={() => handlePageChange(meta.current_page - 1)}
-                    className={cn(
-                      meta.current_page === 1 && 'pointer-events-none opacity-50'
-                    )}
+                    className={cn(meta.current_page === 1 && 'pointer-events-none opacity-50')}
                   />
                 </PaginationItem>
 
@@ -283,8 +316,7 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
                   <PaginationNext
                     onClick={() => handlePageChange(meta.current_page + 1)}
                     className={cn(
-                      meta.current_page === meta.last_page &&
-                        'pointer-events-none opacity-50'
+                      meta.current_page === meta.last_page && 'pointer-events-none opacity-50'
                     )}
                   />
                 </PaginationItem>
@@ -321,8 +353,7 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer la photo</AlertDialogTitle>
             <AlertDialogDescription>
-              Etes-vous sur de vouloir supprimer cette photo ? Cette action est
-              irreversible.
+              Etes-vous sur de vouloir supprimer cette photo ? Cette action est irreversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -344,8 +375,8 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer les photos selectionnees</AlertDialogTitle>
             <AlertDialogDescription>
-              Etes-vous sur de vouloir supprimer {selectedIds.length} photo(s) ? Cette
-              action est irreversible.
+              Etes-vous sur de vouloir supprimer {selectedIds.length} photo(s) ? Cette action est
+              irreversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

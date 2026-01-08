@@ -36,14 +36,25 @@ export function PhotoCard({
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    // Don't handle click if clicking on interactive elements (buttons, menus, etc.)
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button') ||
+      target.closest('[role="menuitem"]') ||
+      target.closest('[role="menu"]') ||
+      target.closest('[data-radix-popper-content-wrapper]') ||
+      target.closest('[data-radix-dropdown-menu-content]')
+    ) {
+      return;
+    }
+
     if (selectionMode && onSelect) {
       onSelect(photo.id);
     } else if (onView) {
       onView(photo);
     }
   };
-  console.log(resolveUrl(photo.thumbnail_url || photo.url));
   return (
     <div
       className={cn(
@@ -115,46 +126,48 @@ export function PhotoCard({
               Voir
             </Button>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                <Button variant="secondary" size="icon" className="h-8 w-8">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDownload?.(photo);
-                  }}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Telecharger
-                </DropdownMenuItem>
-                {!photo.is_featured && onSetFeatured && (
+            <div onClick={(e) => e.stopPropagation()}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="secondary" size="icon" className="h-8 w-8">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation();
-                      onSetFeatured(photo);
+                      onDownload?.(photo);
                     }}
                   >
-                    <Star className="mr-2 h-4 w-4" />
-                    Definir comme photo principale
+                    <Download className="mr-2 h-4 w-4" />
+                    Telecharger
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete?.(photo);
-                  }}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Supprimer
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  {!photo.is_featured && onSetFeatured && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSetFeatured(photo);
+                      }}
+                    >
+                      <Star className="mr-2 h-4 w-4" />
+                      Definir comme photo principale
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete?.(photo);
+                    }}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Supprimer
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       )}
