@@ -117,7 +117,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
             setEditingGuest(undefined);
             toast({
               title: 'Invite modifie',
-              description: 'L\'invite a ete modifie avec succes.',
+              description: "L'invite a ete modifie avec succes.",
             });
           },
         }
@@ -128,7 +128,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
           setShowForm(false);
           toast({
             title: 'Invite ajoute',
-            description: 'L\'invite a ete ajoute avec succes.',
+            description: "L'invite a ete ajoute avec succes.",
           });
         },
       });
@@ -142,7 +142,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
           setGuestToDelete(null);
           toast({
             title: 'Invite supprime',
-            description: 'L\'invite a ete supprime avec succes.',
+            description: "L'invite a ete supprime avec succes.",
           });
         },
       });
@@ -217,11 +217,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
 
       {/* Guest Limit Status */}
       {hasActiveSubscription && guestLimit !== null && (
-        <LimitStatus
-          current={currentGuests}
-          limit={guestLimit}
-          label="Invites"
-        />
+        <LimitStatus current={currentGuests} limit={guestLimit} label="Invites" />
       )}
 
       {/* Stats */}
@@ -240,15 +236,9 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => handleExport('csv')}>
-                Export CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport('xlsx')}>
-                Export Excel
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport('pdf')}>
-                Export PDF
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('csv')}>Export CSV</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('xlsx')}>Export Excel</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('pdf')}>Export PDF</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -265,7 +255,13 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
           <Button
             onClick={handleAddGuest}
             disabled={!canAddGuests}
-            title={!hasActiveSubscription ? 'Abonnement requis' : !canAddGuests ? 'Limite atteinte' : undefined}
+            title={
+              !hasActiveSubscription
+                ? 'Abonnement requis'
+                : !canAddGuests
+                  ? 'Limite atteinte'
+                  : undefined
+            }
           >
             {!canAddGuests && hasActiveSubscription ? (
               <Crown className="mr-2 h-4 w-4" />
@@ -284,7 +280,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
           title="Aucun invite"
           description={
             !hasActiveSubscription
-              ? "Souscrivez a un abonnement pour commencer a ajouter des invites."
+              ? 'Souscrivez a un abonnement pour commencer a ajouter des invites.'
               : filters.search || filters.rsvp_status
                 ? 'Aucun invite ne correspond a vos criteres de recherche'
                 : "Vous n'avez pas encore ajoute d'invites. Commencez par en ajouter un !"
@@ -319,9 +315,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
                 <PaginationItem>
                   <PaginationPrevious
                     onClick={() => handlePageChange(meta.current_page - 1)}
-                    className={cn(
-                      meta.current_page === 1 && 'pointer-events-none opacity-50'
-                    )}
+                    className={cn(meta.current_page === 1 && 'pointer-events-none opacity-50')}
                   />
                 </PaginationItem>
 
@@ -352,8 +346,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
                   <PaginationNext
                     onClick={() => handlePageChange(meta.current_page + 1)}
                     className={cn(
-                      meta.current_page === meta.last_page &&
-                        'pointer-events-none opacity-50'
+                      meta.current_page === meta.last_page && 'pointer-events-none opacity-50'
                     )}
                   />
                 </PaginationItem>
@@ -386,8 +379,8 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer l'invite</AlertDialogTitle>
             <AlertDialogDescription>
-              Etes-vous sur de vouloir supprimer "{guestToDelete?.name}" ? Cette
-              action est irreversible.
+              Etes-vous sur de vouloir supprimer "{guestToDelete?.name}" ? Cette action est
+              irreversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
