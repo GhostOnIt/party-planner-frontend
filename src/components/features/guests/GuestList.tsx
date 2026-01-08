@@ -126,9 +126,6 @@ export function GuestList({
               <TableCell>
                 <div>
                   <p className="font-medium">{guest.name}</p>
-                  {guest.dietary_restrictions && (
-                    <p className="text-xs text-muted-foreground">{guest.dietary_restrictions}</p>
-                  )}
                 </div>
               </TableCell>
               <TableCell>
