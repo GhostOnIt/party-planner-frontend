@@ -93,7 +93,11 @@ export function GuestList({
                 checked={allSelected}
                 ref={(ref) => {
                   if (ref) {
-                    (ref as any).indeterminate = someSelected;
+                    (ref as HTMLButtonElement).dataset.state = someSelected
+                      ? 'indeterminate'
+                      : allSelected
+                        ? 'checked'
+                        : 'unchecked';
                   }
                 }}
                 onCheckedChange={handleSelectAll}

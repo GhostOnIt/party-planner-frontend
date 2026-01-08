@@ -577,9 +577,7 @@ export function PublicPhotoUploadPage() {
           currentIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
           onNavigate={setLightboxIndex}
-          onDelete={() => {}}
           onDownload={() => {}}
-          onSetFeatured={() => {}}
         />
       )}
     </div>
