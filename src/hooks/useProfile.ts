@@ -52,7 +52,7 @@ export function useUpdateProfile() {
 export function useChangePassword() {
   return useMutation({
     mutationFn: async (data: ChangePasswordData) => {
-      const response = await api.put('/auth/password', data);
+      const response = await api.put('/api/auth/password', data);
       return response.data;
     },
   });

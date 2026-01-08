@@ -34,7 +34,7 @@ export function ForgotPasswordPage() {
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: async (data: ForgotPasswordFormValues) => {
-      const response = await api.post('/auth/forgot-password', data);
+      const response = await api.post('/api/auth/forgot-password', data);
       return response.data;
     },
     onSuccess: () => {
