@@ -2,14 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { publicApi } from '@/api/client';
 import type { Photo } from '@/types';
 
-// Pagination meta type
-interface PaginationMeta {
-  current_page: number;
-  last_page: number;
-  per_page: number;
-  total: number;
-}
-
 // API response type for public photos
 interface PublicPhotosApiResponse {
   photos: {
@@ -44,28 +36,19 @@ export function usePublicPhotos(
         { params: filters }
       );
 
-      const responseData = response.data;
+      const responseData: PublicPhotosApiResponse = response.data;
 
-      if (responseData && 'photos' in responseData) {
-        const photosData = responseData.photos;
-        return {
-          data: photosData.data || [],
-          meta: photosData.current_page
-            ? {
-                current_page: photosData.current_page,
-                last_page: photosData.last_page || 1,
-                per_page: photosData.per_page || 20,
-                total: photosData.total || 0,
-              }
-            : undefined,
-          event: responseData.event,
-          guest: responseData.guest,
-        };
-      }
-
+      const photosData = responseData.photos;
       return {
-        data: [],
-        meta: undefined,
+        data: photosData?.data || [],
+        meta: photosData?.current_page
+          ? {
+              current_page: photosData.current_page,
+              last_page: photosData.last_page || 1,
+              per_page: photosData.per_page || 20,
+              total: photosData.total || 0,
+            }
+          : undefined,
         event: responseData.event,
         guest: responseData.guest,
       };

@@ -26,17 +26,15 @@ const roleColors: Record<CollaboratorRole, string> = {
 };
 
 const statusLabels: Record<EventStatus, string> = {
-  draft: 'Brouillon',
-  planning: 'En planification',
-  confirmed: 'Confirme',
-  completed: 'Termine',
-  cancelled: 'Annule',
+  upcoming: 'À venir',
+  ongoing: 'En cours',
+  completed: 'Terminé',
+  cancelled: 'Annulé',
 };
 
 const statusColors: Record<EventStatus, string> = {
-  draft: 'bg-gray-100 text-gray-800',
-  planning: 'bg-blue-100 text-blue-800',
-  confirmed: 'bg-green-100 text-green-800',
+  upcoming: 'bg-blue-100 text-blue-800',
+  ongoing: 'bg-green-100 text-green-800',
   completed: 'bg-purple-100 text-purple-800',
   cancelled: 'bg-red-100 text-red-800',
 };
