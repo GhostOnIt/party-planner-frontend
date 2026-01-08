@@ -161,6 +161,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
               title: 'Erreur',
               description: errorMessage,
               variant: 'destructive',
+
             });
           },
         }
@@ -182,6 +183,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
             title: 'Erreur',
             description: errorMessage,
             variant: 'destructive',
+
           });
         },
       });
@@ -733,7 +735,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
               <DropdownMenuItem onClick={() => setShowExportModal(true)}>
                 Exporter avec filtres...
               </DropdownMenuItem>
-            </DropdownMenuContent>
+             </DropdownMenuContent>
           </DropdownMenu>
 
           <Button

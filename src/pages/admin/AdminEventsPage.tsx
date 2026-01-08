@@ -74,17 +74,15 @@ const eventTypeColors: Record<EventType, string> = {
 };
 
 const eventStatusLabels: Record<EventStatus, string> = {
-  draft: 'Brouillon',
-  planning: 'En preparation',
-  confirmed: 'Confirme',
-  completed: 'Termine',
-  cancelled: 'Annule',
+  upcoming: 'À venir',
+  ongoing: 'En cours',
+  completed: 'Terminé',
+  cancelled: 'Annulé',
 };
 
 const eventStatusColors: Record<EventStatus, string> = {
-  draft: 'bg-gray-100 text-gray-800',
-  planning: 'bg-blue-100 text-blue-800',
-  confirmed: 'bg-green-100 text-green-800',
+  upcoming: 'bg-blue-100 text-blue-800',
+  ongoing: 'bg-green-100 text-green-800',
   completed: 'bg-purple-100 text-purple-800',
   cancelled: 'bg-red-100 text-red-800',
 };
