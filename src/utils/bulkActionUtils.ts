@@ -48,10 +48,10 @@ export function getEligibilityForAction(
         if (!guest.email) {
           canPerform = false;
           reason = "Pas d'adresse email";
-        } else if (guest.invitation_sent_at && guest.rsvp_status === 'accepted') {
-          // Don't send reminder if already accepted
+        } else if (guest.invitation_sent_at && ['accepted', 'declined'].includes(guest.rsvp_status)) {
+          // Don't send reminder if already responded
           canPerform = false;
-          reason = 'Déjà accepté (pas besoin de rappel)';
+          reason = 'Déjà répondu (pas besoin de rappel)';
         }
         // All guests with email are eligible (will send invitation or reminder automatically)
         break;
@@ -63,9 +63,9 @@ export function getEligibilityForAction(
         } else if (!guest.invitation_sent_at) {
           canPerform = false;
           reason = "Invitation non envoyée (envoyez d'abord une invitation)";
-        } else if (guest.rsvp_status === 'accepted') {
+        } else if (['accepted', 'declined'].includes(guest.rsvp_status)) {
           canPerform = false;
-          reason = 'Déjà accepté (pas besoin de rappel)';
+          reason = 'Déjà répondu (pas besoin de rappel)';
         }
         break;
 

@@ -205,24 +205,43 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
   };
 
   const handleSendInvitation = (guest: Guest) => {
-    sendInvitation(guest.id, {
-      onSuccess: (data) => {
-        const isReminder = data?.type === 'reminder';
-        toast({
-          title: isReminder ? 'Rappel envoyé' : 'Invitation envoyée',
-          description: isReminder
-            ? `Le rappel a été envoyé à ${guest.name}.`
-            : `L'invitation a été envoyée à ${guest.name}.`,
-        });
-      },
-      onError: (error) => {
-        toast({
-          title: 'Erreur',
-          description: `Erreur lors de l'envoi: ${getApiErrorMessage(error)}`,
-          variant: 'destructive',
-        });
-      },
-    });
+    const shouldUseReminder = !!guest.invitation_sent_at;
+    if (shouldUseReminder) {
+      sendReminder(guest.id, {
+        onSuccess: () => {
+          toast({
+            title: 'Rappel envoyé',
+            description: `Le rappel a été envoyé à ${guest.name}.`,
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: 'Erreur',
+            description: `Erreur lors de l'envoi: ${getApiErrorMessage(error)}`,
+            variant: 'destructive',
+          });
+        },
+      });
+    } else {
+      sendInvitation(guest.id, {
+        onSuccess: (data) => {
+          const isReminder = data?.type === 'reminder';
+          toast({
+            title: isReminder ? 'Rappel envoyé' : 'Invitation envoyée',
+            description: isReminder
+              ? `Le rappel a été envoyé à ${guest.name}.`
+              : `L'invitation a été envoyée à ${guest.name}.`,
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: 'Erreur',
+            description: `Erreur lors de l'envoi: ${getApiErrorMessage(error)}`,
+            variant: 'destructive',
+          });
+        },
+      });
+    }
   };
 
   const handleCheckIn = (guest: Guest) => {

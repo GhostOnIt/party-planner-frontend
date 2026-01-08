@@ -189,7 +189,7 @@ export function GuestList({
                         Voir les détails
                       </DropdownMenuItem>
                     )}
-                    {guest.email && guest.rsvp_status !== 'accepted' && (
+                    {guest.email && !['accepted', 'declined'].includes(guest.rsvp_status) && (
                       <DropdownMenuItem onClick={() => onSendInvitation(guest)}>
                         <Mail className="mr-2 h-4 w-4" />
                         {guest.invitation_sent_at ? 'Envoyer un rappel' : 'Envoyer une invitation'}
