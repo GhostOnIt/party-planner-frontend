@@ -41,6 +41,7 @@ const EditEventPage = lazy(() => import('@/pages/events').then(m => ({ default: 
 
 // Public pages
 const InvitationResponsePage = lazy(() => import('@/pages/public').then(m => ({ default: m.InvitationResponsePage })));
+const PublicPhotoUploadPage = lazy(() => import('@/pages/public').then(m => ({ default: m.PublicPhotoUploadPage })));
 
 // Admin pages
 const AdminDashboardPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminDashboardPage })));
@@ -131,6 +132,9 @@ function App() {
 
             {/* Public invitation page (no auth required) */}
             <Route path="/invitation/:token" element={<InvitationResponsePage />} />
+
+            {/* Public photo upload page (no auth required) */}
+            <Route path="/upload-photo/:eventId/:token" element={<PublicPhotoUploadPage />} />
 
             {/* Redirects */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

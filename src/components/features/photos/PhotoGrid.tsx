@@ -26,10 +26,11 @@ export function PhotoGrid({
   selectionMode = false,
 }: PhotoGridProps) {
   const handleSelect = (id: number) => {
-    if (selectedIds.includes(id)) {
-      onSelectChange(selectedIds.filter((i) => i !== id));
+    const numId = typeof id === 'string' ? parseInt(id, 10) : id;
+    if (selectedIds.includes(numId)) {
+      onSelectChange(selectedIds.filter((i) => i !== numId));
     } else {
-      onSelectChange([...selectedIds, id]);
+      onSelectChange([...selectedIds, numId]);
     }
   };
 
@@ -45,19 +46,22 @@ export function PhotoGrid({
 
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-      {photos.map((photo) => (
-        <PhotoCard
-          key={photo.id}
-          photo={photo}
-          isSelected={selectedIds.includes(photo.id)}
-          onSelect={handleSelect}
-          onView={onView}
-          onDelete={onDelete}
-          onDownload={onDownload}
-          onSetFeatured={onSetFeatured}
-          selectionMode={selectionMode}
-        />
-      ))}
+      {photos.map((photo) => {
+        const photoId = typeof photo.id === 'string' ? parseInt(photo.id, 10) : photo.id;
+        return (
+          <PhotoCard
+            key={photo.id}
+            photo={photo}
+            isSelected={selectedIds.includes(photoId)}
+            onSelect={handleSelect}
+            onView={onView}
+            onDelete={onDelete}
+            onDownload={onDownload}
+            onSetFeatured={onSetFeatured}
+            selectionMode={selectionMode}
+          />
+        );
+      })}
     </div>
   );
 }
