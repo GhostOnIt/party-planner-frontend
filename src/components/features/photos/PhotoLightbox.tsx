@@ -1,8 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Download, Star, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { getStorageUrl } from '@/api/client';
+import { cn, resolveUrl } from '@/lib/utils';
 import type { Photo } from '@/types';
 
 interface PhotoLightboxProps {
@@ -130,12 +129,9 @@ export function PhotoLightbox({
       </div>
 
       {/* Main Image */}
-      <div
-        className="flex h-full w-full items-center justify-center p-16"
-        onClick={onClose}
-      >
+      <div className="flex h-full w-full items-center justify-center p-16" onClick={onClose}>
         <img
-          src={getStorageUrl(currentPhoto.url)}
+          src={resolveUrl(currentPhoto.url)}
           alt={currentPhoto.caption || currentPhoto.original_name}
           className="max-h-full max-w-full object-contain"
           onClick={(e) => e.stopPropagation()}
@@ -187,7 +183,7 @@ export function PhotoLightbox({
               }}
             >
               <img
-                src={getStorageUrl(photo.thumbnail_url || photo.url)}
+                src={resolveUrl(photo.thumbnail_url || photo.url)}
                 alt=""
                 className="h-full w-full object-cover"
               />

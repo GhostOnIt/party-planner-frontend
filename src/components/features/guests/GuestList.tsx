@@ -6,6 +6,7 @@ import {
   UserCheck,
   UserX,
   Phone,
+  Eye,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -41,6 +42,7 @@ interface GuestListProps {
   onSendInvitation: (guest: Guest) => void;
   onCheckIn: (guest: Guest) => void;
   onUndoCheckIn: (guest: Guest) => void;
+  onViewInvitationDetails: (guest: Guest) => void;
 }
 
 export function GuestList({
@@ -53,6 +55,7 @@ export function GuestList({
   onSendInvitation,
   onCheckIn,
   onUndoCheckIn,
+  onViewInvitationDetails,
 }: GuestListProps) {
   const allSelected = guests.length > 0 && selectedIds.length === guests.length;
   const someSelected = selectedIds.length > 0 && selectedIds.length < guests.length;
@@ -93,7 +96,11 @@ export function GuestList({
                 checked={allSelected}
                 ref={(ref) => {
                   if (ref) {
-                    (ref as any).indeterminate = someSelected;
+                    (ref as HTMLButtonElement).dataset.state = someSelected
+                      ? 'indeterminate'
+                      : allSelected
+                        ? 'checked'
+                        : 'unchecked';
                   }
                 }}
                 onCheckedChange={handleSelectAll}
@@ -119,11 +126,6 @@ export function GuestList({
               <TableCell>
                 <div>
                   <p className="font-medium">{guest.name}</p>
-                  {guest.dietary_restrictions && (
-                    <p className="text-xs text-muted-foreground">
-                      {guest.dietary_restrictions}
-                    </p>
-                  )}
                 </div>
               </TableCell>
               <TableCell>
@@ -150,9 +152,7 @@ export function GuestList({
                   <div>
                     <Badge variant="outline">+1</Badge>
                     {guest.plus_one_name && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {guest.plus_one_name}
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">{guest.plus_one_name}</p>
                     )}
                   </div>
                 ) : (
@@ -183,10 +183,16 @@ export function GuestList({
                       <Pencil className="mr-2 h-4 w-4" />
                       Modifier
                     </DropdownMenuItem>
-                    {guest.email && !guest.invitation_sent_at && (
+                    {guest.invitation_sent_at && (
+                      <DropdownMenuItem onClick={() => onViewInvitationDetails(guest)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        Voir les détails
+                      </DropdownMenuItem>
+                    )}
+                    {guest.email && !['accepted', 'declined'].includes(guest.rsvp_status) && (
                       <DropdownMenuItem onClick={() => onSendInvitation(guest)}>
                         <Mail className="mr-2 h-4 w-4" />
-                        Envoyer invitation
+                        {guest.invitation_sent_at ? 'Envoyer un rappel' : 'Envoyer une invitation'}
                       </DropdownMenuItem>
                     )}
                     {guest.checked_in_at ? (
@@ -194,12 +200,12 @@ export function GuestList({
                         <UserX className="mr-2 h-4 w-4" />
                         Annuler check-in
                       </DropdownMenuItem>
-                    ) : (
+                    ) : ['pending', 'accepted', 'maybe'].includes(guest.rsvp_status) ? (
                       <DropdownMenuItem onClick={() => onCheckIn(guest)}>
                         <UserCheck className="mr-2 h-4 w-4" />
                         Check-in
                       </DropdownMenuItem>
-                    )}
+                    ) : null}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => onDelete(guest)}

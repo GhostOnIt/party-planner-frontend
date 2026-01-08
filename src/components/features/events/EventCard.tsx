@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Users, MoreHorizontal, Pencil, Copy, Trash2, ImageIcon } from 'lucide-react';
+import {
+  Calendar,
+  MapPin,
+  Users,
+  MoreHorizontal,
+  Pencil,
+  Copy,
+  Trash2,
+  ImageIcon,
+} from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -15,8 +24,8 @@ import {
 import { EventStatusBadge } from './EventStatusBadge';
 import { EventTypeBadge } from './EventTypeBadge';
 import { PlanBadge } from './PlanBadge';
-import { getStorageUrl } from '@/api/client';
 import type { Event, Subscription } from '@/types';
+import { resolveUrl } from '@/lib/utils';
 
 interface EventCardProps {
   event: Event;
@@ -33,9 +42,7 @@ export function EventCard({ event, subscription, onEdit, onDuplicate, onDelete }
   // Get plan from subscription
   const plan = subscription?.plan_type || subscription?.plan;
 
-  const imageUrl = event.featured_photo
-    ? getStorageUrl(event.featured_photo.thumbnail_url || event.featured_photo.url)
-    : null;
+  const imageUrl = resolveUrl(event.featured_photo?.thumbnail_url || event.featured_photo?.url);
 
   return (
     <Card className="group relative overflow-hidden transition-shadow hover:shadow-md">
@@ -44,10 +51,15 @@ export function EventCard({ event, subscription, onEdit, onDuplicate, onDelete }
         <div className="relative aspect-[16/9] bg-muted">
           {imageUrl && !imageError ? (
             <img
-              src={imageUrl}
+              src={resolveUrl(imageUrl)}
               alt={event.title}
               className="h-full w-full object-cover"
-              onError={() => setImageError(true)}
+              onError={() => {
+                setImageError(true);
+              }}
+              onLoad={() => {
+                // Image loaded successfully
+              }}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
@@ -65,9 +77,7 @@ export function EventCard({ event, subscription, onEdit, onDuplicate, onDelete }
         <CardContent className="p-4">
           <h3 className="font-semibold text-lg truncate">{event.title}</h3>
           {event.description && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-              {event.description}
-            </p>
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{event.description}</p>
           )}
 
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">

@@ -47,8 +47,8 @@ import {
   useDeleteAccount,
 } from '@/hooks/useProfile';
 import { useNotificationSettings, useUpdateNotificationSettings } from '@/hooks/useSettings';
-import { getStorageUrl } from '@/api/client';
 import { NotificationPreferences } from '@/types';
+import { resolveUrl } from '@/lib/utils';
 
 // Validation schemas
 const profileSchema = z.object({
@@ -56,14 +56,16 @@ const profileSchema = z.object({
   phone: z.string().optional(),
 });
 
-const passwordSchema = z.object({
-  current_password: z.string().min(1, 'Mot de passe actuel requis'),
-  password: z.string().min(8, 'Le nouveau mot de passe doit contenir au moins 8 caracteres'),
-  password_confirmation: z.string(),
-}).refine((data) => data.password === data.password_confirmation, {
-  message: 'Les mots de passe ne correspondent pas',
-  path: ['password_confirmation'],
-});
+const passwordSchema = z
+  .object({
+    current_password: z.string().min(1, 'Mot de passe actuel requis'),
+    password: z.string().min(8, 'Le nouveau mot de passe doit contenir au moins 8 caracteres'),
+    password_confirmation: z.string(),
+  })
+  .refine((data) => data.password === data.password_confirmation, {
+    message: 'Les mots de passe ne correspondent pas',
+    path: ['password_confirmation'],
+  });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 type PasswordFormData = z.infer<typeof passwordSchema>;
@@ -264,10 +266,7 @@ export function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={t('settings.title')}
-        description={t('settings.description')}
-      />
+      <PageHeader title={t('settings.title')} description={t('settings.description')} />
 
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
@@ -299,7 +298,7 @@ export function SettingsPage() {
               </CardHeader>
               <CardContent className="flex flex-col items-center gap-4">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={getStorageUrl(user.avatar_url)} />
+                  <AvatarImage src={resolveUrl(user.avatar_url)} />
                   <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
                 </Avatar>
 
@@ -355,7 +354,10 @@ export function SettingsPage() {
                 <CardDescription>Mettez a jour vos informations</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={profileForm.handleSubmit(handleProfileSubmit)} className="space-y-4">
+                <form
+                  onSubmit={profileForm.handleSubmit(handleProfileSubmit)}
+                  className="space-y-4"
+                >
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="name">Nom complet</Label>
@@ -383,12 +385,7 @@ export function SettingsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Email</Label>
-                    <Input
-                      type="email"
-                      value={user.email}
-                      disabled
-                      className="bg-muted"
-                    />
+                    <Input type="email" value={user.email} disabled className="bg-muted" />
                     <p className="text-xs text-muted-foreground">
                       L'email ne peut pas etre modifie
                     </p>
@@ -413,7 +410,10 @@ export function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)} className="space-y-4">
+              <form
+                onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}
+                className="space-y-4"
+              >
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="current_password">Mot de passe actuel</Label>
@@ -430,11 +430,7 @@ export function SettingsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password">Nouveau mot de passe</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      {...passwordForm.register('password')}
-                    />
+                    <Input id="password" type="password" {...passwordForm.register('password')} />
                     {passwordForm.formState.errors.password && (
                       <p className="text-sm text-destructive">
                         {passwordForm.formState.errors.password.message}
@@ -478,9 +474,7 @@ export function SettingsPage() {
                   </div>
                   <div>
                     <p className="font-medium">Session actuelle</p>
-                    <p className="text-sm text-muted-foreground">
-                      Connecte depuis cet appareil
-                    </p>
+                    <p className="text-sm text-muted-foreground">Connecte depuis cet appareil</p>
                   </div>
                 </div>
                 <span className="text-sm text-green-600 font-medium">Active</span>
@@ -494,9 +488,7 @@ export function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Canaux de notification</CardTitle>
-              <CardDescription>
-                Choisissez comment vous souhaitez etre notifie
-              </CardDescription>
+              <CardDescription>Choisissez comment vous souhaitez etre notifie</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
@@ -560,16 +552,12 @@ export function SettingsPage() {
                   </div>
                   <div>
                     <p className="font-medium">Rappels d'evenements</p>
-                    <p className="text-sm text-muted-foreground">
-                      Rappels avant vos evenements
-                    </p>
+                    <p className="text-sm text-muted-foreground">Rappels avant vos evenements</p>
                   </div>
                 </div>
                 <Switch
                   checked={notificationSettings?.event_reminder ?? true}
-                  onCheckedChange={(checked) =>
-                    handleNotificationToggle('event_reminder', checked)
-                  }
+                  onCheckedChange={(checked) => handleNotificationToggle('event_reminder', checked)}
                   disabled={isLoadingSettings}
                 />
               </div>
@@ -590,9 +578,7 @@ export function SettingsPage() {
                 </div>
                 <Switch
                   checked={notificationSettings?.task_reminder ?? true}
-                  onCheckedChange={(checked) =>
-                    handleNotificationToggle('task_reminder', checked)
-                  }
+                  onCheckedChange={(checked) => handleNotificationToggle('task_reminder', checked)}
                   disabled={isLoadingSettings}
                 />
               </div>
@@ -613,9 +599,7 @@ export function SettingsPage() {
                 </div>
                 <Switch
                   checked={notificationSettings?.guest_reminder ?? true}
-                  onCheckedChange={(checked) =>
-                    handleNotificationToggle('guest_reminder', checked)
-                  }
+                  onCheckedChange={(checked) => handleNotificationToggle('guest_reminder', checked)}
                   disabled={isLoadingSettings}
                 />
               </div>
@@ -636,9 +620,7 @@ export function SettingsPage() {
                 </div>
                 <Switch
                   checked={notificationSettings?.budget_alert ?? true}
-                  onCheckedChange={(checked) =>
-                    handleNotificationToggle('budget_alert', checked)
-                  }
+                  onCheckedChange={(checked) => handleNotificationToggle('budget_alert', checked)}
                   disabled={isLoadingSettings}
                 />
               </div>
@@ -698,9 +680,7 @@ export function SettingsPage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Email verifie</p>
-                  <p className="font-medium">
-                    {user.email_verified_at ? 'Oui' : 'Non'}
-                  </p>
+                  <p className="font-medium">{user.email_verified_at ? 'Oui' : 'Non'}</p>
                 </div>
               </div>
             </CardContent>
@@ -712,24 +692,17 @@ export function SettingsPage() {
                 <AlertTriangle className="h-5 w-5" />
                 Zone de danger
               </CardTitle>
-              <CardDescription>
-                Actions irreversibles sur votre compte
-              </CardDescription>
+              <CardDescription>Actions irreversibles sur votre compte</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-                <h4 className="font-medium text-destructive mb-2">
-                  Supprimer mon compte
-                </h4>
+                <h4 className="font-medium text-destructive mb-2">Supprimer mon compte</h4>
                 <p className="text-sm text-muted-foreground mb-4">
-                  La suppression de votre compte est definitive. Toutes vos donnees,
-                  evenements, invites et configurations seront definitivement perdus.
-                  Cette action ne peut pas etre annulee.
+                  La suppression de votre compte est definitive. Toutes vos donnees, evenements,
+                  invites et configurations seront definitivement perdus. Cette action ne peut pas
+                  etre annulee.
                 </p>
-                <Button
-                  variant="destructive"
-                  onClick={() => setShowDeleteDialog(true)}
-                >
+                <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
                   <Trash2 className="mr-2 h-4 w-4" />
                   Supprimer mon compte
                 </Button>
@@ -745,8 +718,8 @@ export function SettingsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer votre compte</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irreversible. Tous vos evenements, invites, et donnees
-              seront definitivement supprimes. Entrez votre mot de passe pour confirmer.
+              Cette action est irreversible. Tous vos evenements, invites, et donnees seront
+              definitivement supprimes. Entrez votre mot de passe pour confirmer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4">
@@ -761,9 +734,7 @@ export function SettingsPage() {
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeletePassword('')}>
-              Annuler
-            </AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setDeletePassword('')}>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteAccount}
               disabled={isDeletingAccount || !deletePassword}

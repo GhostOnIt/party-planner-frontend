@@ -20,11 +20,10 @@ const eventTypes: { value: EventType; label: string }[] = [
 ];
 
 const eventStatuses: { value: EventStatus; label: string }[] = [
-  { value: 'draft', label: 'Brouillon' },
-  { value: 'planning', label: 'En preparation' },
-  { value: 'confirmed', label: 'Confirme' },
-  { value: 'completed', label: 'Termine' },
-  { value: 'cancelled', label: 'Annule' },
+  { value: 'upcoming', label: 'À venir' },
+  { value: 'ongoing', label: 'En cours' },
+  { value: 'completed', label: 'Terminé' },
+  { value: 'cancelled', label: 'Annulé' },
 ];
 
 interface EventFiltersProps {

@@ -2,6 +2,20 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
 import type { Guest, GuestFilters, CreateGuestFormData, GuestStats } from '@/types';
 
+// Helper function to transform backend stats format to frontend format
+function transformStats(rawStats: any): GuestStats | undefined {
+  if (!rawStats) return undefined;
+  
+  return {
+    total: rawStats.total || 0,
+    accepted: rawStats.by_status?.accepted || 0,
+    declined: rawStats.by_status?.declined || 0,
+    pending: rawStats.by_status?.pending || 0,
+    maybe: rawStats.by_status?.maybe || 0,
+    checked_in: rawStats.check_in?.checked_in || 0,
+  };
+}
+
 interface GuestsApiResponse {
   data: Guest[];
   meta?: {
@@ -37,7 +51,7 @@ export function useGuests(eventId: number | string, filters: GuestFilters = {}) 
             per_page: guestsData.per_page || 20,
             total: guestsData.total || 0,
           } : undefined,
-          stats: responseData.stats,
+          stats: transformStats(responseData.stats),
         };
       }
 
@@ -45,7 +59,7 @@ export function useGuests(eventId: number | string, filters: GuestFilters = {}) 
       return {
         data: responseData.data || [],
         meta: responseData.meta,
-        stats: responseData.stats,
+        stats: transformStats(responseData.stats),
       };
     },
     enabled: !!eventId,
@@ -142,6 +156,21 @@ export function useSendInvitation(eventId: number | string) {
   });
 }
 
+// Send reminder
+export function useSendReminder(eventId: number | string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (guestId: number) => {
+      const response = await api.post(`/events/${eventId}/guests/${guestId}/send-reminder`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events', eventId, 'guests'] });
+    },
+  });
+}
+
 // Check-in guest
 export function useCheckInGuest(eventId: number | string) {
   const queryClient = useQueryClient();
@@ -172,23 +201,98 @@ export function useUndoCheckIn(eventId: number | string) {
   });
 }
 
+// Get invitation details
+export interface InvitationDetailsResponse {
+  guest: {
+    id: number;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    rsvp_status: string;
+    notes: string | null;
+    plus_one: boolean;
+    plus_one_name: string | null;
+    dietary_restrictions: string | null;
+  };
+  invitation: {
+    sent_at: string | null;
+    responded_at: string | null;
+    opened_at: string | null;
+    custom_message: string | null;
+  } | null;
+  invitation_sent_at: string | null;
+  invitation_url: string;
+}
+
+export function useInvitationDetails(
+  eventId: number | string,
+  guestId: number | string | null
+) {
+  return useQuery({
+    queryKey: ['events', eventId, 'guests', guestId, 'invitation-details'],
+    queryFn: async () => {
+      if (!guestId) return null;
+      const response = await api.get(
+        `/events/${eventId}/guests/${guestId}/invitation-details`
+      );
+      return response.data as InvitationDetailsResponse;
+    },
+    enabled: !!guestId,
+  });
+}
+
+// Export filters type
+export interface ExportFilters {
+  rsvp_status?: string[];
+  checked_in?: boolean;
+  invitation_sent?: boolean;
+}
+
 // Export guests
 export function useExportGuests(eventId: number | string) {
   return useMutation({
-    mutationFn: async (format: 'csv' | 'pdf' | 'xlsx') => {
-      const response = await api.get(`/events/${eventId}/exports/guests/${format}`, {
+    mutationFn: async ({
+      format,
+      filters = {},
+    }: {
+      format: 'csv' | 'pdf' | 'xlsx';
+      filters?: ExportFilters;
+    }) => {
+      const params = new URLSearchParams();
+
+      // Add RSVP status filters
+      if (filters.rsvp_status && filters.rsvp_status.length > 0) {
+        filters.rsvp_status.forEach((status) => {
+          params.append('rsvp_status[]', status);
+        });
+      }
+
+      // Add check-in filter
+      if (filters.checked_in !== undefined) {
+        params.append('checked_in', filters.checked_in ? '1' : '0');
+      }
+
+      // Add invitation sent filter
+      if (filters.invitation_sent !== undefined) {
+        params.append('invitation_sent', filters.invitation_sent ? '1' : '0');
+      }
+
+      const queryString = params.toString();
+      const url = `/events/${eventId}/exports/guests/${format}${queryString ? `?${queryString}` : ''}`;
+
+      const response = await api.get(url, {
         responseType: 'blob',
       });
 
       // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const urlBlob = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
-      link.href = url;
+      link.href = urlBlob;
       link.setAttribute('download', `invites.${format}`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(urlBlob);
 
       return response.data;
     },

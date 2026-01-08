@@ -211,6 +211,29 @@ export function useDownloadPhoto(eventId: string) {
   });
 }
 
+// Download multiple photos as ZIP
+export function useDownloadMultiplePhotos(eventId: string) {
+  return useMutation({
+    mutationFn: async ({ photoIds }: { photoIds: number[] }) => {
+      const response = await api.post(
+        `/events/${eventId}/photos/bulk-download`,
+        { photos: photoIds },
+        { responseType: 'blob' }
+      );
+
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `photos-${eventId}-${Date.now()}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    },
+  });
+}
+
 // Set photo as featured
 export function useSetFeaturedPhoto(eventId: string) {
   const queryClient = useQueryClient();

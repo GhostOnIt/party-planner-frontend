@@ -1,6 +1,6 @@
 // Enums
 export type EventType = 'mariage' | 'anniversaire' | 'baby_shower' | 'soiree' | 'brunch' | 'autre';
-export type EventStatus = 'draft' | 'planning' | 'confirmed' | 'completed' | 'cancelled';
+export type EventStatus = 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
 export type RsvpStatus = 'pending' | 'accepted' | 'declined' | 'maybe';
 export type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'cancelled';
 export type TaskPriority = 'low' | 'medium' | 'high';
@@ -365,6 +365,7 @@ export interface EventFilters {
   search?: string;
   per_page?: number;
   page?: number;
+  to?: number;
 }
 
 export interface GuestFilters {
