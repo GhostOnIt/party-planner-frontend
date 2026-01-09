@@ -11,11 +11,12 @@ export function resolveUrl(path: string | null | undefined): string | undefined 
     return path;
   }
 
-   const viteApiUrl = import.meta.env.VITE_API_URL as string;
-   if (!viteApiUrl) {
-     return undefined;
-   }
+  const viteApiUrl = import.meta.env.VITE_API_URL as string;
+  if (!viteApiUrl) {
+    return undefined;
+  }
 
-   const backendUrl = viteApiUrl.replace(/\/api(?!.*\/api)/, '');
-   return `${backendUrl}${path}`;
+  // Remove /api from the end of the API URL to get the base backend URL
+  const backendUrl = viteApiUrl.replace(/\/api\/?$/, '');
+  return `${backendUrl}${path}`;
 }
