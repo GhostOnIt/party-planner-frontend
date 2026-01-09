@@ -1,6 +1,16 @@
+import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Mail, Phone, Calendar, UserPlus, UtensilsCrossed, FileText } from 'lucide-react';
+import {
+  Mail,
+  Phone,
+  Calendar,
+  UserPlus,
+  UtensilsCrossed,
+  FileText,
+  Check,
+  Copy,
+} from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -13,7 +23,8 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RsvpBadge } from './RsvpBadge';
 import { useInvitationDetails } from '@/hooks/useGuests';
-//import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface InvitationDetailsSheetProps {
   open: boolean;
@@ -28,21 +39,21 @@ export function InvitationDetailsSheet({
   eventId,
   guestId,
 }: InvitationDetailsSheetProps) {
-  //const { toast } = useToast();
-  //const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+  const [copied, setCopied] = useState(false);
   const { data, isLoading, error } = useInvitationDetails(eventId, guestId);
 
-  // const handleCopyLink = () => {
-  //   if (data?.invitation_url) {
-  //     navigator.clipboard.writeText(data.invitation_url);
-  //     //  setCopied(true);
-  //     toast({
-  //       title: 'Lien copié',
-  //       description: "Le lien de l'invitation a été copié dans le presse-papiers.",
-  //     });
-  //     //  setTimeout(() => setCopied(false), 2000);
-  //   }
-  // };
+  const handleCopyLink = () => {
+    if (data?.invitation_url) {
+      navigator.clipboard.writeText(data.invitation_url);
+      setCopied(true);
+      toast({
+        title: 'Lien copié',
+        description: "Le lien de l'invitation a été copié dans le presse-papiers.",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -236,7 +247,7 @@ export function InvitationDetailsSheet({
           </div>
 
           {/* Lien de l'invitation */}
-          {/* {data.invitation_url && (
+          {data.invitation_url && (
             <>
               <Separator />
               <div className="space-y-2">
@@ -261,7 +272,7 @@ export function InvitationDetailsSheet({
                 </div>
               </div>
             </>
-          )} */}
+          )}
         </div>
       </SheetContent>
     </Sheet>
