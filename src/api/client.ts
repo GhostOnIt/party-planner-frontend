@@ -9,9 +9,24 @@ const dispatchServerError = (message: string) => {
   window.dispatchEvent(new CustomEvent(SERVER_ERROR_EVENT, { detail: { message } }));
 };
 
+// Helper function to normalize API URL (remove trailing /api if present)
+// Laravel automatically prefixes routes in api.php with /api, so we need to avoid double /api/api/
+const normalizeApiUrl = (url: string | undefined): string => {
+  if (!url) return '';
+  // Remove trailing /api to avoid double /api/api/ in routes
+  return url.replace(/\/api\/?$/, '');
+};
+
+// Get normalized base URL
+const getBaseUrl = (): string => {
+  const apiUrl = normalizeApiUrl(import.meta.env.VITE_API_URL);
+  // Ensure base URL ends with /api since Laravel routes are prefixed with /api
+  return apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
+};
+
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -24,7 +39,7 @@ fetch('http://127.0.0.1:7243/ingest/e5db8a79-cefc-4fef-9e25-d5a65a71a32e',{metho
 
 // Public API client (no authentication required)
 export const publicApi = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
