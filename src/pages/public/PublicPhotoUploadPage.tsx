@@ -311,7 +311,7 @@ export function PublicPhotoUploadPage() {
         </div>
       </header>
 
-      <main className="container mx-auto max-w-5xl px-4 py-12 space-y-16">
+      <main className="container mx-auto max-w-5xl px-4 py-12 space-y-8">
         {/* Description de la page */}
         <section className="max-w-3xl mx-auto text-center space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <p className="text-base text-slate-600 leading-relaxed">

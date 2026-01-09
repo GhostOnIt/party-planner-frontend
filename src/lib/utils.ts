@@ -16,6 +16,6 @@ export function resolveUrl(path: string | null | undefined): string | undefined 
      return undefined;
    }
 
-   const backendUrl = viteApiUrl.replace('/api', '');
+   const backendUrl = viteApiUrl.replace(/\/api(?!.*\/api)/, '');
    return `${backendUrl}${path}`;
 }
