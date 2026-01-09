@@ -316,7 +316,7 @@ export function PublicPhotoUploadPage() {
         <section className="max-w-3xl mx-auto text-center space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <p className="text-base text-slate-600 leading-relaxed">
             Partagez vos meilleurs moments de cet événement avec tous les participants. Vous pouvez
-            ajouter vos photos et télécharger celles partagées par les autres invitésss.
+            ajouter vos photos et télécharger celles partagées par les autres invités.
           </p>
         </section>
 
