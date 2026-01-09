@@ -17,6 +17,10 @@ export function resolveUrl(path: string | null | undefined): string | undefined 
   }
 
   // Remove /api from the end of the API URL to get the base backend URL
-  const backendUrl = viteApiUrl.replace(/\/api\/?$/, '');
+  let backendUrl = viteApiUrl.replace(/\/api\/?$/, '');
+
+  // Remove the 'api.' subdomain to get the main domain for static files
+  backendUrl = backendUrl.replace(/^https?:\/\/api\./, (match) => match.replace('api.', ''));
+
   return `${backendUrl}${path}`;
 }
