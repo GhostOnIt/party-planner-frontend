@@ -105,26 +105,6 @@ export function RsvpForm({
     setValue('response', value);
     // Mettre à jour showPlusOne immédiatement lors de la sélection
     if (value === 'accepted' && hasPlusOne) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/e5db8a79-cefc-4fef-9e25-d5a65a71a32e', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location: 'RsvpForm.tsx:169',
-          message: 'handleResponseSelect - setting showPlusOne to true',
-          data: {
-            value,
-            hasPlusOne,
-            before: showPlusOne,
-            after: true,
-          },
-          timestamp: Date.now(),
-          sessionId: 'debug-session',
-          runId: 'run2',
-          hypothesisId: 'H',
-        }),
-      }).catch(() => {});
-      // #endregion
       setShowPlusOne(true);
       setValue('plus_one_attending', true);
     } else if (value !== 'accepted') {
