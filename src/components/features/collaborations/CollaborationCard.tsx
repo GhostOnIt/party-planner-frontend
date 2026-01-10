@@ -5,6 +5,7 @@ import { Calendar, MapPin, Users, Shield, LogOut, ExternalLink } from 'lucide-re
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ROLE_LABELS } from '@/utils/constants';
 import type { Collaboration, CollaboratorRole, EventStatus } from '@/types';
 
 interface CollaborationCardProps {
@@ -12,18 +13,6 @@ interface CollaborationCardProps {
   onLeave: (eventId: number) => void;
   isLeaving?: boolean;
 }
-
-const roleLabels: Record<CollaboratorRole, string> = {
-  owner: 'Proprietaire',
-  editor: 'Editeur',
-  viewer: 'Lecteur',
-};
-
-const roleColors: Record<CollaboratorRole, string> = {
-  owner: 'bg-purple-100 text-purple-800',
-  editor: 'bg-blue-100 text-blue-800',
-  viewer: 'bg-gray-100 text-gray-800',
-};
 
 const statusLabels: Record<EventStatus, string> = {
   upcoming: 'À venir',
@@ -67,9 +56,9 @@ export function CollaborationCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-start gap-2 flex-wrap">
               <h3 className="font-semibold text-lg truncate">{event?.title || 'Evenement'}</h3>
-              <Badge variant="secondary" className={roleColors[role]}>
+              <Badge variant="secondary">
                 <Shield className="mr-1 h-3 w-3" />
-                {roleLabels[role]}
+                {ROLE_LABELS[role]}
               </Badge>
               {event?.status && (
                 <Badge variant="outline" className={statusColors[event.status]}>
@@ -100,14 +89,10 @@ export function CollaborationCard({
             </div>
 
             {event?.description && (
-              <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                {event.description}
-              </p>
+              <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{event.description}</p>
             )}
 
-            <p className="mt-2 text-xs text-muted-foreground">
-              Collaborateur depuis {joinedAgo}
-            </p>
+            <p className="mt-2 text-xs text-muted-foreground">Collaborateur depuis {joinedAgo}</p>
           </div>
 
           <div className="flex flex-col gap-2">

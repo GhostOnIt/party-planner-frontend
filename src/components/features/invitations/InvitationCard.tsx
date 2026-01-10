@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ROLE_LABELS } from '@/utils/constants';
 import type { Invitation, CollaboratorRole } from '@/types';
 import { resolveUrl } from '@/lib/utils';
 
@@ -15,18 +16,6 @@ interface InvitationCardProps {
   isAccepting?: boolean;
   isRejecting?: boolean;
 }
-
-const roleLabels: Record<CollaboratorRole, string> = {
-  owner: 'Proprietaire',
-  editor: 'Editeur',
-  viewer: 'Lecteur',
-};
-
-const roleColors: Record<CollaboratorRole, string> = {
-  owner: 'bg-purple-100 text-purple-800',
-  editor: 'bg-blue-100 text-blue-800',
-  viewer: 'bg-gray-100 text-gray-800',
-};
 
 export function InvitationCard({
   invitation,
@@ -68,9 +57,9 @@ export function InvitationCard({
                   vous invite a collaborer sur un evenement
                 </p>
               </div>
-              <Badge variant="secondary" className={roleColors[invitation.role]}>
+              <Badge variant="secondary">
                 <Shield className="mr-1 h-3 w-3" />
-                {roleLabels[invitation.role]}
+                {ROLE_LABELS[invitation.role]}
               </Badge>
             </div>
 

@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
+import { useAuthStore } from '@/stores/authStore';
+import { getCollaboratorPermissions } from '@/utils/collaboratorPermissions';
 import type {
   Collaborator,
   CollaboratorFilters,
@@ -123,6 +125,63 @@ export function useResendInvitation(eventId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events', eventId, 'collaborators'] });
+    },
+  });
+}
+
+// Get current user permissions for an event
+export function useCurrentUserPermissions(eventId: string) {
+  const { user } = useAuthStore();
+
+  return useQuery({
+    queryKey: ['events', eventId, 'user-permissions', user?.id],
+    queryFn: async () => {
+      // This could be a separate API endpoint, but for now we'll use the collaborators data
+      const collaboratorsResponse = await api.get(`/events/${eventId}/collaborators`);
+      const collaborators = collaboratorsResponse.data?.data || collaboratorsResponse.data?.collaborators || collaboratorsResponse.data || [];
+
+      // Check if user is in collaborators list
+      const userCollaborator = collaborators.find((c: any) => c.user_id === user?.id);
+
+      if (userCollaborator) {
+        return getCollaboratorPermissions(userCollaborator);
+      }
+
+      // If user is not in collaborators list, they might be the owner
+      // For now, assume they have owner permissions if they can access this endpoint
+      return {
+        canManage: true,
+        canInvite: true,
+        canEditRoles: true,
+        canRemoveCollaborators: true,
+        canCreateCustomRoles: true,
+        canView: true,
+        canEdit: true,
+        canDelete: true,
+        isOwner: true,
+        isCoordinator: false,
+        effectiveRole: 'Propriétaire',
+        effectiveRoleColor: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+      };
+    },
+    enabled: !!eventId && !!user?.id,
+  });
+}
+
+// Get available roles for assignment
+export function useAvailableRoles() {
+  return useQuery({
+    queryKey: ['roles', 'available'],
+    queryFn: async () => {
+      const response = await api.get<{ roles: Array<{
+        value: string;
+        label: string;
+        description: string;
+        color: string;
+        icon: string;
+      }> }>('/roles/available');
+
+      return response.data;
     },
   });
 }

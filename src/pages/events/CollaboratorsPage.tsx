@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Plus, UserPlus, Users } from 'lucide-react';
@@ -16,6 +17,7 @@ import {
 import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/stores/authStore';
+import { SubscriptionRequired } from '@/components/features/subscription';
 import {
   CollaboratorList,
   InviteCollaboratorForm,
@@ -23,11 +25,14 @@ import {
 } from '@/components/features/collaborators';
 import {
   useCollaborators,
+  useCurrentUserPermissions,
   useInviteCollaborator,
   useUpdateCollaborator,
   useRemoveCollaborator,
   useResendInvitation,
 } from '@/hooks/useCollaborators';
+import { useEventSubscription } from '@/hooks/useSubscription';
+import { getAssignableRoles } from '@/utils/collaboratorPermissions';
 import type { Collaborator, InviteCollaboratorFormData, CollaboratorRole } from '@/types';
 
 interface CollaboratorsPageProps {
@@ -41,22 +46,31 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
   const { user } = useAuthStore();
 
   const [showInviteForm, setShowInviteForm] = useState(false);
-  const [collaboratorToChangeRole, setCollaboratorToChangeRole] = useState<Collaborator | null>(null);
+  const [collaboratorToChangeRole, setCollaboratorToChangeRole] = useState<Collaborator | null>(
+    null
+  );
   const [collaboratorToRemove, setCollaboratorToRemove] = useState<Collaborator | null>(null);
 
   const { data: collaboratorsData, isLoading } = useCollaborators(eventId!);
+  const { data: userPermissions, isLoading: permissionsLoading } = useCurrentUserPermissions(
+    eventId!
+  );
   const { mutate: inviteCollaborator, isPending: isInviting } = useInviteCollaborator(eventId!);
   const { mutate: updateCollaborator, isPending: isUpdating } = useUpdateCollaborator(eventId!);
   const { mutate: removeCollaborator, isPending: isRemoving } = useRemoveCollaborator(eventId!);
   const { mutate: resendInvitation } = useResendInvitation(eventId!);
+  const { data: subscription, isLoading: isLoadingSubscription } = useEventSubscription(eventId!);
 
   const collaborators = collaboratorsData?.data || [];
 
-  // Check if current user is owner or editor
-  const currentUserCollaborator = collaborators.find((c) => c.user_id === user?.id);
-  const isOwner = currentUserCollaborator?.role === 'owner';
-  const canManage = isOwner || currentUserCollaborator?.role === 'editor';
+  // Check if subscription is active
+  const subscriptionStatus: string = subscription?.payment_status || subscription?.status || '';
+  const hasActiveSubscription = subscriptionStatus === 'paid' || subscriptionStatus === 'active';
+  const canManage = userPermissions?.canManage || false;
+  const canInvite = (userPermissions?.canInvite && hasActiveSubscription) || false;
 
+  // Get assignable roles for the current user
+  const assignableRoles = getAssignableRoles(collaborators, user?.id);
   const handleInvite = (data: InviteCollaboratorFormData) => {
     inviteCollaborator(data, {
       onSuccess: () => {
@@ -66,10 +80,19 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
           description: `Une invitation a ete envoyee a ${data.email}.`,
         });
       },
-      onError: () => {
+      onError: (error: any) => {
+        // Extract error message from API response
+        let errorMessage = "Une erreur est survenue lors de l'envoi de l'invitation.";
+
+        if (error?.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error?.response?.data?.errors?.email?.[0]) {
+          errorMessage = error.response.data.errors.email[0];
+        }
+
         toast({
           title: 'Erreur',
-          description: 'Une erreur est survenue lors de l\'envoi de l\'invitation.',
+          description: errorMessage,
           variant: 'destructive',
         });
       },
@@ -87,10 +110,16 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
             description: 'Le role du collaborateur a ete modifie avec succes.',
           });
         },
-        onError: () => {
+        onError: (error: any) => {
+          let errorMessage = 'Une erreur est survenue lors de la modification du role.';
+
+          if (error?.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          }
+
           toast({
             title: 'Erreur',
-            description: 'Une erreur est survenue lors de la modification du role.',
+            description: errorMessage,
             variant: 'destructive',
           });
         },
@@ -109,10 +138,16 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
             description: `${collaboratorToRemove.user.name} a ete retire de l'evenement.`,
           });
         },
-        onError: () => {
+        onError: (error: any) => {
+          let errorMessage = 'Une erreur est survenue lors de la suppression.';
+
+          if (error?.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          }
+
           toast({
             title: 'Erreur',
-            description: 'Une erreur est survenue lors de la suppression.',
+            description: errorMessage,
             variant: 'destructive',
           });
         },
@@ -129,10 +164,16 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
           description: `L'invitation a ete renvoyee a ${collaborator.user.email}.`,
         });
       },
-      onError: () => {
+      onError: (error: any) => {
+        let errorMessage = "Une erreur est survenue lors du renvoi de l'invitation.";
+
+        if (error?.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+
         toast({
           title: 'Erreur',
-          description: 'Une erreur est survenue lors du renvoi de l\'invitation.',
+          description: errorMessage,
           variant: 'destructive',
         });
       },
@@ -154,11 +195,9 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
                 <Users className="h-5 w-5" />
                 Collaborateurs
               </CardTitle>
-              <CardDescription>
-                Gerez les personnes qui ont acces a cet evenement.
-              </CardDescription>
+              <CardDescription>Gerez les personnes qui ont acces a cet evenement.</CardDescription>
             </div>
-            {canManage && (
+            {canInvite && (
               <Button onClick={() => setShowInviteForm(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Inviter
@@ -182,6 +221,15 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
         </CardContent>
       </Card>
 
+      {/* Subscription Required Message */}
+      {!isLoadingSubscription && !hasActiveSubscription && (
+        <SubscriptionRequired
+          eventId={eventId!}
+          feature="la gestion des collaborateurs"
+          message="Un abonnement actif est necessaire pour ajouter et gerer des collaborateurs pour votre evenement."
+        />
+      )}
+
       {/* Collaborators List */}
       {!isLoading && collaborators.length === 0 ? (
         <EmptyState
@@ -189,7 +237,7 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
           title="Aucun collaborateur"
           description="Vous n'avez pas encore invite de collaborateurs. Invitez des personnes pour travailler ensemble sur cet evenement."
           action={
-            canManage
+            canInvite
               ? {
                   label: 'Inviter un collaborateur',
                   onClick: () => setShowInviteForm(true),
@@ -200,7 +248,7 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
       ) : (
         <CollaboratorList
           collaborators={collaborators}
-          isLoading={isLoading}
+          isLoading={isLoading || permissionsLoading || isLoadingSubscription}
           currentUserId={user?.id}
           canManage={canManage}
           onChangeRole={setCollaboratorToChangeRole}
@@ -215,6 +263,7 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
         onOpenChange={setShowInviteForm}
         onSubmit={handleInvite}
         isSubmitting={isInviting}
+        availableRoles={assignableRoles}
       />
 
       {/* Change Role Dialog */}
@@ -224,19 +273,17 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
         collaborator={collaboratorToChangeRole}
         onConfirm={handleChangeRole}
         isSubmitting={isUpdating}
+        availableRoles={assignableRoles}
       />
 
       {/* Remove Confirmation Dialog */}
-      <AlertDialog
-        open={!!collaboratorToRemove}
-        onOpenChange={() => setCollaboratorToRemove(null)}
-      >
+      <AlertDialog open={!!collaboratorToRemove} onOpenChange={() => setCollaboratorToRemove(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Retirer le collaborateur</AlertDialogTitle>
             <AlertDialogDescription>
-              Etes-vous sur de vouloir retirer {collaboratorToRemove?.user.name} de cet
-              evenement ? Cette personne n'aura plus acces a l'evenement.
+              Etes-vous sur de vouloir retirer {collaboratorToRemove?.user.name} de cet evenement ?
+              Cette personne n'aura plus acces a l'evenement.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -19,41 +19,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { InviteCollaboratorFormData, CollaboratorRole } from '@/types';
+import { useAvailableRoles } from '@/hooks/useCollaborators';
+import type { InviteCollaboratorFormData } from '@/types';
 
-const inviteSchema = z.object({
-  email: z.string().email('Email invalide'),
-  role: z.enum(['editor', 'viewer'] as const),
-});
-
-type InviteFormValues = z.infer<typeof inviteSchema>;
+type InviteFormValues = {
+  email: string;
+  role: string;
+};
 
 interface InviteCollaboratorFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: InviteCollaboratorFormData) => void;
   isSubmitting?: boolean;
+  availableRoles?: string[];
 }
-
-const roles: { value: Exclude<CollaboratorRole, 'owner'>; label: string; description: string }[] = [
-  {
-    value: 'editor',
-    label: 'Editeur',
-    description: 'Peut modifier l\'evenement, les invites, les taches et le budget',
-  },
-  {
-    value: 'viewer',
-    label: 'Lecteur',
-    description: 'Peut uniquement consulter l\'evenement',
-  },
-];
 
 export function InviteCollaboratorForm({
   open,
   onOpenChange,
   onSubmit,
   isSubmitting = false,
+  availableRoles = [],
 }: InviteCollaboratorFormProps) {
+  // Fetch available roles from API
+  const { data: rolesData, isLoading: isLoadingRoles } = useAvailableRoles();
+  const availableRoleDefinitions = rolesData?.roles || [];
+
+  // Filter roles based on availableRoles prop (if provided)
+  const filteredRoles =
+    availableRoles.length > 0
+      ? availableRoleDefinitions.filter((role) => availableRoles.includes(role.value as string))
+      : availableRoleDefinitions;
+
+  // Create schema with available role values
+  const roleValues = filteredRoles.map((role) => role.value);
+  const inviteSchema = z.object({
+    email: z.string().email('Email invalide'),
+    role: roleValues.length > 0 ? z.enum(roleValues as [string, ...string[]]) : z.string(),
+  });
+
   const {
     register,
     handleSubmit,
@@ -65,7 +70,7 @@ export function InviteCollaboratorForm({
     resolver: zodResolver(inviteSchema),
     defaultValues: {
       email: '',
-      role: 'editor',
+      role: filteredRoles[0]?.value || '',
     },
   });
 
@@ -79,6 +84,18 @@ export function InviteCollaboratorForm({
     reset();
     onOpenChange(false);
   };
+
+  if (isLoadingRoles) {
+    return (
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-md">
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -100,22 +117,17 @@ export function InviteCollaboratorForm({
               {...register('email')}
               aria-invalid={!!errors.email}
             />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
+            {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="role">Role *</Label>
-            <Select
-              value={selectedRole}
-              onValueChange={(value) => setValue('role', value as 'editor' | 'viewer')}
-            >
+            <Select value={selectedRole} onValueChange={(value) => setValue('role', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Selectionnez un role" />
               </SelectTrigger>
               <SelectContent>
-                {roles.map((role) => (
+                {filteredRoles.map((role) => (
                   <SelectItem key={role.value} value={role.value}>
                     <div>
                       <p className="font-medium">{role.label}</p>
@@ -125,9 +137,7 @@ export function InviteCollaboratorForm({
                 ))}
               </SelectContent>
             </Select>
-            {errors.role && (
-              <p className="text-sm text-destructive">{errors.role.message}</p>
-            )}
+            {errors.role && <p className="text-sm text-destructive">{errors.role.message}</p>}
           </div>
 
           <DialogFooter>
@@ -135,7 +145,7 @@ export function InviteCollaboratorForm({
               Annuler
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Envoi...' : 'Envoyer l\'invitation'}
+              {isSubmitting ? 'Envoi...' : "Envoyer l'invitation"}
             </Button>
           </DialogFooter>
         </form>

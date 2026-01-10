@@ -12,7 +12,7 @@ export type BudgetCategory =
   | 'photography'
   | 'transportation'
   | 'other';
-export type CollaboratorRole = 'owner' | 'editor' | 'viewer';
+export type CollaboratorRole = 'owner' | 'coordinator' | 'guest_manager' | 'planner' | 'accountant' | 'photographer' | 'supervisor' | 'reporter' | 'editor' | 'viewer';
 export type PaymentMethod = 'mtn_mobile_money' | 'airtel_money';
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 export type PlanType = 'starter' | 'pro';
@@ -140,8 +140,49 @@ export interface Collaborator {
   user_id: number;
   user: User;
   role: CollaboratorRole;
+  custom_role_id?: number;
+  custom_role?: CustomRole;
   accepted_at: string | null;
   created_at: string;
+}
+
+// Permission
+export interface Permission {
+  id: number;
+  name: string;
+  display_name: string;
+  description: string | null;
+  module: string;
+  action: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Custom Role
+export interface CustomRole {
+  id: number;
+  name: string;
+  description: string | null;
+  icon: string;
+  is_system: boolean;
+  permissions: string[]; // Array of permission names
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Permission Module
+export interface PermissionModule {
+  name: string;
+  label: string;
+  icon: string;
+  permissions: Permission[];
+}
+
+// Custom Role Form Data
+export interface CustomRoleFormData {
+  name: string;
+  description?: string;
+  permissions: number[]; // Array of permission IDs
 }
 
 // Notification
@@ -340,7 +381,7 @@ export interface CreateBudgetItemFormData {
 
 export interface InviteCollaboratorFormData {
   email: string;
-  role: CollaboratorRole;
+  role: string;
 }
 
 export interface PaymentFormData {

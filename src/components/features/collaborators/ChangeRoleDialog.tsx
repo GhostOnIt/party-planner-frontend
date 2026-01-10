@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { useAvailableRoles } from '@/hooks/useCollaborators';
 import type { Collaborator, CollaboratorRole } from '@/types';
 
 interface ChangeRoleDialogProps {
@@ -24,20 +25,8 @@ interface ChangeRoleDialogProps {
   collaborator: Collaborator | null;
   onConfirm: (collaboratorId: number, userId: number, role: CollaboratorRole) => void;
   isSubmitting?: boolean;
+  availableRoles?: CollaboratorRole[];
 }
-
-const roles: { value: Exclude<CollaboratorRole, 'owner'>; label: string; description: string }[] = [
-  {
-    value: 'editor',
-    label: 'Editeur',
-    description: 'Peut modifier l\'evenement, les invites, les taches et le budget',
-  },
-  {
-    value: 'viewer',
-    label: 'Lecteur',
-    description: 'Peut uniquement consulter l\'evenement',
-  },
-];
 
 export function ChangeRoleDialog({
   open,
@@ -45,14 +34,26 @@ export function ChangeRoleDialog({
   collaborator,
   onConfirm,
   isSubmitting = false,
+  availableRoles = [],
 }: ChangeRoleDialogProps) {
-  const [selectedRole, setSelectedRole] = useState<Exclude<CollaboratorRole, 'owner'>>('editor');
+  const { data: systemRolesData } = useAvailableRoles();
+  const systemRoles = systemRolesData?.roles || [];
+
+  // Filter system roles based on what the current user can assign
+  const filteredRoles =
+    availableRoles.length > 0
+      ? systemRoles.filter((role) => availableRoles.includes(role.value as CollaboratorRole))
+      : systemRoles;
+
+  const [selectedRole, setSelectedRole] = useState<CollaboratorRole>('coordinator');
 
   useEffect(() => {
     if (collaborator && collaborator.role !== 'owner') {
-      setSelectedRole(collaborator.role as Exclude<CollaboratorRole, 'owner'>);
+      setSelectedRole(collaborator.role);
+    } else if (filteredRoles.length > 0) {
+      setSelectedRole(filteredRoles[0].value as CollaboratorRole);
     }
-  }, [collaborator]);
+  }, [collaborator, filteredRoles]);
 
   const handleConfirm = () => {
     if (collaborator) {
@@ -75,13 +76,15 @@ export function ChangeRoleDialog({
             <Label>Nouveau role</Label>
             <Select
               value={selectedRole}
-              onValueChange={(value) => setSelectedRole(value as Exclude<CollaboratorRole, 'owner'>)}
+              onValueChange={(value) =>
+                setSelectedRole(value as Exclude<CollaboratorRole, 'owner'>)
+              }
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {roles.map((role) => (
+                {filteredRoles.map((role) => (
                   <SelectItem key={role.value} value={role.value}>
                     <div>
                       <p className="font-medium">{role.label}</p>
