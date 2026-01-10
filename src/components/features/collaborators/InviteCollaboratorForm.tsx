@@ -12,13 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+
 import { useAvailableRoles } from '@/hooks/useCollaborators';
 import type { InviteCollaboratorFormData } from '@/types';
 
@@ -52,8 +46,7 @@ export function InviteCollaboratorForm({
       ? availableRoleDefinitions.filter((role) => availableRoles.includes(role.value as string))
       : availableRoleDefinitions;
 
-  // Create schema with available role values
-  const roleValues = filteredRoles.map((role) => role.value);
+  // Create schema for invitation form
   const inviteSchema = z.object({
     email: z.string().email('Email invalide'),
     roles: z.array(z.string()).min(1, 'Au moins un rôle doit être sélectionné'),
@@ -157,7 +150,7 @@ export function InviteCollaboratorForm({
                 </div>
               ))}
             </div>
-            {errors.role && <p className="text-sm text-destructive">{errors.role.message}</p>}
+            {errors.roles && <p className="text-sm text-destructive">{errors.roles.message}</p>}
           </div>
 
           <DialogFooter>
