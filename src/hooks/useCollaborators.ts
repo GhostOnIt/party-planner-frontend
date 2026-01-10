@@ -75,17 +75,17 @@ export function useUpdateCollaborator(eventId: string) {
     mutationFn: async ({
       collaboratorId,
       userId,
-      role,
+      roles,
     }: {
       collaboratorId: number;
       userId?: number;
-      role: CollaboratorRole;
+      roles: CollaboratorRole[];
     }) => {
       // Use userId for the route (backend expects user id)
       const userIdParam = userId || collaboratorId;
       const response = await api.put<Collaborator>(
         `/events/${eventId}/collaborators/${userIdParam}`,
-        { role }
+        { roles }
       );
       return response.data;
     },

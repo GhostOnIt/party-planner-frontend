@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ROLE_LABELS } from '@/utils/constants';
+import { getEffectiveRoles } from '@/utils/collaboratorPermissions';
 import type { Collaborator, CollaboratorRole } from '@/types';
 
 interface CollaboratorCardProps {
@@ -63,10 +64,12 @@ export function CollaboratorCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Badge variant="secondary">
-          {ROLE_LABELS[collaborator.role]}
-        </Badge>
+      <div className="flex items-center gap-2 flex-wrap">
+        {getEffectiveRoles(collaborator).map((roleName, index) => (
+          <Badge key={index} variant="secondary">
+            {roleName}
+          </Badge>
+        ))}
 
         {canManage && !isOwner && (
           <DropdownMenu>

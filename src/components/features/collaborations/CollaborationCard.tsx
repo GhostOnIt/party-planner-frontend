@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ROLE_LABELS } from '@/utils/constants';
+import { getEffectiveRoles } from '@/utils/collaboratorPermissions';
 import type { Collaboration, CollaboratorRole, EventStatus } from '@/types';
 
 interface CollaborationCardProps {
@@ -58,7 +59,7 @@ export function CollaborationCard({
               <h3 className="font-semibold text-lg truncate">{event?.title || 'Evenement'}</h3>
               <Badge variant="secondary">
                 <Shield className="mr-1 h-3 w-3" />
-                {ROLE_LABELS[role]}
+                {getEffectiveRoles(collaboration).join(', ')}
               </Badge>
               {event?.status && (
                 <Badge variant="outline" className={statusColors[event.status]}>

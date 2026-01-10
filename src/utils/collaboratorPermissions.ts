@@ -20,14 +20,46 @@ export interface CollaboratorPermissions {
 }
 
 /**
- * Get effective role name from collaborator
+ * Get effective role names from collaborator
  */
-export function getEffectiveRole(collaborator: Collaborator): string {
+export function getEffectiveRoles(collaborator: Collaborator): string[] {
   if (collaborator.custom_role) {
-    return collaborator.custom_role.name;
+    return [collaborator.custom_role.name];
   }
 
-  return getSystemRoleDisplayName(collaborator.role);
+  if (collaborator.roles && collaborator.roles.length > 0) {
+    return collaborator.roles.map(role => ROLE_LABELS[role]);
+  }
+
+  return collaborator.role ? [ROLE_LABELS[collaborator.role]] : ['Aucun'];
+}
+
+/**
+ * Get effective role values (not labels) for collaborator
+ */
+export function getEffectiveRoleValues(collaborator: Collaborator): string[] {
+  if (collaborator.custom_role) {
+    return ['custom']; // Special value for custom roles
+  }
+
+  // Check if collaborator has multiple roles (new system)
+  if (collaborator.roles && collaborator.roles.length > 0) {
+    return collaborator.roles;
+  }
+
+  // Fallback to single role (old system or backward compatibility)
+  if (collaborator.role) {
+    return [collaborator.role];
+  }
+
+  return [];
+}
+
+/**
+ * Get effective role name from collaborator (primary role for backward compatibility)
+ */
+export function getEffectiveRole(collaborator: Collaborator): string {
+  return getEffectiveRoles(collaborator)[0] || 'Aucun';
 }
 
 /**
@@ -208,6 +240,25 @@ export function canUserManageCollaborators(
 ): boolean {
   const permissions = getCurrentUserPermissions(collaborators, currentUserId);
   return permissions.canManage;
+}
+
+// Helper functions for multiple roles support
+export function hasRole(collaborator: Collaborator, role: CollaboratorRole): boolean {
+  if (collaborator.roles) {
+    return collaborator.roles.includes(role);
+  }
+  return collaborator.role === role;
+}
+
+export function hasAnyRole(collaborator: Collaborator, roles: CollaboratorRole[]): boolean {
+  if (collaborator.roles) {
+    return roles.some(role => collaborator.roles!.includes(role));
+  }
+  return roles.includes(collaborator.role!);
+}
+
+export function collaboratorCanManageCollaborators(collaborator: Collaborator): boolean {
+  return hasAnyRole(collaborator, ['owner', 'coordinator']);
 }
 
 /**

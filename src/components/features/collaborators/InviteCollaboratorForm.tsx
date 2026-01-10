@@ -24,7 +24,7 @@ import type { InviteCollaboratorFormData } from '@/types';
 
 type InviteFormValues = {
   email: string;
-  role: string;
+  roles: string[];
 };
 
 interface InviteCollaboratorFormProps {
@@ -56,7 +56,7 @@ export function InviteCollaboratorForm({
   const roleValues = filteredRoles.map((role) => role.value);
   const inviteSchema = z.object({
     email: z.string().email('Email invalide'),
-    role: roleValues.length > 0 ? z.enum(roleValues as [string, ...string[]]) : z.string(),
+    roles: z.array(z.string()).min(1, 'Au moins un rôle doit être sélectionné'),
   });
 
   const {
@@ -70,14 +70,17 @@ export function InviteCollaboratorForm({
     resolver: zodResolver(inviteSchema),
     defaultValues: {
       email: '',
-      role: filteredRoles[0]?.value || '',
+      roles: [],
     },
   });
 
-  const selectedRole = watch('role');
+  const selectedRoles = watch('roles');
 
   const handleFormSubmit = (data: InviteFormValues) => {
-    onSubmit(data);
+    onSubmit({
+      email: data.email,
+      roles: data.roles,
+    });
   };
 
   const handleClose = () => {
@@ -121,22 +124,39 @@ export function InviteCollaboratorForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role">Role *</Label>
-            <Select value={selectedRole} onValueChange={(value) => setValue('role', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selectionnez un role" />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredRoles.map((role) => (
-                  <SelectItem key={role.value} value={role.value}>
+            <Label>Rôles *</Label>
+            <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
+              {filteredRoles.map((role) => (
+                <div key={role.value} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`role-${role.value}`}
+                    checked={selectedRoles?.includes(role.value) || false}
+                    onChange={(e) => {
+                      const currentRoles = selectedRoles || [];
+                      if (e.target.checked) {
+                        setValue('roles', [...currentRoles, role.value]);
+                      } else {
+                        setValue(
+                          'roles',
+                          currentRoles.filter((r) => r !== role.value)
+                        );
+                      }
+                    }}
+                    className="rounded border-gray-300"
+                  />
+                  <label
+                    htmlFor={`role-${role.value}`}
+                    className="text-sm font-medium cursor-pointer flex-1"
+                  >
                     <div>
                       <p className="font-medium">{role.label}</p>
                       <p className="text-xs text-muted-foreground">{role.description}</p>
                     </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  </label>
+                </div>
+              ))}
+            </div>
             {errors.role && <p className="text-sm text-destructive">{errors.role.message}</p>}
           </div>
 

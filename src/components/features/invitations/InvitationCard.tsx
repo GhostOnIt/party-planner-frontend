@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ROLE_LABELS } from '@/utils/constants';
+import { getEffectiveRoles } from '@/utils/collaboratorPermissions';
 import type { Invitation, CollaboratorRole } from '@/types';
 import { resolveUrl } from '@/lib/utils';
 
@@ -59,7 +60,7 @@ export function InvitationCard({
               </div>
               <Badge variant="secondary">
                 <Shield className="mr-1 h-3 w-3" />
-                {ROLE_LABELS[invitation.role]}
+                {getEffectiveRoles(invitation).join(', ')}
               </Badge>
             </div>
 

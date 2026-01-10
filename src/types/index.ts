@@ -139,7 +139,8 @@ export interface Collaborator {
   event_id: number;
   user_id: number;
   user: User;
-  role: CollaboratorRole;
+  role?: CollaboratorRole; // Legacy single role (for backward compatibility)
+  roles?: CollaboratorRole[]; // New multiple roles
   custom_role_id?: number;
   custom_role?: CustomRole;
   accepted_at: string | null;
@@ -381,7 +382,7 @@ export interface CreateBudgetItemFormData {
 
 export interface InviteCollaboratorFormData {
   email: string;
-  role: string;
+  roles: string[];
 }
 
 export interface PaymentFormData {
@@ -467,7 +468,8 @@ export interface Invitation {
   user?: User;
   inviter_id: number;
   inviter: User;
-  role: CollaboratorRole;
+  role?: CollaboratorRole; // Legacy single role
+  roles?: CollaboratorRole[]; // New multiple roles
   status: InvitationStatus;
   message?: string;
   expires_at?: string;

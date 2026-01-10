@@ -99,9 +99,9 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
     });
   };
 
-  const handleChangeRole = (collaboratorId: number, userId: number, role: CollaboratorRole) => {
+  const handleChangeRole = (collaboratorId: number, userId: number, roles: CollaboratorRole[]) => {
     updateCollaborator(
-      { collaboratorId, userId, role },
+      { collaboratorId, userId, roles },
       {
         onSuccess: () => {
           setCollaboratorToChangeRole(null);
