@@ -6,8 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ROLE_LABELS } from '@/utils/constants';
-import { getEffectiveRoles } from '@/utils/collaboratorPermissions';
-import type { Invitation, CollaboratorRole } from '@/types';
+import type { Invitation } from '@/types';
 import { resolveUrl } from '@/lib/utils';
 
 interface InvitationCardProps {
@@ -25,10 +24,12 @@ export function InvitationCard({
   isAccepting = false,
   isRejecting = false,
 }: InvitationCardProps) {
-  const timeAgo = formatDistanceToNow(parseISO(invitation.created_at), {
-    addSuffix: true,
-    locale: fr,
-  });
+  const timeAgo = invitation.created_at
+    ? formatDistanceToNow(parseISO(invitation.created_at), {
+        addSuffix: true,
+        locale: fr,
+      })
+    : 'Date inconnue';
 
   const eventDate = invitation.event?.date
     ? format(parseISO(invitation.event.date), 'dd MMMM yyyy', { locale: fr })
@@ -60,13 +61,16 @@ export function InvitationCard({
               </div>
               <Badge variant="secondary">
                 <Shield className="mr-1 h-3 w-3" />
-                {getEffectiveRoles(invitation).join(', ')}
+                {(invitation.roles || [invitation.role])
+                  .filter(Boolean)
+                  .map((role) => (role ? ROLE_LABELS[role] || role : 'Rôle inconnu'))
+                  .join(', ')}
               </Badge>
             </div>
 
             {invitation.event && (
               <div className="mt-3 rounded-lg bg-muted/50 p-3">
-                <h4 className="font-medium">{invitation.event.title}</h4>
+                <h4 className="font-medium">{invitation.event.title || 'Événement sans titre'}</h4>
                 <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                   {eventDate && (
                     <span className="flex items-center gap-1">
