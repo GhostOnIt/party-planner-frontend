@@ -3,18 +3,16 @@ import { Mail } from 'lucide-react';
 import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { InvitationList } from '@/components/features/invitations';
+import { InvitationList, InvitationDetailsSheet } from '@/components/features/invitations';
 import { useToast } from '@/hooks/use-toast';
-import {
-  useInvitations,
-  useAcceptInvitation,
-  useRejectInvitation,
-} from '@/hooks/useInvitations';
+import { useInvitations, useAcceptInvitation, useRejectInvitation } from '@/hooks/useInvitations';
+import type { Invitation } from '@/types';
 
 export function InvitationsPage() {
   const { toast } = useToast();
   const [acceptingId, setAcceptingId] = useState<number | null>(null);
   const [rejectingId, setRejectingId] = useState<number | null>(null);
+  const [selectedInvitation, setSelectedInvitation] = useState<Invitation | null>(null);
 
   const { data: invitations = [], isLoading } = useInvitations();
   const { mutate: acceptInvitation } = useAcceptInvitation();
@@ -29,14 +27,14 @@ export function InvitationsPage() {
       onSuccess: () => {
         toast({
           title: 'Invitation acceptee',
-          description: 'Vous avez rejoint l\'evenement en tant que collaborateur.',
+          description: "Vous avez rejoint l'evenement en tant que collaborateur.",
         });
         setAcceptingId(null);
       },
       onError: () => {
         toast({
           title: 'Erreur',
-          description: 'Impossible d\'accepter l\'invitation.',
+          description: "Impossible d'accepter l'invitation.",
           variant: 'destructive',
         });
         setAcceptingId(null);
@@ -56,7 +54,7 @@ export function InvitationsPage() {
       onError: () => {
         toast({
           title: 'Erreur',
-          description: 'Impossible de refuser l\'invitation.',
+          description: "Impossible de refuser l'invitation.",
           variant: 'destructive',
         });
         setRejectingId(null);
@@ -64,12 +62,13 @@ export function InvitationsPage() {
     });
   };
 
+  const handleViewDetails = (invitation: Invitation) => {
+    setSelectedInvitation(invitation);
+  };
+
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Invitations"
-        description="Invitations a collaborer recues"
-      />
+      <PageHeader title="Invitations" description="Invitations a collaborer recues" />
 
       <Card>
         <CardHeader>
@@ -96,12 +95,28 @@ export function InvitationsPage() {
               isLoading={isLoading}
               onAccept={handleAccept}
               onReject={handleReject}
+              onViewDetails={handleViewDetails}
               acceptingId={acceptingId}
               rejectingId={rejectingId}
             />
           )}
         </CardContent>
       </Card>
+
+      {/* Invitation Details Sheet */}
+      {selectedInvitation && (
+        <InvitationDetailsSheet
+          invitation={selectedInvitation}
+          open={!!selectedInvitation}
+          onOpenChange={(open) => {
+            if (!open) setSelectedInvitation(null);
+          }}
+          onAccept={handleAccept}
+          onReject={handleReject}
+          isAccepting={acceptingId === selectedInvitation.id}
+          isRejecting={rejectingId === selectedInvitation.id}
+        />
+      )}
     </div>
   );
 }

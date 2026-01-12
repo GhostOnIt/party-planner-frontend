@@ -1,6 +1,6 @@
 import { formatDistanceToNow, parseISO, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Calendar, Shield, Check, X } from 'lucide-react';
+import { Calendar, Shield, Check, X, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,7 @@ interface InvitationCardProps {
   invitation: Invitation;
   onAccept: (id: number) => void;
   onReject: (id: number) => void;
+  onViewDetails?: (invitation: Invitation) => void;
   isAccepting?: boolean;
   isRejecting?: boolean;
 }
@@ -21,6 +22,7 @@ export function InvitationCard({
   invitation,
   onAccept,
   onReject,
+  onViewDetails,
   isAccepting = false,
   isRejecting = false,
 }: InvitationCardProps) {
@@ -90,6 +92,16 @@ export function InvitationCard({
             <div className="mt-4 flex items-center justify-between">
               <span className="text-xs text-muted-foreground">{timeAgo}</span>
               <div className="flex gap-2">
+                {onViewDetails && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onViewDetails(invitation)}
+                  >
+                    <Eye className="mr-1 h-4 w-4" />
+                    Détails
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
