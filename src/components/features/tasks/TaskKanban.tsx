@@ -7,6 +7,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
   DragStartEvent,
   DragEndEvent,
 } from '@dnd-kit/core';
@@ -60,14 +61,9 @@ function SortableTaskCard({
   onReopen: (task: Task) => void;
   onStatusChange?: (task: Task, status: TaskStatus) => void;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -106,8 +102,19 @@ function KanbanColumn({
   onReopen: (task: Task) => void;
   onStatusChange?: (task: Task, status: TaskStatus) => void;
 }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: column.id,
+  });
+
   return (
-    <div className={cn('flex flex-col bg-muted/30 rounded-lg border-l-4', column.color)}>
+    <div
+      ref={setNodeRef}
+      className={cn(
+        'flex flex-col bg-muted/30 rounded-lg border-l-4 transition-colors',
+        column.color,
+        isOver && 'bg-muted/50 border-l-8'
+      )}
+    >
       <div className="p-3 border-b">
         <h3 className="font-semibold text-sm flex items-center gap-2">
           {column.title}
@@ -115,7 +122,7 @@ function KanbanColumn({
         </h3>
       </div>
       <div className="flex-1 p-2 space-y-2 min-h-[200px]">
-        <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           {tasks.map((task) => (
             <SortableTaskCard
               key={task.id}
