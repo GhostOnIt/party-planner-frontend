@@ -99,6 +99,7 @@ export function useCollaboratorsPermissions(eventId: string) {
     canRemove: permissions?.permissions?.includes('collaborators.remove') || false,
     canManage: permissions?.can_manage || false,
     canCreateCustomRoles: permissions?.can_create_custom_roles || false,
+    isOwner: permissions?.is_owner || false,
     hasAnyPermission:
       permissions?.permissions?.some((p) => p.startsWith('collaborators.')) || false,
   };

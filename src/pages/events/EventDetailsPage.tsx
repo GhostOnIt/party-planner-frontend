@@ -35,7 +35,12 @@ import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { EventStatusBadge, EventTypeBadge } from '@/components/features/events';
 import { useEvent, useDeleteEvent, useDuplicateEvent } from '@/hooks/useEvents';
-import { useGuestsPermissions, useTasksPermissions, useBudgetPermissions } from '@/hooks/usePermissions';
+import {
+  useGuestsPermissions,
+  useTasksPermissions,
+  useBudgetPermissions,
+  useCollaboratorsPermissions,
+} from '@/hooks/usePermissions';
 import { PermissionGuard } from '@/components/ui/permission-guard';
 import { GuestsPage } from './GuestsPage';
 import { TasksPage } from './TasksPage';
@@ -73,6 +78,7 @@ export function EventDetailsPage() {
   const guestPermissions = useGuestsPermissions(id!);
   const tasksPermissions = useTasksPermissions(id!);
   const budgetPermissions = useBudgetPermissions(id!);
+  const collaboratorsPermissions = useCollaboratorsPermissions(id!);
 
   if (isLoading) {
     return (
@@ -245,14 +251,20 @@ export function EventDetailsPage() {
             <Image className="h-4 w-4" />
             Photos
           </TabsTrigger>
-          <TabsTrigger value="collaborators" className="gap-2">
+          <TabsTrigger
+            value="collaborators"
+            className={`gap-2 ${!collaboratorsPermissions.hasAnyPermission ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!collaboratorsPermissions.hasAnyPermission}
+          >
             <UserPlus className="h-4 w-4" />
             Collaborateurs
           </TabsTrigger>
-          <TabsTrigger value="subscription" className="gap-2">
-            <Crown className="h-4 w-4" />
-            Abonnement
-          </TabsTrigger>
+          {collaboratorsPermissions.isOwner && (
+            <TabsTrigger value="subscription" className="gap-2">
+              <Crown className="h-4 w-4" />
+              Abonnement
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -351,11 +363,31 @@ export function EventDetailsPage() {
         </TabsContent>
 
         <TabsContent value="collaborators">
-          <CollaboratorsPage eventId={id} />
+          <PermissionGuard
+            eventId={id!}
+            permissions={['collaborators.view']}
+            fallback={
+              <EmptyState
+                icon={UserPlus}
+                title="Accès restreint"
+                description="Vous n'avez pas les permissions nécessaires pour consulter les collaborateurs de cet événement."
+              />
+            }
+          >
+            <CollaboratorsPage eventId={id} />
+          </PermissionGuard>
         </TabsContent>
 
         <TabsContent value="subscription">
-          <EventSubscriptionPage eventId={id} />
+          {collaboratorsPermissions.isOwner ? (
+            <EventSubscriptionPage eventId={id} />
+          ) : (
+            <EmptyState
+              icon={Crown}
+              title="Accès restreint"
+              description="Seul le propriétaire de l'événement peut gérer les abonnements."
+            />
+          )}
         </TabsContent>
       </Tabs>
 

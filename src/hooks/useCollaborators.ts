@@ -136,36 +136,67 @@ export function useCurrentUserPermissions(eventId: string) {
 
   return useQuery({
     queryKey: ['events', eventId, 'user-permissions', user?.id],
-    queryFn: async () => {
-      // This could be a separate API endpoint, but for now we'll use the collaborators data
-      const collaboratorsResponse = await api.get(`/events/${eventId}/collaborators`);
-      const collaborators = collaboratorsResponse.data?.data || collaboratorsResponse.data?.collaborators || collaboratorsResponse.data || [];
+    queryFn: async (): Promise<any> => {
+      try {
+        // Use the dedicated permissions endpoint
+        const response = await api.get(`/events/${eventId}/permissions`);
+        const permissions = response.data.permissions || [];
+        const role = response.data.role || 'none';
+        const isOwner = response.data.is_owner || false;
 
-      // Check if user is in collaborators list
-      const userCollaborator = collaborators.find((c: any) => c.user_id === user?.id);
+        // Convert to the format expected by CollaboratorsPage
+        return {
+          canManage: response.data.can_manage || false,
+          canInvite: response.data.can_invite || false,
+          canEditRoles: response.data.can_edit_roles || false,
+          canRemoveCollaborators: response.data.can_remove_collaborators || false,
+          canCreateCustomRoles: response.data.can_create_custom_roles || false,
+          canView: permissions.some((p: string) => ['collaborators.view', 'events.view'].includes(p)) || false,
+          canEdit: permissions.some((p: string) => p.includes('.edit') || p.includes('.create')) || false,
+          canDelete: permissions.some((p: string) => p.includes('.delete')) || false,
+          isOwner: isOwner,
+          isCoordinator: role === 'coordinator',
+          effectiveRole: role === 'owner' ? 'Propriétaire' :
+                        role === 'coordinator' ? 'Coordinateur' :
+                        role === 'guest_manager' ? "Gestionnaire d'Invités" :
+                        role === 'planner' ? 'Planificateur' :
+                        role === 'accountant' ? 'Comptable' :
+                        role === 'photographer' ? 'Photographe' :
+                        role === 'supervisor' ? 'Superviseur' :
+                        role === 'reporter' ? 'Rapporteur' :
+                        'Aucun',
+        };
+      } catch (error) {
+        // Fallback to old system if API fails
+        const collaboratorsResponse = await api.get(`/events/${eventId}/collaborators`);
+        const collaborators = collaboratorsResponse.data?.data || collaboratorsResponse.data?.collaborators || collaboratorsResponse.data || [];
 
-      if (userCollaborator) {
-        return getCollaboratorPermissions(userCollaborator);
+        // Check if user is in collaborators list
+        const userCollaborator = collaborators.find((c: any) => c.user_id === user?.id);
+
+        if (userCollaborator) {
+          return getCollaboratorPermissions(userCollaborator);
+        }
+
+        // If user is not in collaborators list, they might be the owner
+        return {
+          canManage: true,
+          canInvite: true,
+          canEditRoles: true,
+          canRemoveCollaborators: true,
+          canCreateCustomRoles: true,
+          canView: true,
+          canEdit: true,
+          canDelete: true,
+          isOwner: true,
+          isCoordinator: false,
+          effectiveRole: 'Propriétaire',
+        };
       }
-
-      // If user is not in collaborators list, they might be the owner
-      // For now, assume they have owner permissions if they can access this endpoint
-      return {
-        canManage: true,
-        canInvite: true,
-        canEditRoles: true,
-        canRemoveCollaborators: true,
-        canCreateCustomRoles: true,
-        canView: true,
-        canEdit: true,
-        canDelete: true,
-        isOwner: true,
-        isCoordinator: false,
-        effectiveRole: 'Propriétaire',
-        effectiveRoleColor: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-      };
     },
     enabled: !!eventId && !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
   });
 }
 
