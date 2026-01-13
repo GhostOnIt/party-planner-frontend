@@ -32,6 +32,7 @@ import {
 import { useCollaborators } from '@/hooks/useCollaborators';
 import { PermissionGuard } from '@/components/ui/permission-guard';
 import { useTasksPermissions } from '@/hooks/usePermissions';
+import { useEvent } from '@/hooks/useEvents';
 import type { Task, TaskFilters as TaskFiltersType, CreateTaskFormData, TaskStatus } from '@/types';
 
 interface TasksPageProps {
@@ -57,10 +58,19 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
   const { mutate: reopenTask } = useReopenTask(eventId!);
   const tasksPermissions = useTasksPermissions(eventId!);
   const { data: collaboratorsData } = useCollaborators(eventId!);
+  const { data: eventData } = useEvent(eventId!);
 
   const tasks = tasksData?.data || [];
   const collaborators =
     collaboratorsData?.data?.map((c) => ({ id: c.user_id, name: c.user.name })) || [];
+
+  // Build assignable users list (collaborators + owner)
+  const assignableUsers = [
+    // Add owner if available
+    ...(eventData?.user ? [{ id: eventData.user_id, name: eventData.user.name }] : []),
+    // Add collaborators
+    ...collaborators,
+  ];
 
   const handleAddTask = () => {
     setEditingTask(undefined);
@@ -243,7 +253,7 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
         task={editingTask}
         onSubmit={handleFormSubmit}
         isSubmitting={isCreating || isUpdating}
-        collaborators={collaborators}
+        collaborators={assignableUsers}
         canAssign={tasksPermissions.canAssign}
       />
 
