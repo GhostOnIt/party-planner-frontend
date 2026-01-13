@@ -29,6 +29,7 @@ import {
   useCompleteTask,
   useReopenTask,
 } from '@/hooks/useTasks';
+import { useCollaborators } from '@/hooks/useCollaborators';
 import { PermissionGuard } from '@/components/ui/permission-guard';
 import { useTasksPermissions } from '@/hooks/usePermissions';
 import type { Task, TaskFilters as TaskFiltersType, CreateTaskFormData, TaskStatus } from '@/types';
@@ -55,8 +56,11 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
   const { mutate: completeTask } = useCompleteTask(eventId!);
   const { mutate: reopenTask } = useReopenTask(eventId!);
   const tasksPermissions = useTasksPermissions(eventId!);
+  const { data: collaboratorsData } = useCollaborators(eventId!);
 
   const tasks = tasksData?.data || [];
+  const collaborators =
+    collaboratorsData?.data?.map((c) => ({ id: c.user_id, name: c.user.name })) || [];
 
   const handleAddTask = () => {
     setEditingTask(undefined);
@@ -239,6 +243,8 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
         task={editingTask}
         onSubmit={handleFormSubmit}
         isSubmitting={isCreating || isUpdating}
+        collaborators={collaborators}
+        canAssign={tasksPermissions.canAssign}
       />
 
       {/* Delete Confirmation Dialog */}

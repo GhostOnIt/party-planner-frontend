@@ -95,7 +95,7 @@ export interface Task {
   priority: TaskPriority;
   due_date: string | null;
   assigned_to: number | null;
-  assignee?: User;
+  assigned_user?: User;
   completed_at: string | null;
   created_at: string;
 }
@@ -368,7 +368,7 @@ export interface CreateTaskFormData {
   description?: string;
   priority: TaskPriority;
   due_date?: string;
-  assigned_to?: number;
+  assigned_to_user_id?: number;
 }
 
 export interface CreateBudgetItemFormData {
