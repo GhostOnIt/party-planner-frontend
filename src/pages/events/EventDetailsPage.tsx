@@ -35,6 +35,8 @@ import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { EventStatusBadge, EventTypeBadge } from '@/components/features/events';
 import { useEvent, useDeleteEvent, useDuplicateEvent } from '@/hooks/useEvents';
+import { useGuestsPermissions, useTasksPermissions, useBudgetPermissions } from '@/hooks/usePermissions';
+import { PermissionGuard } from '@/components/ui/permission-guard';
 import { GuestsPage } from './GuestsPage';
 import { TasksPage } from './TasksPage';
 import { BudgetPage } from './BudgetPage';
@@ -68,6 +70,9 @@ export function EventDetailsPage() {
   const { data: event, isLoading, error } = useEvent(id);
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
   const { mutate: duplicateEvent } = useDuplicateEvent();
+  const guestPermissions = useGuestsPermissions(id!);
+  const tasksPermissions = useTasksPermissions(id!);
+  const budgetPermissions = useBudgetPermissions(id!);
 
   if (isLoading) {
     return (
@@ -212,15 +217,27 @@ export function EventDetailsPage() {
       <Tabs value={activeTab || 'overview'} onValueChange={handleTabChange} className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-          <TabsTrigger value="guests" className="gap-2">
+          <TabsTrigger
+            value="guests"
+            className={`gap-2 ${!guestPermissions.hasAnyPermission ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!guestPermissions.hasAnyPermission}
+          >
             <Users className="h-4 w-4" />
             Invites
           </TabsTrigger>
-          <TabsTrigger value="tasks" className="gap-2">
+          <TabsTrigger
+            value="tasks"
+            className={`gap-2 ${!tasksPermissions.hasAnyPermission ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!tasksPermissions.hasAnyPermission}
+          >
             <CheckSquare className="h-4 w-4" />
             Taches
           </TabsTrigger>
-          <TabsTrigger value="budget" className="gap-2">
+          <TabsTrigger
+            value="budget"
+            className={`gap-2 ${!budgetPermissions.hasAnyPermission ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!budgetPermissions.hasAnyPermission}
+          >
             <Wallet className="h-4 w-4" />
             Budget
           </TabsTrigger>
@@ -282,15 +299,51 @@ export function EventDetailsPage() {
         </TabsContent>
 
         <TabsContent value="guests">
-          <GuestsPage eventId={id} />
+          <PermissionGuard
+            eventId={id!}
+            permissions={['guests.view']}
+            fallback={
+              <EmptyState
+                icon={Users}
+                title="Accès restreint"
+                description="Vous n'avez pas les permissions nécessaires pour consulter les invités de cet événement."
+              />
+            }
+          >
+            <GuestsPage eventId={id} />
+          </PermissionGuard>
         </TabsContent>
 
         <TabsContent value="tasks">
-          <TasksPage eventId={id} />
+          <PermissionGuard
+            eventId={id!}
+            permissions={['tasks.view']}
+            fallback={
+              <EmptyState
+                icon={CheckSquare}
+                title="Accès restreint"
+                description="Vous n'avez pas les permissions nécessaires pour consulter les tâches de cet événement."
+              />
+            }
+          >
+            <TasksPage eventId={id} />
+          </PermissionGuard>
         </TabsContent>
 
         <TabsContent value="budget">
-          <BudgetPage eventId={id} />
+          <PermissionGuard
+            eventId={id!}
+            permissions={['budget.view']}
+            fallback={
+              <EmptyState
+                icon={Wallet}
+                title="Accès restreint"
+                description="Vous n'avez pas les permissions nécessaires pour consulter le budget de cet événement."
+              />
+            }
+          >
+            <BudgetPage eventId={id} />
+          </PermissionGuard>
         </TabsContent>
 
         <TabsContent value="photos">

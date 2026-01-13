@@ -56,6 +56,8 @@ import {
   useExportGuests,
 } from '@/hooks/useGuests';
 import { useEventSubscription, useCheckLimits } from '@/hooks/useSubscription';
+import { PermissionGuard } from '@/components/ui/permission-guard';
+import { useGuestsPermissions } from '@/hooks/usePermissions';
 import type {
   Guest,
   GuestFilters as GuestFiltersType,
@@ -100,6 +102,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
   const { data: separateStats, isLoading: isLoadingStats } = useGuestStats(eventId!);
   const { data: subscription, isLoading: isLoadingSubscription } = useEventSubscription(eventId!);
   const { data: limits } = useCheckLimits(eventId!);
+  const guestPermissions = useGuestsPermissions(eventId!);
   const { mutate: createGuest, isPending: isCreating } = useCreateGuest(eventId!);
   const { mutate: updateGuest, isPending: isUpdating } = useUpdateGuest(eventId!);
   const { mutate: deleteGuest, isPending: isDeleting } = useDeleteGuest(eventId!);
@@ -161,7 +164,6 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
               title: 'Erreur',
               description: errorMessage,
               variant: 'destructive',
-
             });
           },
         }
@@ -183,7 +185,6 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
             title: 'Erreur',
             description: errorMessage,
             variant: 'destructive',
-
           });
         },
       });
@@ -732,161 +733,189 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
       )}
 
       {/* Stats */}
-      <GuestStats stats={stats} isLoading={isLoadingGuests && isLoadingStats} />
+      <PermissionGuard eventId={eventId!} permissions={['guests.view']}>
+        <GuestStats stats={stats} isLoading={isLoadingGuests && isLoadingStats} />
+      </PermissionGuard>
 
       {/* Actions Bar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <GuestFilters filters={filters} onFiltersChange={setFilters} />
 
         <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" disabled={isExporting || !hasActiveSubscription}>
-                <Download className="mr-2 h-4 w-4" />
-                Exporter
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => handleExport('csv')}>Export CSV</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport('xlsx')}>Export Excel</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport('pdf')}>Export PDF</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setShowExportModal(true)}>
-                Exporter avec filtres...
-              </DropdownMenuItem>
-             </DropdownMenuContent>
-          </DropdownMenu>
+          <PermissionGuard eventId={eventId!} permissions={['guests.export']}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={isExporting || !hasActiveSubscription}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Exporter
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleExport('csv')}>Export CSV</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('xlsx')}>
+                  Export Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('pdf')}>Export PDF</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setShowExportModal(true)}>
+                  Exporter avec filtres...
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </PermissionGuard>
 
-          <Button
-            variant="outline"
-            onClick={() => setShowImport(true)}
-            disabled={!hasActiveSubscription}
-            title={!hasActiveSubscription ? 'Abonnement requis' : undefined}
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            Importer
-          </Button>
+          <PermissionGuard eventId={eventId!} permissions={['guests.import']}>
+            <Button
+              variant="outline"
+              onClick={() => setShowImport(true)}
+              disabled={!hasActiveSubscription}
+              title={!hasActiveSubscription ? 'Abonnement requis' : undefined}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Importer
+            </Button>
+          </PermissionGuard>
 
-          <Button
-            onClick={handleAddGuest}
-            disabled={!canAddGuests}
-            title={
-              !hasActiveSubscription
-                ? 'Abonnement requis'
-                : !canAddGuests
-                  ? 'Limite atteinte'
-                  : undefined
-            }
-          >
-            {!canAddGuests && hasActiveSubscription ? (
-              <Crown className="mr-2 h-4 w-4" />
-            ) : (
-              <Plus className="mr-2 h-4 w-4" />
-            )}
-            Ajouter un invite
-          </Button>
+          <PermissionGuard eventId={eventId!} permissions={['guests.create']}>
+            <Button
+              onClick={handleAddGuest}
+              disabled={!canAddGuests}
+              title={
+                !hasActiveSubscription
+                  ? 'Abonnement requis'
+                  : !canAddGuests
+                    ? 'Limite atteinte'
+                    : undefined
+              }
+            >
+              {!canAddGuests && hasActiveSubscription ? (
+                <Crown className="mr-2 h-4 w-4" />
+              ) : (
+                <Plus className="mr-2 h-4 w-4" />
+              )}
+              Ajouter un invite
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 
       {/* Bulk Actions Bar */}
       {selectedIds.length > 0 && (
-        <BulkActionsBar
-          selectedCount={selectedIds.length}
-          selectedGuests={selectedGuests}
-          onDeselectAll={() => setSelectedIds([])}
-          onSendInvitations={handleBulkSendInvitations}
-          onSendReminders={handleBulkSendReminders}
-          onUpdateRsvp={handleBulkUpdateRsvp}
-          onCheckIn={handleBulkCheckIn}
-          onUndoCheckIn={handleBulkUndoCheckIn}
-          onExport={handleExportSelected}
-          onDelete={handleBulkDelete}
-        />
+        <PermissionGuard eventId={eventId!} permissions={['guests.view']}>
+          <BulkActionsBar
+            selectedCount={selectedIds.length}
+            selectedGuests={selectedGuests}
+            onDeselectAll={() => setSelectedIds([])}
+            onSendInvitations={
+              guestPermissions.canSendInvitations ? handleBulkSendInvitations : undefined
+            }
+            onSendReminders={
+              guestPermissions.canSendInvitations ? handleBulkSendReminders : undefined
+            }
+            onUpdateRsvp={guestPermissions.canEdit ? handleBulkUpdateRsvp : undefined}
+            onCheckIn={guestPermissions.canCheckIn ? handleBulkCheckIn : undefined}
+            onUndoCheckIn={guestPermissions.canCheckIn ? handleBulkUndoCheckIn : undefined}
+            onExport={guestPermissions.canExport ? handleExportSelected : undefined}
+            onDelete={guestPermissions.canDelete ? handleBulkDelete : undefined}
+          />
+        </PermissionGuard>
       )}
 
       {/* Guests List */}
-      {!isLoadingGuests && guests.length === 0 ? (
-        <EmptyState
-          icon={Users}
-          title="Aucun invite"
-          description={
-            !hasActiveSubscription
-              ? 'Souscrivez a un abonnement pour commencer a ajouter des invites.'
-              : filters.search || filters.rsvp_status
-                ? 'Aucun invite ne correspond a vos criteres de recherche'
-                : "Vous n'avez pas encore ajoute d'invites. Commencez par en ajouter un !"
-          }
-          action={
-            !filters.search && !filters.rsvp_status && canAddGuests
-              ? {
-                  label: 'Ajouter un invite',
-                  onClick: handleAddGuest,
-                }
-              : undefined
-          }
-        />
-      ) : (
-        <>
-          <GuestList
-            guests={guests}
-            isLoading={isLoadingGuests}
-            selectedIds={selectedIds}
-            onSelectChange={setSelectedIds}
-            onEdit={handleEditGuest}
-            onDelete={setGuestToDelete}
-            onSendInvitation={handleSendInvitation}
-            onCheckIn={handleCheckIn}
-            onUndoCheckIn={handleUndoCheckIn}
-            onViewInvitationDetails={(guest) => setGuestForInvitationDetails(guest)}
+      <PermissionGuard
+        eventId={eventId!}
+        permissions={['guests.view']}
+        fallback={
+          <EmptyState
+            icon={Users}
+            title="Accès restreint"
+            description="Vous n'avez pas les permissions nécessaires pour consulter les invités de cet événement."
           />
+        }
+      >
+        {!isLoadingGuests && guests.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="Aucun invite"
+            description={
+              !hasActiveSubscription
+                ? 'Souscrivez a un abonnement pour commencer a ajouter des invites.'
+                : filters.search || filters.rsvp_status
+                  ? 'Aucun invite ne correspond a vos criteres de recherche'
+                  : "Vous n'avez pas encore ajoute d'invites. Commencez par en ajouter un !"
+            }
+            action={
+              !filters.search && !filters.rsvp_status && canAddGuests && guestPermissions.canCreate
+                ? {
+                    label: 'Ajouter un invite',
+                    onClick: handleAddGuest,
+                  }
+                : undefined
+            }
+          />
+        ) : (
+          <>
+            <GuestList
+              guests={guests}
+              isLoading={isLoadingGuests}
+              selectedIds={selectedIds}
+              onSelectChange={setSelectedIds}
+              onEdit={handleEditGuest}
+              onDelete={setGuestToDelete}
+              onSendInvitation={handleSendInvitation}
+              onCheckIn={handleCheckIn}
+              onUndoCheckIn={handleUndoCheckIn}
+              onViewInvitationDetails={(guest) => setGuestForInvitationDetails(guest)}
+            />
 
-          {/* Pagination */}
-          {meta && meta.last_page > 1 && (
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => handlePageChange(meta.current_page - 1)}
-                    className={cn(meta.current_page === 1 && 'pointer-events-none opacity-50')}
-                  />
-                </PaginationItem>
+            {/* Pagination */}
+            {meta && meta.last_page > 1 && (
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => handlePageChange(meta.current_page - 1)}
+                      className={cn(meta.current_page === 1 && 'pointer-events-none opacity-50')}
+                    />
+                  </PaginationItem>
 
-                {Array.from({ length: meta.last_page }, (_, i) => i + 1)
-                  .filter((page) => {
-                    const current = meta.current_page;
-                    return (
-                      page === 1 ||
-                      page === meta.last_page ||
-                      (page >= current - 1 && page <= current + 1)
-                    );
-                  })
-                  .map((page, index, array) => (
-                    <PaginationItem key={page}>
-                      {index > 0 && array[index - 1] !== page - 1 && (
-                        <span className="px-2">...</span>
+                  {Array.from({ length: meta.last_page }, (_, i) => i + 1)
+                    .filter((page) => {
+                      const current = meta.current_page;
+                      return (
+                        page === 1 ||
+                        page === meta.last_page ||
+                        (page >= current - 1 && page <= current + 1)
+                      );
+                    })
+                    .map((page, index, array) => (
+                      <PaginationItem key={page}>
+                        {index > 0 && array[index - 1] !== page - 1 && (
+                          <span className="px-2">...</span>
+                        )}
+                        <PaginationLink
+                          onClick={() => handlePageChange(page)}
+                          isActive={page === meta.current_page}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => handlePageChange(meta.current_page + 1)}
+                      className={cn(
+                        meta.current_page === meta.last_page && 'pointer-events-none opacity-50'
                       )}
-                      <PaginationLink
-                        onClick={() => handlePageChange(page)}
-                        isActive={page === meta.current_page}
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
-
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => handlePageChange(meta.current_page + 1)}
-                    className={cn(
-                      meta.current_page === meta.last_page && 'pointer-events-none opacity-50'
-                    )}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
-        </>
-      )}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+          </>
+        )}
+      </PermissionGuard>
 
       {/* Guest Form Modal */}
       <GuestForm

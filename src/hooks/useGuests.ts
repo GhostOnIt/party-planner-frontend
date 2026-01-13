@@ -399,3 +399,49 @@ export function useDownloadTemplate() {
     },
   });
 }
+
+// Get guests-specific permissions for an event
+export function useGuestsPermissions(eventId: string) {
+  const { data: permissions } = useEventPermissions(eventId);
+
+  const guestPermissions = {
+    canView: permissions?.permissions?.includes('guests.view') ||
+             permissions?.user_permissions?.canView ||
+             permissions?.is_owner ||
+             false,
+    canCreate: permissions?.permissions?.includes('guests.create') ||
+               permissions?.user_permissions?.canEdit ||
+               permissions?.is_owner ||
+               false,
+    canEdit: permissions?.permissions?.includes('guests.edit') ||
+             permissions?.user_permissions?.canEdit ||
+             permissions?.is_owner ||
+             false,
+    canDelete: permissions?.permissions?.includes('guests.delete') ||
+               permissions?.user_permissions?.canDelete ||
+               permissions?.is_owner ||
+               false,
+    canImport: permissions?.permissions?.includes('guests.import') ||
+               permissions?.user_permissions?.canEdit ||
+               permissions?.is_owner ||
+               false,
+    canExport: permissions?.permissions?.includes('guests.export') ||
+               permissions?.permissions?.includes('guests.view') ||
+               permissions?.user_permissions?.canView ||
+               permissions?.is_owner ||
+               false,
+    canSendInvitations: permissions?.permissions?.includes('guests.send_invitations') ||
+                        permissions?.user_permissions?.canEdit ||
+                        permissions?.is_owner ||
+                        false,
+    canCheckIn: permissions?.permissions?.includes('guests.checkin') ||
+                permissions?.user_permissions?.canEdit ||
+                permissions?.is_owner ||
+                false,
+  };
+
+  return {
+    ...guestPermissions,
+    hasAnyPermission: Object.values(guestPermissions).some(Boolean),
+  };
+}

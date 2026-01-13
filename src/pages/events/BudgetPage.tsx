@@ -45,6 +45,8 @@ import {
   useMarkUnpaid,
   useExportBudget,
 } from '@/hooks/useBudget';
+import { PermissionGuard } from '@/components/ui/permission-guard';
+import { useBudgetPermissions } from '@/hooks/usePermissions';
 import type { BudgetItem, BudgetFilters as BudgetFiltersType, CreateBudgetItemFormData, BudgetCategory } from '@/types';
 
 interface BudgetPageProps {
@@ -100,6 +102,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
   const { mutate: markPaid } = useMarkPaid(eventId!);
   const { mutate: markUnpaid } = useMarkUnpaid(eventId!);
   const { mutate: exportBudget, isPending: isExporting } = useExportBudget(eventId!);
+  const budgetPermissions = useBudgetPermissions(eventId!);
 
   const items = budgetData?.data || [];
 
@@ -316,15 +319,28 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button onClick={handleAddItem}>
-            <Plus className="mr-2 h-4 w-4" />
-            Ajouter une depense
-          </Button>
+          <PermissionGuard eventId={eventId!} permissions={['budget.create']}>
+            <Button onClick={handleAddItem}>
+              <Plus className="mr-2 h-4 w-4" />
+              Ajouter une depense
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 
       {/* Budget List */}
-      {!isLoadingBudget && items.length === 0 ? (
+      <PermissionGuard
+        eventId={eventId!}
+        permissions={['budget.view']}
+        fallback={
+          <EmptyState
+            icon={Wallet}
+            title="Accès restreint"
+            description="Vous n'avez pas les permissions nécessaires pour consulter le budget de cet événement."
+          />
+        }
+      >
+        {!isLoadingBudget && items.length === 0 ? (
         <EmptyState
           icon={Wallet}
           title="Aucune depense"
@@ -405,6 +421,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
           )}
         </>
       )}
+      </PermissionGuard>
 
       {/* Budget Form Modal */}
       <BudgetForm

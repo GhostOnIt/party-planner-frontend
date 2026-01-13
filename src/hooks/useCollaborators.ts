@@ -130,6 +130,7 @@ export function useResendInvitation(eventId: string) {
 }
 
 // Get current user permissions for an event
+// Get current user permissions for an event
 export function useCurrentUserPermissions(eventId: string) {
   const { user } = useAuthStore();
 
@@ -164,6 +165,80 @@ export function useCurrentUserPermissions(eventId: string) {
         effectiveRoleColor: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
       };
     },
+    enabled: !!eventId && !!user?.id,
+  });
+}
+
+// Get user permissions for an event (new unified hook)
+export function useEventPermissions(eventId: string) {
+  const { user } = useAuthStore();
+
+  return useQuery({
+    queryKey: ['events', eventId, 'permissions', user?.id],
+    queryFn: async (): Promise<{
+      permissions: string[];
+      role: string;
+      is_owner: boolean;
+      user_permissions: {
+        canManage: boolean;
+        canInvite: boolean;
+        canEditRoles: boolean;
+        canRemoveCollaborators: boolean;
+        canCreateCustomRoles: boolean;
+        canView: boolean;
+        canEdit: boolean;
+        canDelete: boolean;
+        isOwner: boolean;
+        isCoordinator: boolean;
+        effectiveRole: string;
+      };
+    }> => {
+      try {
+        // Try to use the dedicated permissions endpoint
+        const response = await api.get(`/events/${eventId}/permissions`);
+        return response.data;
+      } catch (error) {
+        // Fallback to the old method using collaborators
+        const collaboratorsResponse = await api.get(`/events/${eventId}/collaborators`);
+        const collaborators = collaboratorsResponse.data?.data || collaboratorsResponse.data?.collaborators || collaboratorsResponse.data || [];
+
+        const userCollaborator = collaborators.find((c: any) => c.user_id === user?.id);
+
+        if (userCollaborator) {
+          const userPermissions = getCollaboratorPermissions(userCollaborator);
+          return {
+            permissions: [], // Will be populated when backend endpoint is ready
+            role: userPermissions.effectiveRole,
+            is_owner: userPermissions.isOwner,
+            user_permissions: userPermissions,
+          };
+        }
+
+        // Owner permissions
+        const ownerPermissions = {
+          canManage: true,
+          canInvite: true,
+          canEditRoles: true,
+          canRemoveCollaborators: true,
+          canCreateCustomRoles: true,
+          canView: true,
+          canEdit: true,
+          canDelete: true,
+          isOwner: true,
+          isCoordinator: false,
+          effectiveRole: 'Propriétaire',
+        };
+
+        return {
+          permissions: [], // Will be populated when backend endpoint is ready
+          role: 'Propriétaire',
+          is_owner: true,
+          user_permissions: ownerPermissions,
+        };
+      }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
     enabled: !!eventId && !!user?.id,
   });
 }
