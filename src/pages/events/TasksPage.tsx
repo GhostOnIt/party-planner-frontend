@@ -210,12 +210,12 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
             icon={CheckSquare}
             title="Aucune tache"
             description={
-              filters.status || filters.priority
+              filters.status || filters.priority || filters.search
                 ? 'Aucune tache ne correspond a vos criteres'
                 : "Vous n'avez pas encore cree de taches. Commencez par en ajouter une !"
             }
             action={
-              !filters.status && !filters.priority && tasksPermissions.canCreate
+              !filters.status && !filters.priority && !filters.search && tasksPermissions.canCreate
                 ? {
                     label: 'Creer une tache',
                     onClick: handleAddTask,

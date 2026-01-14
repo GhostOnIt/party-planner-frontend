@@ -421,6 +421,7 @@ export interface TaskFilters {
   status?: TaskStatus;
   priority?: TaskPriority;
   assigned_to?: number;
+  search?: string;
 }
 
 export interface BudgetFilters {

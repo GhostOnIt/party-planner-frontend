@@ -28,7 +28,7 @@ export function getEffectiveRoles(collaborator: Collaborator): string[] {
   }
 
   if (collaborator.roles && collaborator.roles.length > 0) {
-    return collaborator.roles.map(role => ROLE_LABELS[role]);
+    return collaborator.roles.map((role) => ROLE_LABELS[role]);
   }
 
   return collaborator.role ? [ROLE_LABELS[collaborator.role]] : ['Aucun'];
@@ -253,7 +253,7 @@ export function hasRole(collaborator: Collaborator, role: CollaboratorRole): boo
 
 export function hasAnyRole(collaborator: Collaborator, roles: CollaboratorRole[]): boolean {
   if (collaborator.roles) {
-    return roles.some(role => collaborator.roles!.includes(role));
+    return roles.some((role) => collaborator.roles!.includes(role));
   }
   return roles.includes(collaborator.role!);
 }
