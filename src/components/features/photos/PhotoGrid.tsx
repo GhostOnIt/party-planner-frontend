@@ -8,9 +8,9 @@ interface PhotoGridProps {
   selectedIds: number[];
   onSelectChange: (ids: number[]) => void;
   onView: (photo: Photo) => void;
-  onDelete: (photo: Photo) => void;
+  onDelete?: (photo: Photo) => void;
   onDownload: (photo: Photo) => void;
-  onSetFeatured: (photo: Photo) => void;
+  onSetFeatured?: (photo: Photo) => void;
   selectionMode?: boolean;
 }
 

@@ -28,9 +28,10 @@ export function PermissionGuard({
     return <>{fallback}</>;
   }
 
+  const userPerms = userPermissions.permissions || [];
   const hasPermission = requireAll
-    ? permissions.every(p => userPermissions.permissions?.includes(p))
-    : permissions.some(p => userPermissions.permissions?.includes(p));
+    ? permissions.every(p => userPerms.includes(p))
+    : permissions.some(p => userPerms.includes(p));
 
   return hasPermission ? <>{children}</> : <>{fallback}</>;
 }

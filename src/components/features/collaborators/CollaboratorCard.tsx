@@ -9,9 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ROLE_LABELS } from '@/utils/constants';
 import { getEffectiveRoles } from '@/utils/collaboratorPermissions';
-import type { Collaborator, CollaboratorRole } from '@/types';
+import type { Collaborator } from '@/types';
 
 interface CollaboratorCardProps {
   collaborator: Collaborator;

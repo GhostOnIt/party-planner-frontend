@@ -11,6 +11,19 @@ export interface EventPermissions {
   can_edit_roles: boolean;
   can_remove_collaborators: boolean;
   can_create_custom_roles: boolean;
+  user_permissions: {
+    canManage: boolean;
+    canInvite: boolean;
+    canEditRoles: boolean;
+    canRemoveCollaborators: boolean;
+    canCreateCustomRoles: boolean;
+    canView: boolean;
+    canEdit: boolean;
+    canDelete: boolean;
+    isOwner: boolean;
+    isCoordinator: boolean;
+    effectiveRole: string;
+  };
 }
 
 // Hook général pour récupérer les permissions d'un utilisateur sur un événement
@@ -25,7 +38,7 @@ export function useEventPermissions(eventId: string) {
     },
     enabled: !!eventId && !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 }
 

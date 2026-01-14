@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
+import { useEventPermissions } from '@/hooks/usePermissions';
 import type { Guest, GuestFilters, CreateGuestFormData, GuestStats } from '@/types';
 
 // Helper function to transform backend stats format to frontend format

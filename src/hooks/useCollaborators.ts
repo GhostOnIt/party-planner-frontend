@@ -196,7 +196,7 @@ export function useCurrentUserPermissions(eventId: string) {
     },
     enabled: !!eventId && !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 }
 
@@ -269,7 +269,7 @@ export function useEventPermissions(eventId: string) {
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     enabled: !!eventId && !!user?.id,
   });
 }

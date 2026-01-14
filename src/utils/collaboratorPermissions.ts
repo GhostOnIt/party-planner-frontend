@@ -192,19 +192,20 @@ export function getCollaboratorPermissions(
     };
   }
 
-  // Use system role permissions
+  // Use system role permissions (role might be undefined for legacy collaborators)
+  const systemRole = role || 'viewer'; // Default to viewer if no role
   return {
-    canManage: roleCanManage(role),
-    canInvite: roleCanInvite(role),
-    canEditRoles: roleCanEditRoles(role),
-    canRemoveCollaborators: roleCanRemoveCollaborators(role),
-    canCreateCustomRoles: roleCanCreateCustomRoles(role),
-    canView: roleCanView(role),
-    canEdit: roleCanEdit(role),
-    canDelete: roleCanDelete(role),
-    isOwner: isOwner(role),
-    isCoordinator: isCoordinator(role),
-    effectiveRole: getSystemRoleDisplayName(role),
+    canManage: roleCanManage(systemRole),
+    canInvite: roleCanInvite(systemRole),
+    canEditRoles: roleCanEditRoles(systemRole),
+    canRemoveCollaborators: roleCanRemoveCollaborators(systemRole),
+    canCreateCustomRoles: roleCanCreateCustomRoles(systemRole),
+    canView: roleCanView(systemRole),
+    canEdit: roleCanEdit(systemRole),
+    canDelete: roleCanDelete(systemRole),
+    isOwner: isOwner(systemRole),
+    isCoordinator: isCoordinator(systemRole),
+    effectiveRole: getSystemRoleDisplayName(systemRole),
   };
 }
 
