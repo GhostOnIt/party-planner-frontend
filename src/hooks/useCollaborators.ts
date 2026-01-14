@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
+import { useAuthStore } from '@/stores/authStore';
+import { getCollaboratorPermissions } from '@/utils/collaboratorPermissions';
 import type {
   Collaborator,
   CollaboratorFilters,
@@ -73,17 +75,17 @@ export function useUpdateCollaborator(eventId: string) {
     mutationFn: async ({
       collaboratorId,
       userId,
-      role,
+      roles,
     }: {
       collaboratorId: number;
       userId?: number;
-      role: CollaboratorRole;
+      roles: CollaboratorRole[];
     }) => {
       // Use userId for the route (backend expects user id)
       const userIdParam = userId || collaboratorId;
       const response = await api.put<Collaborator>(
         `/events/${eventId}/collaborators/${userIdParam}`,
-        { role }
+        { roles }
       );
       return response.data;
     },
@@ -123,6 +125,169 @@ export function useResendInvitation(eventId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events', eventId, 'collaborators'] });
+    },
+  });
+}
+
+// Get current user permissions for an event
+// Get current user permissions for an event
+export function useCurrentUserPermissions(eventId: string) {
+  const { user } = useAuthStore();
+
+  return useQuery({
+    queryKey: ['events', eventId, 'user-permissions', user?.id],
+    queryFn: async (): Promise<any> => {
+      try {
+        // Use the dedicated permissions endpoint
+        const response = await api.get(`/events/${eventId}/permissions`);
+        const permissions = response.data.permissions || [];
+        const role = response.data.role || 'none';
+        const isOwner = response.data.is_owner || false;
+
+        // Convert to the format expected by CollaboratorsPage
+        return {
+          canManage: response.data.can_manage || false,
+          canInvite: response.data.can_invite || false,
+          canEditRoles: response.data.can_edit_roles || false,
+          canRemoveCollaborators: response.data.can_remove_collaborators || false,
+          canCreateCustomRoles: response.data.can_create_custom_roles || false,
+          canView: permissions.some((p: string) => ['collaborators.view', 'events.view'].includes(p)) || false,
+          canEdit: permissions.some((p: string) => p.includes('.edit') || p.includes('.create')) || false,
+          canDelete: permissions.some((p: string) => p.includes('.delete')) || false,
+          isOwner: isOwner,
+          isCoordinator: role === 'coordinator',
+          effectiveRole: role === 'owner' ? 'Propriétaire' :
+                        role === 'coordinator' ? 'Coordinateur' :
+                        role === 'guest_manager' ? "Gestionnaire d'Invités" :
+                        role === 'planner' ? 'Planificateur' :
+                        role === 'accountant' ? 'Comptable' :
+                        role === 'photographer' ? 'Photographe' :
+                        role === 'supervisor' ? 'Superviseur' :
+                        role === 'reporter' ? 'Rapporteur' :
+                        'Aucun',
+        };
+      } catch (error) {
+        // Fallback to old system if API fails
+        const collaboratorsResponse = await api.get(`/events/${eventId}/collaborators`);
+        const collaborators = collaboratorsResponse.data?.data || collaboratorsResponse.data?.collaborators || collaboratorsResponse.data || [];
+
+        // Check if user is in collaborators list
+        const userCollaborator = collaborators.find((c: any) => c.user_id === user?.id);
+
+        if (userCollaborator) {
+          return getCollaboratorPermissions(userCollaborator);
+        }
+
+        // If user is not in collaborators list, they might be the owner
+        return {
+          canManage: true,
+          canInvite: true,
+          canEditRoles: true,
+          canRemoveCollaborators: true,
+          canCreateCustomRoles: true,
+          canView: true,
+          canEdit: true,
+          canDelete: true,
+          isOwner: true,
+          isCoordinator: false,
+          effectiveRole: 'Propriétaire',
+        };
+      }
+    },
+    enabled: !!eventId && !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
+// Get user permissions for an event (new unified hook)
+export function useEventPermissions(eventId: string) {
+  const { user } = useAuthStore();
+
+  return useQuery({
+    queryKey: ['events', eventId, 'permissions', user?.id],
+    queryFn: async (): Promise<{
+      permissions: string[];
+      role: string;
+      is_owner: boolean;
+      user_permissions: {
+        canManage: boolean;
+        canInvite: boolean;
+        canEditRoles: boolean;
+        canRemoveCollaborators: boolean;
+        canCreateCustomRoles: boolean;
+        canView: boolean;
+        canEdit: boolean;
+        canDelete: boolean;
+        isOwner: boolean;
+        isCoordinator: boolean;
+        effectiveRole: string;
+      };
+    }> => {
+      try {
+        // Try to use the dedicated permissions endpoint
+        const response = await api.get(`/events/${eventId}/permissions`);
+        return response.data;
+      } catch (error) {
+        // Fallback to the old method using collaborators
+        const collaboratorsResponse = await api.get(`/events/${eventId}/collaborators`);
+        const collaborators = collaboratorsResponse.data?.data || collaboratorsResponse.data?.collaborators || collaboratorsResponse.data || [];
+
+        const userCollaborator = collaborators.find((c: any) => c.user_id === user?.id);
+
+        if (userCollaborator) {
+          const userPermissions = getCollaboratorPermissions(userCollaborator);
+          return {
+            permissions: [], // Will be populated when backend endpoint is ready
+            role: userPermissions.effectiveRole,
+            is_owner: userPermissions.isOwner,
+            user_permissions: userPermissions,
+          };
+        }
+
+        // Owner permissions
+        const ownerPermissions = {
+          canManage: true,
+          canInvite: true,
+          canEditRoles: true,
+          canRemoveCollaborators: true,
+          canCreateCustomRoles: true,
+          canView: true,
+          canEdit: true,
+          canDelete: true,
+          isOwner: true,
+          isCoordinator: false,
+          effectiveRole: 'Propriétaire',
+        };
+
+        return {
+          permissions: [], // Will be populated when backend endpoint is ready
+          role: 'Propriétaire',
+          is_owner: true,
+          user_permissions: ownerPermissions,
+        };
+      }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    enabled: !!eventId && !!user?.id,
+  });
+}
+
+// Get available roles for assignment
+export function useAvailableRoles() {
+  return useQuery({
+    queryKey: ['roles', 'available'],
+    queryFn: async () => {
+      const response = await api.get<{ roles: Array<{
+        value: string;
+        label: string;
+        description: string;
+        color: string;
+        icon: string;
+      }> }>('/roles/available');
+
+      return response.data;
     },
   });
 }

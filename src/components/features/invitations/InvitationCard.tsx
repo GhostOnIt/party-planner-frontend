@@ -1,44 +1,37 @@
 import { formatDistanceToNow, parseISO, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Calendar, Shield, Check, X } from 'lucide-react';
+import { Calendar, Shield, Check, X, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Invitation, CollaboratorRole } from '@/types';
+import { ROLE_LABELS } from '@/utils/constants';
+import type { Invitation } from '@/types';
 import { resolveUrl } from '@/lib/utils';
 
 interface InvitationCardProps {
   invitation: Invitation;
   onAccept: (id: number) => void;
   onReject: (id: number) => void;
+  onViewDetails?: (invitation: Invitation) => void;
   isAccepting?: boolean;
   isRejecting?: boolean;
 }
-
-const roleLabels: Record<CollaboratorRole, string> = {
-  owner: 'Proprietaire',
-  editor: 'Editeur',
-  viewer: 'Lecteur',
-};
-
-const roleColors: Record<CollaboratorRole, string> = {
-  owner: 'bg-purple-100 text-purple-800',
-  editor: 'bg-blue-100 text-blue-800',
-  viewer: 'bg-gray-100 text-gray-800',
-};
 
 export function InvitationCard({
   invitation,
   onAccept,
   onReject,
+  onViewDetails,
   isAccepting = false,
   isRejecting = false,
 }: InvitationCardProps) {
-  const timeAgo = formatDistanceToNow(parseISO(invitation.created_at), {
-    addSuffix: true,
-    locale: fr,
-  });
+  const timeAgo = invitation.created_at
+    ? formatDistanceToNow(parseISO(invitation.created_at), {
+        addSuffix: true,
+        locale: fr,
+      })
+    : 'Date inconnue';
 
   const eventDate = invitation.event?.date
     ? format(parseISO(invitation.event.date), 'dd MMMM yyyy', { locale: fr })
@@ -68,15 +61,18 @@ export function InvitationCard({
                   vous invite a collaborer sur un evenement
                 </p>
               </div>
-              <Badge variant="secondary" className={roleColors[invitation.role]}>
+              <Badge variant="secondary">
                 <Shield className="mr-1 h-3 w-3" />
-                {roleLabels[invitation.role]}
+                {(invitation.roles || [invitation.role])
+                  .filter(Boolean)
+                  .map((role) => (role ? ROLE_LABELS[role] || role : 'Rôle inconnu'))
+                  .join(', ')}
               </Badge>
             </div>
 
             {invitation.event && (
               <div className="mt-3 rounded-lg bg-muted/50 p-3">
-                <h4 className="font-medium">{invitation.event.title}</h4>
+                <h4 className="font-medium">{invitation.event.title || 'Événement sans titre'}</h4>
                 <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                   {eventDate && (
                     <span className="flex items-center gap-1">
@@ -96,6 +92,16 @@ export function InvitationCard({
             <div className="mt-4 flex items-center justify-between">
               <span className="text-xs text-muted-foreground">{timeAgo}</span>
               <div className="flex gap-2">
+                {onViewDetails && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onViewDetails(invitation)}
+                  >
+                    <Eye className="mr-1 h-4 w-4" />
+                    Détails
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"

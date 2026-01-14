@@ -26,6 +26,7 @@ import {
 import { EventCard, EventFilters } from '@/components/features/events';
 import { useEvents, useDeleteEvent, useDuplicateEvent } from '@/hooks/useEvents';
 import { useSubscriptions } from '@/hooks/useSubscription';
+import { useAuthStore } from '@/stores/authStore';
 import type { Event, EventFilters as EventFiltersType, Subscription } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -33,6 +34,7 @@ type ViewMode = 'grid' | 'list';
 
 export function EventsListPage() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [filters, setFilters] = useState<EventFiltersType>({ per_page: 12 });
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
@@ -170,6 +172,7 @@ export function EventsListPage() {
                 key={event.id}
                 event={event}
                 subscription={subscriptionsByEventId.get(event.id)}
+                currentUserId={user?.id}
                 onEdit={handleEdit}
                 onDuplicate={handleDuplicate}
                 onDelete={setEventToDelete}

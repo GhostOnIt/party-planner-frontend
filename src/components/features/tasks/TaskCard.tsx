@@ -1,4 +1,15 @@
-import { Calendar, User, MoreHorizontal, Pencil, Trash2, CheckCircle, RotateCcw, Circle, Clock, XCircle } from 'lucide-react';
+import {
+  Calendar,
+  User,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  CheckCircle,
+  RotateCcw,
+  Circle,
+  Clock,
+  XCircle,
+} from 'lucide-react';
 import { format, parseISO, isPast, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
@@ -58,13 +69,16 @@ export function TaskCard({
       <CardContent className="p-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <p className={cn('font-medium text-sm', isCompleted && 'line-through text-muted-foreground')}>
+            <p
+              className={cn(
+                'font-medium text-sm',
+                isCompleted && 'line-through text-muted-foreground'
+              )}
+            >
               {task.title}
             </p>
             {task.description && (
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                {task.description}
-              </p>
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
             )}
           </div>
           <DropdownMenu>
@@ -148,10 +162,10 @@ export function TaskCard({
             </div>
           )}
 
-          {task.assignee && (
+          {task.assigned_user && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <User className="h-3 w-3" />
-              {task.assignee.name}
+              {task.assigned_user.name}
             </div>
           )}
         </div>

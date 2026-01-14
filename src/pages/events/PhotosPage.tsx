@@ -38,6 +38,7 @@ import {
   useDownloadMultiplePhotos,
   useSetFeaturedPhoto,
 } from '@/hooks/usePhotos';
+import { usePhotosPermissions } from '@/hooks/usePermissions';
 import type { Photo, PhotoFilters as PhotoFiltersType } from '@/types';
 
 interface PhotosPageProps {
@@ -70,6 +71,7 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
   const { mutate: downloadMultiplePhotos, isPending: isDownloadingMultiple } =
     useDownloadMultiplePhotos(eventId!);
   const { mutate: setFeaturedPhoto } = useSetFeaturedPhoto(eventId!);
+  const photosPermissions = usePhotosPermissions(eventId!);
 
   const photos = useMemo(() => photosData?.data || [], [photosData?.data]);
   const meta = photosData?.meta;
@@ -266,24 +268,28 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
                 <Download className="mr-2 h-4 w-4" />
                 {isDownloadingMultiple ? 'Telechargement...' : 'Telecharger'}
               </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setShowBatchDeleteDialog(true)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Supprimer ({selectedIds.length})
-              </Button>
+              {photosPermissions.canDelete && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowBatchDeleteDialog(true)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Supprimer ({selectedIds.length})
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={deselectAll}>
                 <XSquare className="mr-2 h-4 w-4" />
                 Annuler
               </Button>
             </>
           )}
-          <Button onClick={() => setShowUploader(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Ajouter des photos
-          </Button>
+          {photosPermissions.canUpload && (
+            <Button onClick={() => setShowUploader(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Ajouter des photos
+            </Button>
+          )}
         </div>
       </div>
 
@@ -314,9 +320,9 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
             selectedIds={selectedIds}
             onSelectChange={setSelectedIds}
             onView={handleView}
-            onDelete={handleDelete}
+            onDelete={photosPermissions.canDelete ? handleDelete : undefined}
             onDownload={handleDownload}
-            onSetFeatured={handleSetFeatured}
+            onSetFeatured={photosPermissions.canSetFeatured ? handleSetFeatured : undefined}
             selectionMode={selectionMode}
           />
 
@@ -383,9 +389,9 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
           currentIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
           onNavigate={setLightboxIndex}
-          onDelete={handleDelete}
+          onDelete={photosPermissions.canDelete ? handleDelete : undefined}
           onDownload={handleDownload}
-          onSetFeatured={handleSetFeatured}
+          onSetFeatured={photosPermissions.canSetFeatured ? handleSetFeatured : undefined}
         />
       )}
 

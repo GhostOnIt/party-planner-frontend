@@ -24,18 +24,28 @@ import {
 import { EventStatusBadge } from './EventStatusBadge';
 import { EventTypeBadge } from './EventTypeBadge';
 import { PlanBadge } from './PlanBadge';
+import { Badge } from '@/components/ui/badge';
+import { UserCheck } from 'lucide-react';
 import type { Event, Subscription } from '@/types';
 import { resolveUrl } from '@/lib/utils';
 
 interface EventCardProps {
   event: Event;
   subscription?: Subscription | null;
+  currentUserId?: number;
   onEdit?: (event: Event) => void;
   onDuplicate?: (event: Event) => void;
   onDelete?: (event: Event) => void;
 }
 
-export function EventCard({ event, subscription, onEdit, onDuplicate, onDelete }: EventCardProps) {
+export function EventCard({
+  event,
+  subscription,
+  currentUserId,
+  onEdit,
+  onDuplicate,
+  onDelete,
+}: EventCardProps) {
   const [imageError, setImageError] = useState(false);
   const formattedDate = format(parseISO(event.date), 'dd MMMM yyyy', { locale: fr });
 
@@ -72,6 +82,16 @@ export function EventCard({ event, subscription, onEdit, onDuplicate, onDelete }
             <EventStatusBadge status={event.status} />
             {plan && <PlanBadge plan={plan} />}
           </div>
+
+          {/* Badge collaborateur en haut à droite */}
+          {currentUserId && event.user_id !== currentUserId && (
+            <div className="absolute top-2 right-2">
+              <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                <UserCheck className="h-3 w-3" />
+                Collaborateur
+              </Badge>
+            </div>
+          )}
         </div>
 
         <CardContent className="p-4">

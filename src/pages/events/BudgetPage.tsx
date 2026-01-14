@@ -45,7 +45,13 @@ import {
   useMarkUnpaid,
   useExportBudget,
 } from '@/hooks/useBudget';
-import type { BudgetItem, BudgetFilters as BudgetFiltersType, CreateBudgetItemFormData, BudgetCategory } from '@/types';
+import { PermissionGuard } from '@/components/ui/permission-guard';
+import type {
+  BudgetItem,
+  BudgetFilters as BudgetFiltersType,
+  CreateBudgetItemFormData,
+  BudgetCategory,
+} from '@/types';
 
 interface BudgetPageProps {
   eventId?: string;
@@ -203,208 +209,224 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Budget estime</CardDescription>
-            <CardTitle className="text-2xl">
-              {isLoadingStats ? <Skeleton className="h-8 w-32" /> : formatCurrency(totalEstimated)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              {stats?.items_count ?? 0} postes de depenses
-            </p>
-          </CardContent>
-        </Card>
+      <PermissionGuard eventId={eventId!} permissions={['budget.view']}>
+        <div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Budget estime</CardDescription>
+                <CardTitle className="text-2xl">
+                  {isLoadingStats ? (
+                    <Skeleton className="h-8 w-32" />
+                  ) : (
+                    formatCurrency(totalEstimated)
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  {stats?.items_count ?? 0} postes de depenses
+                </p>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Depenses reelles</CardDescription>
-            <CardTitle className="text-2xl">
-              {isLoadingStats ? <Skeleton className="h-8 w-32" /> : formatCurrency(totalActual)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              {totalEstimated > 0
-                ? totalActual <= totalEstimated
-                  ? `${formatCurrency(totalEstimated - totalActual)} economises`
-                  : `${formatCurrency(totalActual - totalEstimated)} de depassement`
-                : 'Aucun budget defini'}
-            </p>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Depenses reelles</CardDescription>
+                <CardTitle className="text-2xl">
+                  {isLoadingStats ? <Skeleton className="h-8 w-32" /> : formatCurrency(totalActual)}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  {totalEstimated > 0
+                    ? totalActual <= totalEstimated
+                      ? `${formatCurrency(totalEstimated - totalActual)} economises`
+                      : `${formatCurrency(totalActual - totalEstimated)} de depassement`
+                    : 'Aucun budget defini'}
+                </p>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Deja paye</CardDescription>
-            <CardTitle className="text-2xl">
-              {isLoadingStats ? <Skeleton className="h-8 w-32" /> : formatCurrency(totalPaid)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              {totalActual > 0
-                ? `${((totalPaid / totalActual) * 100).toFixed(0)}% des depenses`
-                : '0% des depenses'}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Deja paye</CardDescription>
+                <CardTitle className="text-2xl">
+                  {isLoadingStats ? <Skeleton className="h-8 w-32" /> : formatCurrency(totalPaid)}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  {totalActual > 0
+                    ? `${((totalPaid / totalActual) * 100).toFixed(0)}% des depenses`
+                    : '0% des depenses'}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
 
-      {/* Category Summary */}
-      {stats?.by_category && stats.by_category.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Repartition par categorie</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {stats.by_category.map((cat) => {
-                const percentage = totalEstimated > 0
-                  ? (cat.estimated / totalEstimated) * 100
-                  : 0;
-                return (
-                  <div key={cat.category} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="h-3 w-3 rounded-full"
-                        style={{ backgroundColor: CATEGORY_COLORS[cat.category] || '#6b7280' }}
-                      />
-                      <span className="font-medium">
-                        {CATEGORY_LABELS[cat.category] || cat.category}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        ({cat.count} postes)
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">{formatCurrency(cat.estimated)}</p>
-                      <p className="text-xs text-muted-foreground">{percentage.toFixed(1)}%</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          {/* Category Summary */}
+          {stats?.by_category && stats.by_category.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Repartition par categorie</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {stats.by_category.map((cat) => {
+                    const percentage =
+                      totalEstimated > 0 ? (cat.estimated / totalEstimated) * 100 : 0;
+                    return (
+                      <div key={cat.category} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="h-3 w-3 rounded-full"
+                            style={{ backgroundColor: CATEGORY_COLORS[cat.category] || '#6b7280' }}
+                          />
+                          <span className="font-medium">
+                            {CATEGORY_LABELS[cat.category] || cat.category}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            ({cat.count} postes)
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">{formatCurrency(cat.estimated)}</p>
+                          <p className="text-xs text-muted-foreground">{percentage.toFixed(1)}%</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </PermissionGuard>
 
       {/* Actions Bar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <BudgetFilters filters={filters} onFiltersChange={setFilters} />
 
         <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" disabled={isExporting}>
-                <Download className="mr-2 h-4 w-4" />
-                Exporter
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => handleExport('csv')}>
-                Export CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport('xlsx')}>
-                Export Excel
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport('pdf')}>
-                Export PDF
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <PermissionGuard eventId={eventId!} permissions={['budget.export']}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={isExporting}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Exporter
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleExport('csv')}>Export CSV</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('xlsx')}>
+                  Export Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('pdf')}>Export PDF</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </PermissionGuard>
 
-          <Button onClick={handleAddItem}>
-            <Plus className="mr-2 h-4 w-4" />
-            Ajouter une depense
-          </Button>
+          <PermissionGuard eventId={eventId!} permissions={['budget.create']}>
+            <Button onClick={handleAddItem}>
+              <Plus className="mr-2 h-4 w-4" />
+              Ajouter une depense
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 
       {/* Budget List */}
-      {!isLoadingBudget && items.length === 0 ? (
-        <EmptyState
-          icon={Wallet}
-          title="Aucune depense"
-          description={
-            filters.category || filters.paid !== undefined || filters.search
-              ? 'Aucune depense ne correspond a vos criteres de recherche'
-              : "Vous n'avez pas encore ajoute de depenses. Commencez par en ajouter une !"
-          }
-          action={
-            !filters.category && filters.paid === undefined && !filters.search
-              ? {
-                  label: 'Ajouter une depense',
-                  onClick: handleAddItem,
-                }
-              : undefined
-          }
-        />
-      ) : (
-        <>
-          <BudgetList
-            items={items}
-            isLoading={isLoadingBudget}
-            selectedIds={selectedIds}
-            onSelectChange={setSelectedIds}
-            onEdit={handleEditItem}
-            onDelete={setItemToDelete}
-            onMarkPaid={handleMarkPaid}
-            onMarkUnpaid={handleMarkUnpaid}
+      <PermissionGuard
+        eventId={eventId!}
+        permissions={['budget.view']}
+        fallback={
+          <EmptyState
+            icon={Wallet}
+            title="Accès restreint"
+            description="Vous n'avez pas les permissions nécessaires pour consulter le budget de cet événement."
           />
+        }
+      >
+        {!isLoadingBudget && items.length === 0 ? (
+          <EmptyState
+            icon={Wallet}
+            title="Aucune depense"
+            description={
+              filters.category || filters.paid !== undefined || filters.search
+                ? 'Aucune depense ne correspond a vos criteres de recherche'
+                : "Vous n'avez pas encore ajoute de depenses. Commencez par en ajouter une !"
+            }
+            action={
+              !filters.category && filters.paid === undefined && !filters.search
+                ? {
+                    label: 'Ajouter une depense',
+                    onClick: handleAddItem,
+                  }
+                : undefined
+            }
+          />
+        ) : (
+          <>
+            <BudgetList
+              items={items}
+              isLoading={isLoadingBudget}
+              selectedIds={selectedIds}
+              onSelectChange={setSelectedIds}
+              onEdit={handleEditItem}
+              onDelete={setItemToDelete}
+              onMarkPaid={handleMarkPaid}
+              onMarkUnpaid={handleMarkUnpaid}
+            />
 
-          {/* Pagination */}
-          {meta && meta.last_page > 1 && (
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => handlePageChange(meta.current_page - 1)}
-                    className={cn(
-                      meta.current_page === 1 && 'pointer-events-none opacity-50'
-                    )}
-                  />
-                </PaginationItem>
+            {/* Pagination */}
+            {meta && meta.last_page > 1 && (
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => handlePageChange(meta.current_page - 1)}
+                      className={cn(meta.current_page === 1 && 'pointer-events-none opacity-50')}
+                    />
+                  </PaginationItem>
 
-                {Array.from({ length: meta.last_page }, (_, i) => i + 1)
-                  .filter((page) => {
-                    const current = meta.current_page;
-                    return (
-                      page === 1 ||
-                      page === meta.last_page ||
-                      (page >= current - 1 && page <= current + 1)
-                    );
-                  })
-                  .map((page, index, array) => (
-                    <PaginationItem key={page}>
-                      {index > 0 && array[index - 1] !== page - 1 && (
-                        <span className="px-2">...</span>
+                  {Array.from({ length: meta.last_page }, (_, i) => i + 1)
+                    .filter((page) => {
+                      const current = meta.current_page;
+                      return (
+                        page === 1 ||
+                        page === meta.last_page ||
+                        (page >= current - 1 && page <= current + 1)
+                      );
+                    })
+                    .map((page, index, array) => (
+                      <PaginationItem key={page}>
+                        {index > 0 && array[index - 1] !== page - 1 && (
+                          <span className="px-2">...</span>
+                        )}
+                        <PaginationLink
+                          onClick={() => handlePageChange(page)}
+                          isActive={page === meta.current_page}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => handlePageChange(meta.current_page + 1)}
+                      className={cn(
+                        meta.current_page === meta.last_page && 'pointer-events-none opacity-50'
                       )}
-                      <PaginationLink
-                        onClick={() => handlePageChange(page)}
-                        isActive={page === meta.current_page}
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
-
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => handlePageChange(meta.current_page + 1)}
-                    className={cn(
-                      meta.current_page === meta.last_page &&
-                        'pointer-events-none opacity-50'
-                    )}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
-        </>
-      )}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+          </>
+        )}
+      </PermissionGuard>
 
       {/* Budget Form Modal */}
       <BudgetForm
@@ -421,8 +443,8 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer la depense</AlertDialogTitle>
             <AlertDialogDescription>
-              Etes-vous sur de vouloir supprimer "{itemToDelete?.name}" ? Cette
-              action est irreversible.
+              Etes-vous sur de vouloir supprimer "{itemToDelete?.name}" ? Cette action est
+              irreversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

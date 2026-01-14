@@ -7,6 +7,7 @@ interface InvitationListProps {
   isLoading?: boolean;
   onAccept: (id: number) => void;
   onReject: (id: number) => void;
+  onViewDetails?: (invitation: Invitation) => void;
   acceptingId?: number | null;
   rejectingId?: number | null;
 }
@@ -16,6 +17,7 @@ export function InvitationList({
   isLoading = false,
   onAccept,
   onReject,
+  onViewDetails,
   acceptingId,
   rejectingId,
 }: InvitationListProps) {
@@ -50,6 +52,7 @@ export function InvitationList({
           invitation={invitation}
           onAccept={onAccept}
           onReject={onReject}
+          onViewDetails={onViewDetails}
           isAccepting={acceptingId === invitation.id}
           isRejecting={rejectingId === invitation.id}
         />

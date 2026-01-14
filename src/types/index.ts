@@ -12,7 +12,7 @@ export type BudgetCategory =
   | 'photography'
   | 'transportation'
   | 'other';
-export type CollaboratorRole = 'owner' | 'editor' | 'viewer';
+export type CollaboratorRole = 'owner' | 'coordinator' | 'guest_manager' | 'planner' | 'accountant' | 'photographer' | 'supervisor' | 'reporter' | 'editor' | 'viewer';
 export type PaymentMethod = 'mtn_mobile_money' | 'airtel_money';
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 export type PlanType = 'starter' | 'pro';
@@ -95,7 +95,7 @@ export interface Task {
   priority: TaskPriority;
   due_date: string | null;
   assigned_to: number | null;
-  assignee?: User;
+  assigned_user?: User;
   completed_at: string | null;
   created_at: string;
 }
@@ -139,9 +139,51 @@ export interface Collaborator {
   event_id: number;
   user_id: number;
   user: User;
-  role: CollaboratorRole;
+  role?: CollaboratorRole; // Legacy single role (for backward compatibility)
+  roles?: CollaboratorRole[]; // New multiple roles
+  custom_role_id?: number;
+  custom_role?: CustomRole;
   accepted_at: string | null;
   created_at: string;
+}
+
+// Permission
+export interface Permission {
+  id: number;
+  name: string;
+  display_name: string;
+  description: string | null;
+  module: string;
+  action: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Custom Role
+export interface CustomRole {
+  id: number;
+  name: string;
+  description: string | null;
+  icon: string;
+  is_system: boolean;
+  permissions: string[]; // Array of permission names
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Permission Module
+export interface PermissionModule {
+  name: string;
+  label: string;
+  icon: string;
+  permissions: Permission[];
+}
+
+// Custom Role Form Data
+export interface CustomRoleFormData {
+  name: string;
+  description?: string;
+  permissions: number[]; // Array of permission IDs
 }
 
 // Notification
@@ -326,7 +368,7 @@ export interface CreateTaskFormData {
   description?: string;
   priority: TaskPriority;
   due_date?: string;
-  assigned_to?: number;
+  assigned_to_user_id?: number;
 }
 
 export interface CreateBudgetItemFormData {
@@ -340,7 +382,7 @@ export interface CreateBudgetItemFormData {
 
 export interface InviteCollaboratorFormData {
   email: string;
-  role: CollaboratorRole;
+  roles: string[];
 }
 
 export interface PaymentFormData {
@@ -426,7 +468,8 @@ export interface Invitation {
   user?: User;
   inviter_id: number;
   inviter: User;
-  role: CollaboratorRole;
+  role?: CollaboratorRole; // Legacy single role
+  roles?: CollaboratorRole[]; // New multiple roles
   status: InvitationStatus;
   message?: string;
   expires_at?: string;

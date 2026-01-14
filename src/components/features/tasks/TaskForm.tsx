@@ -28,7 +28,7 @@ const taskFormSchema = z.object({
   description: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high']),
   due_date: z.string().optional(),
-  assigned_to: z.number().optional(),
+  assigned_to_user_id: z.number().optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -46,6 +46,7 @@ interface TaskFormProps {
   onSubmit: (data: CreateTaskFormData) => void;
   isSubmitting?: boolean;
   collaborators?: { id: number; name: string }[];
+  canAssign?: boolean;
 }
 
 export function TaskForm({
@@ -55,6 +56,7 @@ export function TaskForm({
   onSubmit,
   isSubmitting = false,
   collaborators = [],
+  canAssign = false,
 }: TaskFormProps) {
   const {
     register,
@@ -70,12 +72,12 @@ export function TaskForm({
       description: '',
       priority: 'medium',
       due_date: '',
-      assigned_to: undefined,
+      assigned_to_user_id: undefined,
     },
   });
 
   const priority = watch('priority');
-  const assignedTo = watch('assigned_to');
+  const assignedTo = watch('assigned_to_user_id');
 
   // Reset form when dialog opens or task changes
   useEffect(() => {
@@ -86,7 +88,7 @@ export function TaskForm({
           description: task.description || '',
           priority: task.priority,
           due_date: task.due_date?.split('T')[0] || '',
-          assigned_to: task.assigned_to || undefined,
+          assigned_to_user_id: task.assigned_to || undefined,
         });
       } else {
         reset({
@@ -94,7 +96,7 @@ export function TaskForm({
           description: '',
           priority: 'medium',
           due_date: '',
-          assigned_to: undefined,
+          assigned_to_user_id: undefined,
         });
       }
     }
@@ -106,7 +108,7 @@ export function TaskForm({
       description: data.description || undefined,
       priority: data.priority,
       due_date: data.due_date || undefined,
-      assigned_to: data.assigned_to,
+      assigned_to_user_id: data.assigned_to_user_id,
     });
   };
 
@@ -135,9 +137,7 @@ export function TaskForm({
               {...register('title')}
               aria-invalid={!!errors.title}
             />
-            {errors.title && (
-              <p className="text-sm text-destructive">{errors.title.message}</p>
-            )}
+            {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
           </div>
 
           <div className="space-y-2">
@@ -172,20 +172,21 @@ export function TaskForm({
 
             <div className="space-y-2">
               <Label htmlFor="due_date">Date d'echeance</Label>
-              <Input
-                id="due_date"
-                type="date"
-                {...register('due_date')}
-              />
+              <Input id="due_date" type="date" {...register('due_date')} />
             </div>
           </div>
 
-          {collaborators.length > 0 && (
+          {canAssign && collaborators.length > 0 && (
             <div className="space-y-2">
               <Label htmlFor="assigned_to">Assigne a</Label>
               <Select
                 value={assignedTo?.toString() || 'unassigned'}
-                onValueChange={(value) => setValue('assigned_to', value === 'unassigned' ? undefined : Number(value))}
+                onValueChange={(value) =>
+                  setValue(
+                    'assigned_to_user_id',
+                    value === 'unassigned' ? undefined : Number(value)
+                  )
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Non assigne" />
@@ -212,8 +213,8 @@ export function TaskForm({
                   ? 'Modification...'
                   : 'Creation...'
                 : task
-                ? 'Modifier'
-                : 'Creer'}
+                  ? 'Modifier'
+                  : 'Creer'}
             </Button>
           </DialogFooter>
         </form>
