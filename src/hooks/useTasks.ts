@@ -70,7 +70,48 @@ export function useUpdateTask(eventId: number | string) {
       const response = await api.put<Task>(`/events/${eventId}/tasks/${taskId}`, data);
       return response.data;
     },
-    onSuccess: () => {
+    onMutate: async ({ taskId, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['events', eventId, 'tasks'] });
+
+      const previous = queryClient.getQueriesData({ queryKey: ['events', eventId, 'tasks'] });
+
+      queryClient.setQueriesData({ queryKey: ['events', eventId, 'tasks'] }, (old) => {
+        if (!old) return old;
+
+        // Normalized shape from useTasks(): { data: Task[], meta: ... }
+        if (typeof old === 'object' && old !== null && 'data' in old) {
+          const anyOld = old as { data?: unknown };
+          if (Array.isArray(anyOld.data)) {
+            return {
+              ...(old as any),
+              data: (anyOld.data as Task[]).map((t) => (t.id === taskId ? { ...t, ...data } : t)),
+            };
+          }
+        }
+
+        // Fallback: raw array of tasks
+        if (Array.isArray(old)) {
+          return (old as Task[]).map((t) => (t.id === taskId ? { ...t, ...data } : t));
+        }
+
+        return old;
+      });
+
+      // Also update single-task cache if present
+      queryClient.setQueryData(['events', eventId, 'tasks', taskId], (old) => {
+        if (!old) return old;
+        return { ...(old as Task), ...(data as Partial<Task>) };
+      });
+
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (!context?.previous) return;
+      context.previous.forEach(([key, value]) => {
+        queryClient.setQueryData(key, value);
+      });
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['events', eventId, 'tasks'] });
     },
   });

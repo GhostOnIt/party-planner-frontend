@@ -177,38 +177,32 @@ export function EventDetailsPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
               <Calendar className="h-5 w-5 text-primary" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Date</p>
+            <div className="min-w-0">
+              <p className="text-sm text-muted-foreground">{event.time ? 'Date & heure' : 'Date'}</p>
               <p className="font-medium">
                 {format(parseISO(event.date), 'dd MMMM yyyy', { locale: fr })}
               </p>
+              {event.time && (
+                <p className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
+                  {event.time}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {event.time && (
-          <Card>
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10">
-                <Clock className="h-5 w-5 text-info" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Heure</p>
-                <p className="font-medium">{event.time}</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {event.location && (
           <Card>
-            <CardContent className="flex items-center gap-4 p-4">
+            <CardContent className="flex items-start gap-4 p-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
                 <MapPin className="h-5 w-5 text-success" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-muted-foreground">Lieu</p>
-                <p className="font-medium truncate">{event.location}</p>
+                <p className="font-medium break-words whitespace-normal" title={event.location}>
+                  {event.location}
+                </p>
               </div>
             </CardContent>
           </Card>

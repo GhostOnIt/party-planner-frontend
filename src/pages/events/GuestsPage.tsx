@@ -98,7 +98,13 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
     currentStatusBreakdown?: Record<string, number>;
   } | null>(null);
 
-  const { data: guestsData, isLoading: isLoadingGuests } = useGuests(eventId!, filters);
+  // Normalize search to avoid issues with leading/trailing spaces and improve matching
+  const apiFilters: GuestFiltersType = {
+    ...filters,
+    search: filters.search?.trim().replace(/\s+/g, ' ') || undefined,
+  };
+
+  const { data: guestsData, isLoading: isLoadingGuests } = useGuests(eventId!, apiFilters);
   const { data: separateStats, isLoading: isLoadingStats } = useGuestStats(eventId!);
   const { data: subscription, isLoading: isLoadingSubscription } = useEventSubscription(eventId!);
   const { data: limits } = useCheckLimits(eventId!);
