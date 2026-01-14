@@ -36,7 +36,6 @@ interface NavItem {
 const mainNavItems: NavItem[] = [
   { to: '/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
   { to: '/events', icon: Calendar, labelKey: 'nav.events' },
-  { to: '/collaborations', icon: Users, labelKey: 'nav.collaborations' },
   { to: '/invitations', icon: Mail, labelKey: 'nav.invitations' },
   { to: '/subscriptions', icon: CreditCard, labelKey: 'nav.subscriptions' },
   { to: '/notifications', icon: Bell, labelKey: 'nav.notifications' },

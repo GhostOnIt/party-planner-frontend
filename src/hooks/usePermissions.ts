@@ -33,6 +33,7 @@ export function useEventPermissions(eventId: string) {
 export function useGuestsPermissions(eventId: string) {
   const { data: permissions } = useEventPermissions(eventId);
 
+
   return {
     canView: permissions?.permissions?.includes('guests.view') || false,
     canCreate: permissions?.permissions?.includes('guests.create') || false,

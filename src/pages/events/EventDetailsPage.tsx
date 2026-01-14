@@ -14,10 +14,12 @@ import {
   MapPin,
   Clock,
   Crown,
+  UserCheck,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -35,6 +37,7 @@ import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { EventStatusBadge, EventTypeBadge } from '@/components/features/events';
 import { useEvent, useDeleteEvent, useDuplicateEvent } from '@/hooks/useEvents';
+import { useAuthStore } from '@/stores/authStore';
 import {
   useGuestsPermissions,
   useTasksPermissions,
@@ -55,6 +58,7 @@ export function EventDetailsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { user } = useAuthStore();
 
   const validTabs = [
     'overview',
@@ -157,6 +161,12 @@ export function EventDetailsPage() {
         <div className="flex items-center gap-2">
           <EventTypeBadge type={event.type} />
           <EventStatusBadge status={event.status} />
+          {user && event.user_id !== user.id && (
+            <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+              <UserCheck className="h-3 w-3" />
+              Collaborateur
+            </Badge>
+          )}
         </div>
       </div>
 

@@ -37,7 +37,6 @@
   "nav": {
     "dashboard": "Dashboard",
     "events": "My Events",
-    "collaborations": "Collaborations",
     "invitations": "Invitations",
     "subscriptions": "Subscriptions",
     "notifications": "Notifications",
@@ -255,17 +254,6 @@
       "guests": "Confirmed guests",
       "tasks": "Pending tasks",
       "budget": "Total budget"
-    }
-  },
-  "collaborations": {
-    "title": "Collaborations",
-    "invite": "Invite collaborator",
-    "pending": "Pending",
-    "accepted": "Accepted",
-    "role": {
-      "owner": "Owner",
-      "editor": "Editor",
-      "viewer": "Viewer"
     }
   }
 }

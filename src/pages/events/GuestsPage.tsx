@@ -103,6 +103,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
   const { data: subscription, isLoading: isLoadingSubscription } = useEventSubscription(eventId!);
   const { data: limits } = useCheckLimits(eventId!);
   const guestPermissions = useGuestsPermissions(eventId!);
+
   const { mutate: createGuest, isPending: isCreating } = useCreateGuest(eventId!);
   const { mutate: updateGuest, isPending: isUpdating } = useUpdateGuest(eventId!);
   const { mutate: deleteGuest, isPending: isDeleting } = useDeleteGuest(eventId!);

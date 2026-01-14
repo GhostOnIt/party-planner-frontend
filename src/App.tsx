@@ -24,7 +24,6 @@ const ResetPasswordOtpPage = lazy(() => import('@/pages/auth').then(m => ({ defa
 
 // Main pages
 const DashboardPage = lazy(() => import('@/pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
-const CollaborationsPage = lazy(() => import('@/pages/CollaborationsPage').then(m => ({ default: m.CollaborationsPage })));
 const InvitationsPage = lazy(() => import('@/pages/InvitationsPage').then(m => ({ default: m.InvitationsPage })));
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
 const SubscriptionsPage = lazy(() => import('@/pages/SubscriptionsPage').then(m => ({ default: m.SubscriptionsPage })));
@@ -107,7 +106,6 @@ function App() {
                 <Route path="/events/create" element={<CreateEventPage />} />
                 <Route path="/events/:id" element={<EventDetailsPage />} />
                 <Route path="/events/:id/edit" element={<EditEventPage />} />
-                <Route path="/collaborations" element={<CollaborationsPage />} />
                 <Route path="/invitations" element={<InvitationsPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/subscriptions" element={<SubscriptionsPage />} />
