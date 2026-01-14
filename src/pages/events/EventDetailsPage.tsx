@@ -172,35 +172,43 @@ export function EventDetailsPage() {
 
       {/* Event Info Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        {/* Date & Heure */}
+        <Card className="overflow-hidden">
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <Calendar className="h-5 w-5 text-primary" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+              <Calendar className="h-6 w-6 text-primary" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm text-muted-foreground">{event.time ? 'Date & heure' : 'Date'}</p>
-              <p className="font-medium">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {event.time ? 'Date & heure' : 'Date'}
+              </p>
+              <p className="font-semibold text-foreground truncate">
                 {format(parseISO(event.date), 'dd MMMM yyyy', { locale: fr })}
               </p>
               {event.time && (
-                <p className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
-                  <Clock className="h-3.5 w-3.5" />
-                  {event.time}
+                <p className="text-sm font-medium text-muted-foreground">
+                  {event.time.replace(':', 'h')}
                 </p>
               )}
             </div>
           </CardContent>
         </Card>
 
+        {/* Lieu */}
         {event.location && (
-          <Card>
-            <CardContent className="flex items-start gap-4 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
-                <MapPin className="h-5 w-5 text-success" />
+          <Card className="overflow-hidden">
+            <CardContent className="flex items-center gap-4 p-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-success/10">
+                <MapPin className="h-6 w-6 text-success" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm text-muted-foreground">Lieu</p>
-                <p className="font-medium break-words whitespace-normal" title={event.location}>
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Lieu
+                </p>
+                <p
+                  className="font-semibold text-foreground line-clamp-2 leading-snug"
+                  title={event.location}
+                >
                   {event.location}
                 </p>
               </div>
@@ -208,15 +216,20 @@ export function EventDetailsPage() {
           </Card>
         )}
 
+        {/* Invités */}
         {event.expected_guests && (
-          <Card>
+          <Card className="overflow-hidden">
             <CardContent className="flex items-center gap-4 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10">
-                <Users className="h-5 w-5 text-warning" />
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-warning/10">
+                <Users className="h-6 w-6 text-warning" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Invites prevus</p>
-                <p className="font-medium">{event.expected_guests}</p>
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Invités
+                </p>
+                <p className="text-lg font-bold text-foreground">
+                  {event.expected_guests.toLocaleString()}
+                </p>
               </div>
             </CardContent>
           </Card>
