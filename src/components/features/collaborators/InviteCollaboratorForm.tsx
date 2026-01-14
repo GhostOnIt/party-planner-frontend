@@ -12,48 +12,46 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import type { InviteCollaboratorFormData, CollaboratorRole } from '@/types';
 
-const inviteSchema = z.object({
-  email: z.string().email('Email invalide'),
-  role: z.enum(['editor', 'viewer'] as const),
-});
+import { useAvailableRoles } from '@/hooks/useCollaborators';
+import type { InviteCollaboratorFormData } from '@/types';
 
-type InviteFormValues = z.infer<typeof inviteSchema>;
+type InviteFormValues = {
+  email: string;
+  roles: string[];
+};
 
 interface InviteCollaboratorFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: InviteCollaboratorFormData) => void;
   isSubmitting?: boolean;
+  availableRoles?: string[];
 }
-
-const roles: { value: Exclude<CollaboratorRole, 'owner'>; label: string; description: string }[] = [
-  {
-    value: 'editor',
-    label: 'Editeur',
-    description: 'Peut modifier l\'evenement, les invites, les taches et le budget',
-  },
-  {
-    value: 'viewer',
-    label: 'Lecteur',
-    description: 'Peut uniquement consulter l\'evenement',
-  },
-];
 
 export function InviteCollaboratorForm({
   open,
   onOpenChange,
   onSubmit,
   isSubmitting = false,
+  availableRoles = [],
 }: InviteCollaboratorFormProps) {
+  // Fetch available roles from API
+  const { data: rolesData, isLoading: isLoadingRoles } = useAvailableRoles();
+  const availableRoleDefinitions = rolesData?.roles || [];
+
+  // Filter roles based on availableRoles prop (if provided)
+  const filteredRoles =
+    availableRoles.length > 0
+      ? availableRoleDefinitions.filter((role) => availableRoles.includes(role.value as string))
+      : availableRoleDefinitions;
+
+  // Create schema for invitation form
+  const inviteSchema = z.object({
+    email: z.string().email('Email invalide'),
+    roles: z.array(z.string()).min(1, 'Au moins un rôle doit être sélectionné'),
+  });
+
   const {
     register,
     handleSubmit,
@@ -65,20 +63,35 @@ export function InviteCollaboratorForm({
     resolver: zodResolver(inviteSchema),
     defaultValues: {
       email: '',
-      role: 'editor',
+      roles: [],
     },
   });
 
-  const selectedRole = watch('role');
+  const selectedRoles = watch('roles');
 
   const handleFormSubmit = (data: InviteFormValues) => {
-    onSubmit(data);
+    onSubmit({
+      email: data.email,
+      roles: data.roles,
+    });
   };
 
   const handleClose = () => {
     reset();
     onOpenChange(false);
   };
+
+  if (isLoadingRoles) {
+    return (
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-md">
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -100,34 +113,44 @@ export function InviteCollaboratorForm({
               {...register('email')}
               aria-invalid={!!errors.email}
             />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
+            {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role">Role *</Label>
-            <Select
-              value={selectedRole}
-              onValueChange={(value) => setValue('role', value as 'editor' | 'viewer')}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selectionnez un role" />
-              </SelectTrigger>
-              <SelectContent>
-                {roles.map((role) => (
-                  <SelectItem key={role.value} value={role.value}>
+            <Label>Rôles *</Label>
+            <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
+              {filteredRoles.map((role) => (
+                <div key={role.value} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`role-${role.value}`}
+                    checked={selectedRoles?.includes(role.value) || false}
+                    onChange={(e) => {
+                      const currentRoles = selectedRoles || [];
+                      if (e.target.checked) {
+                        setValue('roles', [...currentRoles, role.value]);
+                      } else {
+                        setValue(
+                          'roles',
+                          currentRoles.filter((r) => r !== role.value)
+                        );
+                      }
+                    }}
+                    className="rounded border-gray-300"
+                  />
+                  <label
+                    htmlFor={`role-${role.value}`}
+                    className="text-sm font-medium cursor-pointer flex-1"
+                  >
                     <div>
                       <p className="font-medium">{role.label}</p>
                       <p className="text-xs text-muted-foreground">{role.description}</p>
                     </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.role && (
-              <p className="text-sm text-destructive">{errors.role.message}</p>
-            )}
+                  </label>
+                </div>
+              ))}
+            </div>
+            {errors.roles && <p className="text-sm text-destructive">{errors.roles.message}</p>}
           </div>
 
           <DialogFooter>
@@ -135,7 +158,7 @@ export function InviteCollaboratorForm({
               Annuler
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Envoi...' : 'Envoyer l\'invitation'}
+              {isSubmitting ? 'Envoi...' : "Envoyer l'invitation"}
             </Button>
           </DialogFooter>
         </form>

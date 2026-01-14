@@ -137,10 +137,10 @@ export function TaskList({
                   )}
                 </TableCell>
                 <TableCell>
-                  {task.assignee ? (
+                  {task.assigned_user ? (
                     <div className="flex items-center gap-1 text-sm">
                       <User className="h-3 w-3" />
-                      {task.assignee.name}
+                      {task.assigned_user.name}
                     </div>
                   ) : (
                     <span className="text-muted-foreground">-</span>

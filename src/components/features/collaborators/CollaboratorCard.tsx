@@ -1,4 +1,4 @@
-import { Crown, MoreHorizontal, Pencil, Send, Trash2, User } from 'lucide-react';
+import { MoreHorizontal, Pencil, Send, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,8 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
-import type { Collaborator, CollaboratorRole } from '@/types';
+import { getEffectiveRoles } from '@/utils/collaboratorPermissions';
+import type { Collaborator } from '@/types';
 
 interface CollaboratorCardProps {
   collaborator: Collaborator;
@@ -21,23 +21,6 @@ interface CollaboratorCardProps {
   onResendInvitation?: (collaborator: Collaborator) => void;
 }
 
-const roleConfig: Record<CollaboratorRole, { label: string; color: string; icon: React.ReactNode }> = {
-  owner: {
-    label: 'Proprietaire',
-    color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-    icon: <Crown className="h-3 w-3" />,
-  },
-  editor: {
-    label: 'Editeur',
-    color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-    icon: <Pencil className="h-3 w-3" />,
-  },
-  viewer: {
-    label: 'Lecteur',
-    color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
-    icon: <User className="h-3 w-3" />,
-  },
-};
 
 function getInitials(name: string): string {
   return name
@@ -57,7 +40,6 @@ export function CollaboratorCard({
   onResendInvitation,
 }: CollaboratorCardProps) {
   const { user, role, accepted_at } = collaborator;
-  const config = roleConfig[role];
   const isPending = !accepted_at;
 
   return (
@@ -81,11 +63,12 @@ export function CollaboratorCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Badge className={cn('gap-1', config.color)}>
-          {config.icon}
-          {config.label}
-        </Badge>
+      <div className="flex items-center gap-2 flex-wrap">
+        {getEffectiveRoles(collaborator).map((roleName, index) => (
+          <Badge key={index} variant="secondary">
+            {roleName}
+          </Badge>
+        ))}
 
         {canManage && !isOwner && (
           <DropdownMenu>

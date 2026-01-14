@@ -12,6 +12,8 @@ export function useTasks(eventId: number | string, filters: TaskFilters = {}) {
         { params: filters }
       );
 
+
+
       // Handle both paginated response and direct array response
       if (Array.isArray(response.data)) {
         return {

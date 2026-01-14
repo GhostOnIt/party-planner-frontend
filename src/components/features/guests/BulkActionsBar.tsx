@@ -34,13 +34,13 @@ interface BulkActionsBarProps {
   selectedCount: number;
   selectedGuests: Guest[];
   onDeselectAll: () => void;
-  onSendInvitations: () => void;
-  onSendReminders: () => void;
-  onUpdateRsvp: (status: RsvpStatus) => void;
-  onCheckIn: () => void;
-  onUndoCheckIn: () => void;
-  onExport: () => void;
-  onDelete: () => void;
+  onSendInvitations?: () => void;
+  onSendReminders?: () => void;
+  onUpdateRsvp?: (status: RsvpStatus) => void;
+  onCheckIn?: () => void;
+  onUndoCheckIn?: () => void;
+  onExport?: () => void;
+  onDelete?: () => void;
   className?: string;
 }
 
@@ -140,44 +140,48 @@ export function BulkActionsBar({
           </TooltipProvider>
         </div>
 
-        {/* --- ZONE DROITE : Actions --- */}
         <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
           {/* 1. RSVP */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 gap-2 bg-white hover:bg-slate-50 border-slate-200 text-slate-700 font-medium shadow-sm"
-              >
-                <Check className="h-3.5 w-3.5 text-green-600" />
-                <span className="hidden lg:inline">RSVP</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-sm border-slate-100">
-              <DropdownMenuLabel className="text-xs text-slate-500 font-normal">
-                Définir le statut pour la sélection
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {rsvpStatuses.map((status) => (
-                <DropdownMenuItem
-                  key={status.value}
-                  onClick={() => onUpdateRsvp(status.value)}
-                  className="cursor-pointer"
+          {onUpdateRsvp && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-2 bg-white hover:bg-slate-50 border-slate-200 text-slate-700 font-medium shadow-sm"
                 >
-                  <status.icon className="mr-2 h-4 w-4 text-slate-500" />
-                  {status.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <Check className="h-3.5 w-3.5 text-green-600" />
+                  <span className="hidden lg:inline">RSVP</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-56 rounded-xl shadow-sm border-slate-100"
+              >
+                <DropdownMenuLabel className="text-xs text-slate-500 font-normal">
+                  Définir le statut pour la sélection
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {rsvpStatuses.map((status) => (
+                  <DropdownMenuItem
+                    key={status.value}
+                    onClick={() => onUpdateRsvp(status.value)}
+                    className="cursor-pointer"
+                  >
+                    <status.icon className="mr-2 h-4 w-4 text-slate-500" />
+                    {status.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
           <Separator orientation="vertical" className="h-6 mx-1 hidden sm:block bg-slate-200" />
 
           {/* 3. Actions Rapides (Check-in) */}
           {(hasEligibleForCheckIn || hasEligibleForUndoCheckIn) && (
             <div className="flex items-center gap-1">
-              {hasEligibleForCheckIn && (
+              {hasEligibleForCheckIn && onCheckIn && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>

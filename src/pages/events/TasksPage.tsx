@@ -29,6 +29,10 @@ import {
   useCompleteTask,
   useReopenTask,
 } from '@/hooks/useTasks';
+import { useCollaborators } from '@/hooks/useCollaborators';
+import { PermissionGuard } from '@/components/ui/permission-guard';
+import { useTasksPermissions } from '@/hooks/usePermissions';
+import { useEvent } from '@/hooks/useEvents';
 import type { Task, TaskFilters as TaskFiltersType, CreateTaskFormData, TaskStatus } from '@/types';
 
 interface TasksPageProps {
@@ -52,8 +56,21 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
   const { mutate: deleteTask, isPending: isDeleting } = useDeleteTask(eventId!);
   const { mutate: completeTask } = useCompleteTask(eventId!);
   const { mutate: reopenTask } = useReopenTask(eventId!);
+  const tasksPermissions = useTasksPermissions(eventId!);
+  const { data: collaboratorsData } = useCollaborators(eventId!);
+  const { data: eventData } = useEvent(eventId!);
 
   const tasks = tasksData?.data || [];
+  const collaborators =
+    collaboratorsData?.data?.map((c) => ({ id: c.user_id, name: c.user.name })) || [];
+
+  // Build assignable users list (collaborators + owner)
+  const assignableUsers = [
+    // Add owner if available
+    ...(eventData?.user ? [{ id: eventData.user_id, name: eventData.user.name }] : []),
+    // Add collaborators
+    ...collaborators,
+  ];
 
   const handleAddTask = () => {
     setEditingTask(undefined);
@@ -167,53 +184,67 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
             </TabsList>
           </Tabs>
 
-          <Button onClick={handleAddTask}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nouvelle tache
-          </Button>
+          <PermissionGuard eventId={eventId!} permissions={['tasks.create']}>
+            <Button onClick={handleAddTask}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nouvelle tache
+            </Button>
+          </PermissionGuard>
         </div>
       </div>
 
       {/* Tasks View */}
-      {!isLoading && tasks.length === 0 ? (
-        <EmptyState
-          icon={CheckSquare}
-          title="Aucune tache"
-          description={
-            filters.status || filters.priority
-              ? 'Aucune tache ne correspond a vos criteres'
-              : "Vous n'avez pas encore cree de taches. Commencez par en ajouter une !"
-          }
-          action={
-            !filters.status && !filters.priority
-              ? {
-                  label: 'Creer une tache',
-                  onClick: handleAddTask,
-                }
-              : undefined
-          }
-        />
-      ) : viewMode === 'kanban' ? (
-        <TaskKanban
-          tasks={tasks}
-          isLoading={isLoading}
-          onEdit={handleEditTask}
-          onDelete={setTaskToDelete}
-          onComplete={handleComplete}
-          onReopen={handleReopen}
-          onStatusChange={handleStatusChange}
-        />
-      ) : (
-        <TaskList
-          tasks={tasks}
-          isLoading={isLoading}
-          onEdit={handleEditTask}
-          onDelete={setTaskToDelete}
-          onComplete={handleComplete}
-          onReopen={handleReopen}
-          onStatusChange={(task, status) => handleStatusChange(task.id, status)}
-        />
-      )}
+      <PermissionGuard
+        eventId={eventId!}
+        permissions={['tasks.view']}
+        fallback={
+          <EmptyState
+            icon={CheckSquare}
+            title="Accès restreint"
+            description="Vous n'avez pas les permissions nécessaires pour consulter les tâches de cet événement."
+          />
+        }
+      >
+        {!isLoading && tasks.length === 0 ? (
+          <EmptyState
+            icon={CheckSquare}
+            title="Aucune tache"
+            description={
+              filters.status || filters.priority
+                ? 'Aucune tache ne correspond a vos criteres'
+                : "Vous n'avez pas encore cree de taches. Commencez par en ajouter une !"
+            }
+            action={
+              !filters.status && !filters.priority && tasksPermissions.canCreate
+                ? {
+                    label: 'Creer une tache',
+                    onClick: handleAddTask,
+                  }
+                : undefined
+            }
+          />
+        ) : viewMode === 'kanban' ? (
+          <TaskKanban
+            tasks={tasks}
+            isLoading={isLoading}
+            onEdit={handleEditTask}
+            onDelete={setTaskToDelete}
+            onComplete={handleComplete}
+            onReopen={handleReopen}
+            onStatusChange={handleStatusChange}
+          />
+        ) : (
+          <TaskList
+            tasks={tasks}
+            isLoading={isLoading}
+            onEdit={handleEditTask}
+            onDelete={setTaskToDelete}
+            onComplete={handleComplete}
+            onReopen={handleReopen}
+            onStatusChange={(task, status) => handleStatusChange(task.id, status)}
+          />
+        )}
+      </PermissionGuard>
 
       {/* Task Form Modal */}
       <TaskForm
@@ -222,6 +253,8 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
         task={editingTask}
         onSubmit={handleFormSubmit}
         isSubmitting={isCreating || isUpdating}
+        collaborators={assignableUsers}
+        canAssign={tasksPermissions.canAssign}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -230,8 +263,8 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer la tache</AlertDialogTitle>
             <AlertDialogDescription>
-              Etes-vous sur de vouloir supprimer "{taskToDelete?.title}" ? Cette
-              action est irreversible.
+              Etes-vous sur de vouloir supprimer "{taskToDelete?.title}" ? Cette action est
+              irreversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
