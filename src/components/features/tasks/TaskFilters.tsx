@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SearchInput } from '@/components/forms/search-input';
 import type { TaskStatus, TaskPriority, TaskFilters as TaskFiltersType } from '@/types';
 
 const statuses: { value: TaskStatus; label: string }[] = [
@@ -29,7 +30,14 @@ interface TaskFiltersProps {
 }
 
 export function TaskFilters({ filters, onFiltersChange, collaborators = [] }: TaskFiltersProps) {
-  const hasFilters = filters.status || filters.priority || filters.assigned_to;
+  const hasFilters = filters.status || filters.priority || filters.assigned_to || filters.search;
+
+  const handleSearchChange = (value: string) => {
+    onFiltersChange({
+      ...filters,
+      search: value || undefined,
+    });
+  };
 
   const handleStatusChange = (value: string) => {
     onFiltersChange({
@@ -57,20 +65,29 @@ export function TaskFilters({ filters, onFiltersChange, collaborators = [] }: Ta
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Select value={filters.status || 'all'} onValueChange={handleStatusChange}>
-        <SelectTrigger className="w-[140px]">
-          <SelectValue placeholder="Statut" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Tous les statuts</SelectItem>
-          {statuses.map((status) => (
-            <SelectItem key={status.value} value={status.value}>
-              {status.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+      <div className="flex-1">
+        <SearchInput
+          value={filters.search || ''}
+          onChange={handleSearchChange}
+          placeholder="Rechercher une tache..."
+        />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={filters.status || 'all'} onValueChange={handleStatusChange}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Statut" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous les statuts</SelectItem>
+            {statuses.map((status) => (
+              <SelectItem key={status.value} value={status.value}>
+                {status.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
       <Select value={filters.priority || 'all'} onValueChange={handlePriorityChange}>
         <SelectTrigger className="w-[140px]">
@@ -105,17 +122,18 @@ export function TaskFilters({ filters, onFiltersChange, collaborators = [] }: Ta
         </Select>
       )}
 
-      {hasFilters && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleClearFilters}
-          className="h-10 px-3"
-        >
-          <X className="mr-1 h-4 w-4" />
-          Effacer
-        </Button>
-      )}
+        {hasFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClearFilters}
+            className="h-10 px-3"
+          >
+            <X className="mr-1 h-4 w-4" />
+            Effacer
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
