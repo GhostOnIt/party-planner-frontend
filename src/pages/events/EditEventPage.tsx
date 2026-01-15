@@ -83,28 +83,28 @@ export function EditEventPage() {
         </Link>
       </div>
 
-      <Card className="max-w-2xl">
-        <CardHeader>
-          <CardTitle>Informations de l'evenement</CardTitle>
-          <CardDescription>
-            Modifiez les informations de votre evenement
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {updateError && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertDescription>{getApiErrorMessage(updateError)}</AlertDescription>
-            </Alert>
-          )}
+      <div className="mx-auto max-w-2xl">
+        <Card>
+          <CardHeader>
+            <CardTitle>Informations de l'evenement</CardTitle>
+            <CardDescription>Modifiez les informations de votre evenement</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {updateError && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertDescription>{getApiErrorMessage(updateError)}</AlertDescription>
+              </Alert>
+            )}
 
-          <EventForm
-            event={event}
-            onSubmit={handleSubmit}
-            onCancel={() => navigate(`/events/${id}`)}
-            isSubmitting={isUpdating}
-          />
-        </CardContent>
-      </Card>
+            <EventForm
+              event={event}
+              onSubmit={handleSubmit}
+              onCancel={() => navigate(`/events/${id}`)}
+              isSubmitting={isUpdating}
+            />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

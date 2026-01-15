@@ -24,6 +24,15 @@ import {
   ChangeRoleDialog,
 } from '@/components/features/collaborators';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { RoleForm } from '@/components/features/roles/RoleForm';
+import { useCustomRoles, usePermissions, useCreateCustomRole } from '@/hooks/useCustomRoles';
+import {
   useCollaborators,
   useCurrentUserPermissions,
   useInviteCollaborator,
@@ -33,7 +42,12 @@ import {
 } from '@/hooks/useCollaborators';
 import { useEventSubscription } from '@/hooks/useSubscription';
 import { getAssignableRoles } from '@/utils/collaboratorPermissions';
-import type { Collaborator, InviteCollaboratorFormData, CollaboratorRole } from '@/types';
+import type {
+  Collaborator,
+  InviteCollaboratorFormData,
+  CollaboratorRole,
+  CustomRoleFormData,
+} from '@/types';
 
 interface CollaboratorsPageProps {
   eventId?: string;
@@ -46,6 +60,7 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
   const { user } = useAuthStore();
 
   const [showInviteForm, setShowInviteForm] = useState(false);
+  const [showCreateRole, setShowCreateRole] = useState(false);
   const [collaboratorToChangeRole, setCollaboratorToChangeRole] = useState<Collaborator | null>(
     null
   );
@@ -61,6 +76,10 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
   const { mutate: resendInvitation } = useResendInvitation(eventId!);
   const { data: subscription, isLoading: isLoadingSubscription } = useEventSubscription(eventId!);
 
+  const { data: rolesData } = useCustomRoles(eventId!);
+  const { data: permissionsData, isLoading: permissionsModulesLoading } = usePermissions();
+  const createRoleMutation = useCreateCustomRole(eventId!);
+
   const collaborators = collaboratorsData?.data || [];
 
   // Check if subscription is active
@@ -68,6 +87,9 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
   const hasActiveSubscription = subscriptionStatus === 'paid' || subscriptionStatus === 'active';
   const canManage = userPermissions?.canManage || false;
   const canInvite = (userPermissions?.canInvite && hasActiveSubscription) || false;
+  const canCreateCustomRoles =
+    (userPermissions?.canCreateCustomRoles && hasActiveSubscription) || false;
+  const customRoles = (rolesData?.roles || []).filter((r) => !r.is_system);
 
   // Get assignable roles for the current user
   const assignableRoles = getAssignableRoles(collaborators, user?.id);
@@ -99,9 +121,37 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
     });
   };
 
-  const handleChangeRole = (collaboratorId: number, userId: number, roles: CollaboratorRole[]) => {
+  const handleCreateRole = (data: CustomRoleFormData) => {
+    createRoleMutation.mutate(data, {
+      onSuccess: () => {
+        setShowCreateRole(false);
+        toast({
+          title: 'Rôle créé',
+          description: 'Le rôle personnalisé a été créé avec succès.',
+        });
+      },
+      onError: (error: any) => {
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.response?.data?.errors?.name?.[0] ||
+          'Une erreur est survenue lors de la création du rôle.';
+        toast({
+          title: 'Erreur',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      },
+    });
+  };
+
+  const handleChangeRole = (
+    collaboratorId: number,
+    userId: number,
+    roles: CollaboratorRole[],
+    customRoleIds: number[]
+  ) => {
     updateCollaborator(
-      { collaboratorId, userId, roles },
+      { collaboratorId, userId, roles, custom_role_ids: customRoleIds },
       {
         onSuccess: () => {
           setCollaboratorToChangeRole(null);
@@ -197,12 +247,20 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
               </CardTitle>
               <CardDescription>Gerez les personnes qui ont acces a cet evenement.</CardDescription>
             </div>
-            {canInvite && (
-              <Button onClick={() => setShowInviteForm(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Inviter
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {canCreateCustomRoles && (
+                <Button variant="outline" onClick={() => setShowCreateRole(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nouveau rôle
+                </Button>
+              )}
+              {canInvite && (
+                <Button onClick={() => setShowInviteForm(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Inviter
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -216,6 +274,10 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
                 {collaborators.filter((c) => !c.accepted_at).length}
               </span>
               <span className="ml-1 text-muted-foreground">en attente</span>
+            </div>
+            <div>
+              <span className="font-medium">{customRoles.length}</span>
+              <span className="ml-1 text-muted-foreground">rôle(s) personnalisé(s)</span>
             </div>
           </div>
         </CardContent>
@@ -264,13 +326,34 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
         onSubmit={handleInvite}
         isSubmitting={isInviting}
         availableRoles={assignableRoles}
+        customRoles={customRoles}
       />
+
+      {/* Create Custom Role Dialog */}
+      <Dialog open={showCreateRole} onOpenChange={setShowCreateRole}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Créer un rôle pour cet événement</DialogTitle>
+            <DialogDescription>
+              Choisissez précisément les permissions. Ce rôle sera disponible uniquement sur cet
+              événement.
+            </DialogDescription>
+          </DialogHeader>
+          <RoleForm
+            permissions={permissionsData?.permissions || []}
+            onSubmit={handleCreateRole}
+            isSubmitting={createRoleMutation.isPending || permissionsModulesLoading}
+            submitLabel="Créer le rôle"
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Change Role Dialog */}
       <ChangeRoleDialog
         open={!!collaboratorToChangeRole}
         onOpenChange={() => setCollaboratorToChangeRole(null)}
         collaborator={collaboratorToChangeRole}
+        eventId={eventId!}
         onConfirm={handleChangeRole}
         isSubmitting={isUpdating}
         availableRoles={assignableRoles}

@@ -12,7 +12,6 @@ import {
   UserPlus,
   Calendar,
   MapPin,
-  Clock,
   Crown,
   UserCheck,
 } from 'lucide-react';

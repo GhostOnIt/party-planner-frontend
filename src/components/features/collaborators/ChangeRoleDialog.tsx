@@ -10,14 +10,20 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useAvailableRoles } from '@/hooks/useCollaborators';
-import { getEffectiveRoleValues } from '@/utils/collaboratorPermissions';
-import type { Collaborator, CollaboratorRole } from '@/types';
+import { useCustomRoles } from '@/hooks/useCustomRoles';
+import type { Collaborator, CollaboratorRole, CustomRole } from '@/types';
 
 interface ChangeRoleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   collaborator: Collaborator | null;
-  onConfirm: (collaboratorId: number, userId: number, roles: CollaboratorRole[]) => void;
+  eventId: string;
+  onConfirm: (
+    collaboratorId: number,
+    userId: number,
+    roles: CollaboratorRole[],
+    customRoleIds: number[]
+  ) => void;
   isSubmitting?: boolean;
   availableRoles?: CollaboratorRole[];
 }
@@ -26,12 +32,15 @@ export function ChangeRoleDialog({
   open,
   onOpenChange,
   collaborator,
+  eventId,
   onConfirm,
   isSubmitting = false,
   availableRoles = [],
 }: ChangeRoleDialogProps) {
   const { data: systemRolesData } = useAvailableRoles();
   const systemRoles = systemRolesData?.roles || [];
+  const { data: rolesData } = useCustomRoles(eventId);
+  const customRoles: CustomRole[] = (rolesData?.roles || []).filter((r) => !r.is_system);
 
   // Filter system roles based on what the current user can assign
   const filteredRoles =
@@ -40,13 +49,30 @@ export function ChangeRoleDialog({
       : systemRoles;
 
   const [selectedRoles, setSelectedRoles] = useState<CollaboratorRole[]>([]);
+  const [selectedCustomRoleIds, setSelectedCustomRoleIds] = useState<number[]>([]);
 
   useEffect(() => {
     if (collaborator) {
-      // Get current roles, excluding owner role
-      const currentRoles = getEffectiveRoleValues(collaborator).filter(
-        (role) => role !== 'owner'
-      ) as CollaboratorRole[];
+      // Get current system roles, excluding owner role
+      const currentRoles = (
+        (collaborator.roles && collaborator.roles.length > 0
+          ? collaborator.roles
+          : collaborator.role
+            ? [collaborator.role]
+            : []) as CollaboratorRole[]
+      ).filter((role) => role !== 'owner');
+
+      // Set current custom role if any
+      if (Array.isArray(collaborator.custom_role_ids)) {
+        setSelectedCustomRoleIds(collaborator.custom_role_ids);
+      } else if (collaborator.custom_roles && collaborator.custom_roles.length > 0) {
+        setSelectedCustomRoleIds(collaborator.custom_roles.map((r) => r.id));
+      } else if (collaborator.custom_role_id) {
+        // legacy fallback
+        setSelectedCustomRoleIds([collaborator.custom_role_id]);
+      } else {
+        setSelectedCustomRoleIds([]);
+      }
 
       if (currentRoles.length > 0) {
         setSelectedRoles(currentRoles);
@@ -56,8 +82,16 @@ export function ChangeRoleDialog({
       }
     } else if (filteredRoles.length > 0) {
       setSelectedRoles([filteredRoles[0].value as CollaboratorRole]);
+      setSelectedCustomRoleIds([]);
     }
   }, [collaborator, filteredRoles]);
+
+  const handleCustomRoleToggle = (roleId: number, checked: boolean) => {
+    setSelectedCustomRoleIds((prev) => {
+      if (checked) return [...prev, roleId];
+      return prev.filter((id) => id !== roleId);
+    });
+  };
 
   const handleRoleToggle = (roleValue: CollaboratorRole, checked: boolean) => {
     if (checked) {
@@ -68,8 +102,13 @@ export function ChangeRoleDialog({
   };
 
   const handleConfirm = () => {
-    if (collaborator && selectedRoles.length > 0) {
-      onConfirm(collaborator.id, collaborator.user_id, selectedRoles);
+    if (collaborator) {
+      onConfirm(
+        collaborator.id,
+        collaborator.user_id,
+        selectedRoles.length > 0 ? selectedRoles : (['viewer'] as CollaboratorRole[]),
+        selectedCustomRoleIds
+      );
     }
   };
 
@@ -87,6 +126,46 @@ export function ChangeRoleDialog({
           <div className="space-y-2">
             <Label>Nouveaux rôles</Label>
             <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
+              {/* Custom roles (if any) */}
+              {customRoles.length > 0 && (
+                <>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Rôles personnalisés
+                  </p>
+
+                  {customRoles.map((role) => (
+                    <div key={role.id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`change-custom-role-${role.id}`}
+                        checked={selectedCustomRoleIds.includes(role.id)}
+                        onChange={() => {
+                          const nextChecked = !selectedCustomRoleIds.includes(role.id);
+                          handleCustomRoleToggle(role.id, nextChecked);
+                        }}
+                        className="rounded border-gray-300"
+                      />
+                      <label
+                        htmlFor={`change-custom-role-${role.id}`}
+                        className="text-sm font-medium cursor-pointer flex-1"
+                      >
+                        <div>
+                          <p className="font-medium">{role.name}</p>
+                          {role.description && (
+                            <p className="text-xs text-muted-foreground">{role.description}</p>
+                          )}
+                        </div>
+                      </label>
+                    </div>
+                  ))}
+
+                  <div className="my-2 border-t" />
+                </>
+              )}
+
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Rôles système
+              </p>
               {filteredRoles.map((role) => (
                 <div key={role.value} className="flex items-center space-x-2">
                   <input
@@ -111,8 +190,10 @@ export function ChangeRoleDialog({
                 </div>
               ))}
             </div>
-            {selectedRoles.length === 0 && (
-              <p className="text-sm text-destructive">Au moins un rôle doit être sélectionné</p>
+            {selectedRoles.length === 0 && selectedCustomRoleIds.length === 0 && (
+              <p className="text-sm text-destructive">
+                Sélectionnez au moins un rôle (système ou personnalisé)
+              </p>
             )}
           </div>
         </div>
@@ -121,7 +202,12 @@ export function ChangeRoleDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Annuler
           </Button>
-          <Button onClick={handleConfirm} disabled={isSubmitting || selectedRoles.length === 0}>
+          <Button
+            onClick={handleConfirm}
+            disabled={
+              isSubmitting || (selectedRoles.length === 0 && selectedCustomRoleIds.length === 0)
+            }
+          >
             {isSubmitting ? 'Modification...' : 'Modifier'}
           </Button>
         </DialogFooter>

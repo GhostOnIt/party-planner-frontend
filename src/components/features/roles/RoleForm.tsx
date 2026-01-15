@@ -184,7 +184,7 @@ export function RoleForm({
                         <div key={permission.id} className="flex items-start gap-3">
                           <Checkbox
                             checked={selectedPermissions.includes(permission.id)}
-                            onChange={() => togglePermission(permission.id)}
+                            onCheckedChange={() => togglePermission(permission.id)}
                             className="mt-0.5"
                           />
                           <div className="flex-1">
