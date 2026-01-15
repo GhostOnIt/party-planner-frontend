@@ -20,6 +20,7 @@ export function InvitationResponsePage() {
   const { token } = useParams<{ token: string }>();
   const [submittedStatus, setSubmittedStatus] = useState<RsvpStatus | null>(null);
   const [submittedPlusOneName, setSubmittedPlusOneName] = useState<string | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
 
   const {
     data: invitation,
@@ -35,6 +36,7 @@ export function InvitationResponsePage() {
       onSuccess: (response) => {
         setSubmittedStatus(response.guest.rsvp_status);
         setSubmittedPlusOneName(response.guest.plus_one_name);
+        setShowEditForm(false);
         // Refetch to update the local data
         refetch();
       },
@@ -114,8 +116,17 @@ export function InvitationResponsePage() {
     );
   }
 
-  // Show confirmation if just submitted
-  if (submittedStatus) {
+  // Check if user has already responded
+  const hasAlreadyResponded = 
+    (invitation.has_responded || invitation.already_responded) && 
+    invitation.guest.rsvp_status !== 'pending';
+
+  // Determine which status and plusOneName to show
+  const displayStatus = submittedStatus || invitation.guest.rsvp_status;
+  const displayPlusOneName = submittedStatus ? submittedPlusOneName : invitation.guest.plus_one_name;
+
+  // Show confirmation if just submitted OR if already responded (unless user wants to edit)
+  if ((submittedStatus || hasAlreadyResponded) && !showEditForm) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background">
         <div className="container mx-auto max-w-2xl px-4 py-8">
@@ -127,17 +138,22 @@ export function InvitationResponsePage() {
             </div>
 
             <RsvpConfirmation
-              status={submittedStatus}
+              status={displayStatus}
               guestName={invitation.guest.name}
               eventDate={invitation.event.date}
               eventLocation={invitation.event.location ?? null}
-              plusOneName={submittedPlusOneName}
+              plusOneName={displayPlusOneName}
             />
 
             <div className="text-center">
               <Button
                 variant="outline"
-                onClick={() => setSubmittedStatus(null)}
+                onClick={() => {
+                  setShowEditForm(true);
+                  setSubmittedStatus(null);
+                  // Scroll to form if needed
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               >
                 Modifier ma reponse
               </Button>
@@ -161,17 +177,6 @@ export function InvitationResponsePage() {
 
           {/* Event Info */}
           <EventInfoCard event={invitation.event} />
-
-          {/* Already responded notice */}
-          {(invitation.has_responded || invitation.already_responded) && invitation.guest.rsvp_status !== 'pending' && (
-            <Card className="border-blue-200 bg-blue-50">
-              <CardContent className="p-4">
-                <p className="text-sm text-blue-800">
-                  Vous avez deja repondu a cette invitation. Vous pouvez modifier votre reponse ci-dessous.
-                </p>
-              </CardContent>
-            </Card>
-          )}
 
           {/* RSVP Form */}
           <RsvpForm
