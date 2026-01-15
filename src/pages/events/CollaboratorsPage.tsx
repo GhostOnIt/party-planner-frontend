@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Plus, UserPlus, Users } from 'lucide-react';
+import { Plus, UserPlus, Users, Pencil, Trash2, Shield, Lock, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AlertDialog,
@@ -14,6 +15,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/stores/authStore';
@@ -31,7 +38,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { RoleForm } from '@/components/features/roles/RoleForm';
-import { useCustomRoles, usePermissions, useCreateCustomRole } from '@/hooks/useCustomRoles';
+import {
+  useCustomRoles,
+  usePermissions,
+  useCreateCustomRole,
+  useUpdateCustomRole,
+  useDeleteCustomRole,
+} from '@/hooks/useCustomRoles';
 import {
   useCollaborators,
   useCurrentUserPermissions,
@@ -47,6 +60,7 @@ import type {
   InviteCollaboratorFormData,
   CollaboratorRole,
   CustomRoleFormData,
+  CustomRole,
 } from '@/types';
 
 interface CollaboratorsPageProps {
@@ -61,6 +75,8 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
 
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [showCreateRole, setShowCreateRole] = useState(false);
+  const [editingRole, setEditingRole] = useState<CustomRole | null>(null);
+  const [roleToDelete, setRoleToDelete] = useState<CustomRole | null>(null);
   const [collaboratorToChangeRole, setCollaboratorToChangeRole] = useState<Collaborator | null>(
     null
   );
@@ -79,6 +95,8 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
   const { data: rolesData } = useCustomRoles(eventId!);
   const { data: permissionsData, isLoading: permissionsModulesLoading } = usePermissions();
   const createRoleMutation = useCreateCustomRole(eventId!);
+  const updateRoleMutation = useUpdateCustomRole(eventId!, editingRole?.id || 0);
+  const deleteRoleMutation = useDeleteCustomRole(eventId!, roleToDelete?.id || 0);
 
   const collaborators = collaboratorsData?.data || [];
 
@@ -90,6 +108,23 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
   const canCreateCustomRoles =
     (userPermissions?.canCreateCustomRoles && hasActiveSubscription) || false;
   const customRoles = (rolesData?.roles || []).filter((r) => !r.is_system);
+
+  const permissionNameToId = new Map<string, number>();
+  (permissionsData?.permissions || []).forEach((module) => {
+    module.permissions.forEach((p) => {
+      permissionNameToId.set(p.name, p.id);
+    });
+  });
+
+  const getRoleAssignedCount = (roleId: number) => {
+    return collaborators.filter((c) => {
+      const ids =
+        (c.custom_role_ids && Array.isArray(c.custom_role_ids) ? c.custom_role_ids : []) ||
+        (c.custom_roles ? c.custom_roles.map((r) => r.id) : []) ||
+        (c.custom_role_id ? [c.custom_role_id] : []);
+      return ids.includes(roleId);
+    }).length;
+  };
 
   // Get assignable roles for the current user
   const assignableRoles = getAssignableRoles(collaborators, user?.id);
@@ -135,6 +170,57 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
           error?.response?.data?.message ||
           error?.response?.data?.errors?.name?.[0] ||
           'Une erreur est survenue lors de la création du rôle.';
+        toast({
+          title: 'Erreur',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      },
+    });
+  };
+
+  const handleUpdateRole = (data: CustomRoleFormData) => {
+    if (!editingRole) return;
+
+    updateRoleMutation.mutate(data, {
+      onSuccess: () => {
+        setEditingRole(null);
+        toast({
+          title: 'Rôle modifié',
+          description: 'Le rôle personnalisé a été modifié avec succès.',
+        });
+      },
+      onError: (error: any) => {
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.response?.data?.errors?.name?.[0] ||
+          error?.response?.data?.errors?.permissions?.[0] ||
+          'Une erreur est survenue lors de la modification du rôle.';
+        toast({
+          title: 'Erreur',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      },
+    });
+  };
+
+  const handleDeleteRole = () => {
+    if (!roleToDelete) return;
+
+    deleteRoleMutation.mutate(undefined, {
+      onSuccess: () => {
+        toast({
+          title: 'Rôle supprimé',
+          description: 'Le rôle personnalisé a été supprimé avec succès.',
+        });
+        setRoleToDelete(null);
+      },
+      onError: (error: any) => {
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.response?.data?.errors?.role?.[0] ||
+          'Une erreur est survenue lors de la suppression du rôle.';
         toast({
           title: 'Erreur',
           description: errorMessage,
@@ -319,6 +405,124 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
         />
       )}
 
+      {/* Custom Roles Grid */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h3 className="text-lg font-medium flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              Rôles personnalisés
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Définissez des accès granulaires spécifiques à cet événement.
+            </p>
+          </div>
+        </div>
+
+        {customRoles.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+              <Shield className="h-10 w-10 text-muted-foreground/50 mb-4" />
+              <p className="text-sm font-medium text-muted-foreground">Aucun rôle personnalisé</p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+                Créez des rôles sur mesure pour limiter l'accès à certaines fonctionnalités.
+              </p>
+              {canCreateCustomRoles && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => setShowCreateRole(true)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Créer un rôle
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {customRoles.map((role) => {
+              const assignedCount = getRoleAssignedCount(role.id);
+              const canDelete = assignedCount === 0;
+
+              return (
+                <Card
+                  key={role.id}
+                  className="group hover:shadow-md transition-all duration-200 border-muted-foreground/20 hover:border-primary/50"
+                >
+                  <CardHeader className="pb-3 pt-5 px-5 flex flex-row items-start justify-between space-y-0">
+                    <div className="space-y-1 pr-2">
+                      <CardTitle className="text-base font-semibold truncate leading-none">
+                        {role.name}
+                      </CardTitle>
+                      <CardDescription className="line-clamp-2 text-xs min-h-[2.5em]">
+                        {role.description || 'Aucune description fournie.'}
+                      </CardDescription>
+                    </div>
+
+                    {canCreateCustomRoles && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 -mt-1 -mr-2 text-muted-foreground"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                            <span className="sr-only">Actions</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setEditingRole(role)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Modifier
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setRoleToDelete(role)}
+                            disabled={!canDelete}
+                            className={
+                              !canDelete
+                                ? 'opacity-50 cursor-not-allowed'
+                                : 'text-destructive focus:text-destructive'
+                            }
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </CardHeader>
+
+                  <CardContent className="px-5 pb-5">
+                    <div className="flex items-center gap-3 pt-2">
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center gap-1 font-normal text-xs px-2 py-0.5"
+                      >
+                        <Lock className="h-3 w-3 text-muted-foreground" />
+                        <span>{role.permissions?.length || 0} perm.</span>
+                      </Badge>
+
+                      <Badge
+                        variant={assignedCount > 0 ? 'default' : 'outline'}
+                        className={`flex items-center gap-1 font-normal text-xs px-2 py-0.5 ${assignedCount === 0 ? 'text-muted-foreground border-dashed' : ''}`}
+                      >
+                        <Users className="h-3 w-3" />
+                        <span>
+                          {assignedCount} membre{assignedCount > 1 ? 's' : ''}
+                        </span>
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Invite Form Modal */}
       <InviteCollaboratorForm
         open={showInviteForm}
@@ -347,6 +551,62 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
           />
         </DialogContent>
       </Dialog>
+
+      {/* Edit Custom Role Dialog */}
+      <Dialog open={!!editingRole} onOpenChange={() => setEditingRole(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Modifier le rôle</DialogTitle>
+            <DialogDescription>
+              Modifiez le nom, la description et les permissions du rôle "{editingRole?.name}".
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingRole && (
+            <RoleForm
+              initialData={{
+                name: editingRole.name,
+                description: editingRole.description || '',
+                permissions: (editingRole.permissions || [])
+                  .map((permName) => permissionNameToId.get(permName))
+                  .filter((v): v is number => typeof v === 'number'),
+              }}
+              permissions={permissionsData?.permissions || []}
+              onSubmit={handleUpdateRole}
+              isSubmitting={updateRoleMutation.isPending || permissionsModulesLoading}
+              submitLabel="Modifier le rôle"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Custom Role Confirmation */}
+      <AlertDialog open={!!roleToDelete} onOpenChange={() => setRoleToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer le rôle</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer le rôle "{roleToDelete?.name}" ? Cette action est
+              irréversible.
+              <br />
+              <span className="text-sm">
+                Note: un rôle ne peut pas être supprimé s'il est assigné à au moins un
+                collaborateur.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteRole}
+              disabled={deleteRoleMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteRoleMutation.isPending ? 'Suppression...' : 'Supprimer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Change Role Dialog */}
       <ChangeRoleDialog
