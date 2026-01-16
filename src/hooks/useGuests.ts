@@ -329,16 +329,18 @@ export interface ImportResultResponse {
 // Preview import
 export function usePreviewImport(eventId: number | string) {
   return useMutation({
-    mutationFn: async ({ file, delimiter = ',' }: { file: File; delimiter?: string }): Promise<ImportPreviewResponse> => {
+    mutationFn: async ({
+      file,
+      delimiter = ',',
+    }: {
+      file: File;
+      delimiter?: string;
+    }): Promise<ImportPreviewResponse> => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('delimiter', delimiter);
 
-      const response = await api.post(`/events/${eventId}/guests/preview-import`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await api.post(`/events/${eventId}/guests/preview-import`, formData);
       return response.data;
     },
   });
@@ -363,11 +365,7 @@ export function useImportGuests(eventId: number | string) {
       formData.append('skip_duplicates', skipDuplicates ? '1' : '0');
       formData.append('delimiter', delimiter);
 
-      const response = await api.post(`/events/${eventId}/guests/import`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await api.post(`/events/${eventId}/guests/import`, formData);
       return response.data;
     },
     onSuccess: () => {

@@ -70,11 +70,8 @@ export function useCreateEvent() {
         // Ajouter la photo de couverture
         formData.append('cover_photo', cover_photo);
 
-        const response = await api.post<CreateEventResponse>('/events', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+        // The API client interceptor will automatically handle Content-Type for FormData
+        const response = await api.post<CreateEventResponse>('/events', formData);
         return response.data.event;
       } else {
         // Sinon, envoyer en JSON normal
