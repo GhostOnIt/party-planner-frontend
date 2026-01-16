@@ -37,7 +37,6 @@ interface EventCardProps {
   onDuplicate?: (event: Event) => void;
   onDelete?: (event: Event) => void;
 }
-
 export function EventCard({
   event,
   subscription,
@@ -49,43 +48,37 @@ export function EventCard({
   const [imageError, setImageError] = useState(false);
   const formattedDate = format(parseISO(event.date), 'dd MMMM yyyy', { locale: fr });
 
-  // Get plan from subscription
   const plan = subscription?.plan_type || subscription?.plan;
-
   const imageUrl = resolveUrl(event.featured_photo?.thumbnail_url || event.featured_photo?.url);
 
   return (
-    <Card className="group relative overflow-hidden transition-shadow hover:shadow-md">
-      <Link to={`/events/${event.id}`} className="block">
-        {/* Image de couverture */}
+    <Card className="group relative flex h-full flex-col overflow-hidden transition-shadow hover:shadow-md">
+      {/* Zone cliquable */}
+      <Link to={`/events/${event.id}`} className="flex flex-1 flex-col">
+        {/* Image */}
         <div className="relative aspect-[16/9] bg-muted">
           {imageUrl && !imageError ? (
             <img
               src={resolveUrl(imageUrl)}
               alt={event.title}
               className="h-full w-full object-cover"
-              onError={() => {
-                setImageError(true);
-              }}
-              onLoad={() => {
-                // Image loaded successfully
-              }}
+              onError={() => setImageError(true)}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
               <ImageIcon className="h-12 w-12 text-muted-foreground/40" />
             </div>
           )}
-          {/* Badges superposés sur l'image */}
-          <div className="absolute bottom-2 left-2 flex flex-wrap items-center gap-1.5">
+
+          {/* Badges image */}
+          <div className="absolute bottom-2 left-2 flex flex-wrap gap-1.5">
             <EventTypeBadge type={event.type} />
             <EventStatusBadge status={event.status} />
             {plan && <PlanBadge plan={plan} />}
           </div>
 
-          {/* Badge collaborateur en haut à droite */}
           {currentUserId && event.user_id !== currentUserId && (
-            <div className="absolute top-2 right-2">
+            <div className="absolute right-2 top-2">
               <Badge variant="secondary" className="flex items-center gap-1 text-xs">
                 <UserCheck className="h-3 w-3" />
                 Collaborateur
@@ -94,65 +87,81 @@ export function EventCard({
           )}
         </div>
 
-        <CardContent className="p-4">
-          <h3 className="font-semibold text-lg truncate">{event.title}</h3>
+        {/* Contenu extensible */}
+        <CardContent className="flex flex-1 flex-col p-4">
+          <h3 className="truncate text-lg font-semibold">{event.title}</h3>
+
           {event.description && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{event.description}</p>
+            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{event.description}</p>
           )}
 
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <Calendar className="h-4 w-4" />
               {formattedDate}
-              {event.time && ` a ${event.time}`}
+              {event.time && ` à ${event.time}`}
             </span>
+
             {event.location && (
               <span className="flex items-center gap-1.5 max-w-full overflow-hidden">
-                <MapPin className="h-4 w-4 flex-shrink-0" />
+                <MapPin className="h-4 w-4 shrink-0" />
                 <span className="truncate">{event.location}</span>
               </span>
             )}
+
             {event.expected_guests && (
               <span className="flex items-center gap-1.5">
                 <Users className="h-4 w-4" />
-                {event.expected_guests} invites
+                {event.expected_guests} invités
               </span>
             )}
           </div>
         </CardContent>
       </Link>
 
-      <CardFooter className="border-t px-6 py-3 flex justify-between items-center">
-        <span className="text-xs text-muted-foreground">
-          Cree le {format(parseISO(event.created_at), 'dd/MM/yyyy', { locale: fr })}
-        </span>
+      {/* Footer toujours aligné */}
+      <CardFooter className="h-12 shrink-0 border-t bg-muted/5 p-0 flex items-center">
+        <div className="flex-1 min-w-0 px-4">
+          <p className="truncate whitespace-nowrap text-[11px] sm:text-xs text-muted-foreground">
+            {event.user ? (
+              <>
+                Par <span className="font-semibold text-foreground">{event.user.name}</span>
+              </>
+            ) : (
+              'Créé le'
+            )}
+            <span className="opacity-70">
+              {' • '}
+              {format(parseISO(event.created_at), 'dd/MM/yyyy', { locale: fr })}
+            </span>
+          </p>
+        </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-              <span className="sr-only">Actions</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit?.(event)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Modifier
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDuplicate?.(event)}>
-              <Copy className="mr-2 h-4 w-4" />
-              Dupliquer
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete?.(event)}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Supprimer
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex h-full items-center border-l px-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit?.(event)}>
+                <Pencil className="mr-2 h-4 w-4" /> Modifier
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDuplicate?.(event)}>
+                <Copy className="mr-2 h-4 w-4" /> Dupliquer
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => onDelete?.(event)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Supprimer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </CardFooter>
     </Card>
   );
