@@ -140,7 +140,7 @@ export function SubscribePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Souscrire à ${plan.name}`}
+        title={`Souscrire au plan ${plan.name}`}
         description="Finalisez votre abonnement en effectuant le paiement"
       />
 
@@ -172,7 +172,8 @@ export function SubscribePage() {
                     <li className="flex items-center gap-2 text-sm">
                       <Check className="h-4 w-4 text-primary" />
                       <span>
-                        {formatLimitValue(plan.limits['events.creations_per_billing_period'])} événements
+                        {formatLimitValue(plan.limits['events.creations_per_billing_period'])}{' '}
+                        événements
                       </span>
                     </li>
                   )}
@@ -180,7 +181,8 @@ export function SubscribePage() {
                     <li className="flex items-center gap-2 text-sm">
                       <Check className="h-4 w-4 text-primary" />
                       <span>
-                        {formatLimitValue(plan.limits['guests.max_per_event'])} invités par événement
+                        {formatLimitValue(plan.limits['guests.max_per_event'])} invités par
+                        événement
                       </span>
                     </li>
                   )}
@@ -196,11 +198,7 @@ export function SubscribePage() {
                 </ul>
               </div>
 
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => navigate('/plans')}
-              >
+              <Button variant="outline" className="w-full" onClick={() => navigate('/plans')}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Voir les autres plans
               </Button>
