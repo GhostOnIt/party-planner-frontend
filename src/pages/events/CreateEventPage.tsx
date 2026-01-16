@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { PageHeader } from '@/components/layout/page-header';
 import { EventForm } from '@/components/features/events';
 import { useCreateEvent } from '@/hooks/useEvents';
+import { getApiErrorMessage } from '@/api/client';
 
 export function CreateEventPage() {
-  const { mutate: createEvent, isPending } = useCreateEvent();
+  const { mutate: createEvent, isPending, error } = useCreateEvent();
 
   return (
     <div className="space-y-8">
@@ -36,11 +37,11 @@ export function CreateEventPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {error && (
+            {error ? (
               <Alert variant="destructive" className="mb-6">
                 <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
               </Alert>
-            )}
+            ) : null}
 
             <EventForm onSubmit={createEvent} isSubmitting={isPending} />
           </CardContent>

@@ -125,7 +125,7 @@ export function EventCard({
           <p className="truncate whitespace-nowrap text-[11px] sm:text-xs text-muted-foreground">
             {event.user ? (
               <>
-                Par <span className="font-semibold text-foreground">{event.user.name}</span>
+                Crée par <span className="font-semibold text-foreground">{event.user.name}</span>
               </>
             ) : (
               'Créé le'

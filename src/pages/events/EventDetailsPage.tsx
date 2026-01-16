@@ -12,8 +12,6 @@ import {
   UserPlus,
   Calendar,
   MapPin,
-  Clock,
-  Crown,
   UserCheck,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
