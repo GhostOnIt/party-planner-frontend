@@ -42,7 +42,7 @@ import {
   ExportGuestsModal,
   type ExportFilters,
 } from '@/components/features/guests';
-import { SubscriptionRequired, LimitStatus } from '@/components/features/subscription';
+import { LimitStatus } from '@/components/features/subscription';
 import {
   useGuests,
   useGuestStats,
@@ -55,9 +55,8 @@ import {
   useUndoCheckIn,
   useExportGuests,
 } from '@/hooks/useGuests';
-import { useEventSubscription, useCheckLimits } from '@/hooks/useSubscription';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { PermissionGuard } from '@/components/ui/permission-guard';
-import { useGuestsPermissions } from '@/hooks/usePermissions';
 import type {
   Guest,
   GuestFilters as GuestFiltersType,
@@ -100,9 +99,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
 
   const { data: guestsData, isLoading: isLoadingGuests } = useGuests(eventId!, filters);
   const { data: separateStats, isLoading: isLoadingStats } = useGuestStats(eventId!);
-  const { data: subscription, isLoading: isLoadingSubscription } = useEventSubscription(eventId!);
-  const { data: limits } = useCheckLimits(eventId!);
-  const guestPermissions = useGuestsPermissions(eventId!);
+  const featureAccess = useFeatureAccess(eventId!);
 
   const { mutate: createGuest, isPending: isCreating } = useCreateGuest(eventId!);
   const { mutate: updateGuest, isPending: isUpdating } = useUpdateGuest(eventId!);
@@ -118,14 +115,11 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
   // Use stats from main response first, fallback to separate endpoint
   const stats = guestsData?.stats || separateStats;
 
-  // Check if subscription is active
-  const subscriptionStatus: string = subscription?.payment_status || subscription?.status || '';
-  const hasActiveSubscription = subscriptionStatus === 'paid' || subscriptionStatus === 'active';
-
-  // Check if can add more guests
-  const canAddGuests = limits?.can_add_guests ?? hasActiveSubscription;
-  const guestLimit = limits?.guest_limit ?? null;
-  const currentGuests = limits?.current_guests ?? (stats?.total || 0);
+  // Get limits and access from featureAccess
+  const guestLimit = featureAccess.guests.maxPerEvent;
+  const currentGuests = stats?.total || 0;
+  const isUnlimited = featureAccess.guests.isUnlimited;
+  const canAddGuests = isUnlimited || currentGuests < guestLimit;
 
   const handlePageChange = (page: number) => {
     setFilters((prev) => ({ ...prev, page }));
@@ -719,17 +713,8 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
 
   return (
     <div className="space-y-6">
-      {/* Subscription Required Alert */}
-      {!isLoadingSubscription && !hasActiveSubscription && (
-        <SubscriptionRequired
-          eventId={eventId}
-          feature="la gestion des invites"
-          message="Un abonnement actif est necessaire pour ajouter et gerer des invites pour votre evenement."
-        />
-      )}
-
       {/* Guest Limit Status */}
-      {hasActiveSubscription && guestLimit !== null && (
+      {featureAccess.guests.canAccess && guestLimit !== null && !isUnlimited && (
         <LimitStatus current={currentGuests} limit={guestLimit} label="Invites" />
       )}
 
@@ -746,7 +731,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
           <PermissionGuard eventId={eventId!} permissions={['guests.export']}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" disabled={isExporting || !hasActiveSubscription}>
+                <Button variant="outline" disabled={isExporting || !featureAccess.guests.canExport}>
                   <Download className="mr-2 h-4 w-4" />
                   Exporter
                 </Button>
@@ -769,8 +754,8 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
             <Button
               variant="outline"
               onClick={() => setShowImport(true)}
-              disabled={!hasActiveSubscription}
-              title={!hasActiveSubscription ? 'Abonnement requis' : undefined}
+              disabled={!featureAccess.guests.canImport}
+              title={!featureAccess.guests.canImport ? 'Fonctionnalité non disponible' : undefined}
             >
               <Upload className="mr-2 h-4 w-4" />
               Importer
@@ -780,16 +765,16 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
           <PermissionGuard eventId={eventId!} permissions={['guests.create']}>
             <Button
               onClick={handleAddGuest}
-              disabled={!canAddGuests}
+              disabled={!featureAccess.guests.canCreate || !canAddGuests}
               title={
-                !hasActiveSubscription
-                  ? 'Abonnement requis'
+                !featureAccess.guests.canCreate
+                  ? 'Fonctionnalité non disponible'
                   : !canAddGuests
                     ? 'Limite atteinte'
                     : undefined
               }
             >
-              {!canAddGuests && hasActiveSubscription ? (
+              {!canAddGuests && featureAccess.guests.canCreate ? (
                 <Crown className="mr-2 h-4 w-4" />
               ) : (
                 <Plus className="mr-2 h-4 w-4" />
@@ -808,16 +793,14 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
             selectedGuests={selectedGuests}
             onDeselectAll={() => setSelectedIds([])}
             onSendInvitations={
-              guestPermissions.canSendInvitations ? handleBulkSendInvitations : undefined
+              featureAccess.guests.canCreate ? handleBulkSendInvitations : undefined
             }
-            onSendReminders={
-              guestPermissions.canSendInvitations ? handleBulkSendReminders : undefined
-            }
-            onUpdateRsvp={guestPermissions.canEdit ? handleBulkUpdateRsvp : undefined}
-            onCheckIn={guestPermissions.canCheckIn ? handleBulkCheckIn : undefined}
-            onUndoCheckIn={guestPermissions.canCheckIn ? handleBulkUndoCheckIn : undefined}
-            onExport={guestPermissions.canExport ? handleExportSelected : undefined}
-            onDelete={guestPermissions.canDelete ? handleBulkDelete : undefined}
+            onSendReminders={featureAccess.guests.canCreate ? handleBulkSendReminders : undefined}
+            onUpdateRsvp={featureAccess.guests.canEdit ? handleBulkUpdateRsvp : undefined}
+            onCheckIn={featureAccess.guests.canCreate ? handleBulkCheckIn : undefined}
+            onUndoCheckIn={featureAccess.guests.canCreate ? handleBulkUndoCheckIn : undefined}
+            onExport={featureAccess.guests.canExport ? handleExportSelected : undefined}
+            onDelete={featureAccess.guests.canDelete ? handleBulkDelete : undefined}
           />
         </PermissionGuard>
       )}
@@ -839,14 +822,17 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
             icon={Users}
             title="Aucun invite"
             description={
-              !hasActiveSubscription
-                ? 'Souscrivez a un abonnement pour commencer a ajouter des invites.'
+              !featureAccess.guests.canAccess
+                ? 'Cette fonctionnalité nécessite un abonnement actif.'
                 : filters.search || filters.rsvp_status
                   ? 'Aucun invite ne correspond a vos criteres de recherche'
                   : "Vous n'avez pas encore ajoute d'invites. Commencez par en ajouter un !"
             }
             action={
-              !filters.search && !filters.rsvp_status && canAddGuests && guestPermissions.canCreate
+              !filters.search &&
+              !filters.rsvp_status &&
+              canAddGuests &&
+              featureAccess.guests.canCreate
                 ? {
                     label: 'Ajouter un invite',
                     onClick: handleAddGuest,

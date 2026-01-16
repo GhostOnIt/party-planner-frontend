@@ -241,7 +241,80 @@ export function useSubscribeToPlan() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user', 'subscription'] });
       queryClient.invalidateQueries({ queryKey: ['user', 'quota'] });
+      queryClient.invalidateQueries({ queryKey: ['user', 'entitlements'] });
       queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
     },
+  });
+}
+
+// Entitlements response type
+export interface EntitlementsResponse {
+  plan: {
+    id: number;
+    name: string;
+    slug: string;
+  } | null;
+  subscription: {
+    id: number;
+    status: string;
+    starts_at: string;
+    expires_at: string;
+  } | null;
+  limits: {
+    'events.creations_per_billing_period': number;
+    'guests.max_per_event': number;
+    'collaborators.max_per_event': number;
+    'photos.max_per_event': number;
+  };
+  features: {
+    'budget.enabled': boolean;
+    'planning.enabled': boolean;
+    'tasks.enabled': boolean;
+    'guests.manage': boolean;
+    'guests.import': boolean;
+    'guests.export': boolean;
+    'invitations.sms': boolean;
+    'invitations.whatsapp': boolean;
+    'collaborators.manage': boolean;
+    'roles_permissions.enabled': boolean;
+    'exports.pdf': boolean;
+    'exports.excel': boolean;
+    'exports.csv': boolean;
+    'history.enabled': boolean;
+    'reporting.enabled': boolean;
+    'branding.custom': boolean;
+    'support.whatsapp_priority': boolean;
+    'support.dedicated': boolean;
+    'multi_client.enabled': boolean;
+    'assistance.human': boolean;
+  };
+  is_active: boolean;
+  is_trial: boolean;
+}
+
+// Get user's entitlements (limits and features from account-level subscription)
+export function useEntitlements() {
+  return useQuery({
+    queryKey: ['user', 'entitlements'],
+    queryFn: async (): Promise<EntitlementsResponse> => {
+      const response = await api.get<EntitlementsResponse>('/user/entitlements');
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
+// Get event owner's entitlements (for collaborators to check if features are available)
+export function useEventEntitlements(eventId: string | number) {
+  return useQuery({
+    queryKey: ['events', eventId, 'entitlements'],
+    queryFn: async (): Promise<EntitlementsResponse> => {
+      const response = await api.get<EntitlementsResponse>(`/events/${eventId}/entitlements`);
+      return response.data;
+    },
+    enabled: !!eventId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 }
