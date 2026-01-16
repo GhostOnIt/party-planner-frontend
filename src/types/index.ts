@@ -141,8 +141,10 @@ export interface Collaborator {
   user: User;
   role?: CollaboratorRole; // Legacy single role (for backward compatibility)
   roles?: CollaboratorRole[]; // New multiple roles
-  custom_role_id?: number;
-  custom_role?: CustomRole;
+  custom_role_id?: number; // Legacy single custom role (backward compatibility)
+  custom_role?: CustomRole; // Legacy single custom role payload (backward compatibility)
+  custom_role_ids?: number[]; // New multi custom roles
+  custom_roles?: CustomRole[]; // New multi custom roles payload
   accepted_at: string | null;
   created_at: string;
 }
@@ -383,6 +385,9 @@ export interface CreateBudgetItemFormData {
 export interface InviteCollaboratorFormData {
   email: string;
   roles: string[];
+  custom_role_ids?: number[];
+  // Legacy fallback (older backend)
+  custom_role_id?: number | null;
 }
 
 export interface PaymentFormData {

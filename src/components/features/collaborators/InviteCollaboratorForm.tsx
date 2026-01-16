@@ -14,11 +14,12 @@ import {
 } from '@/components/ui/dialog';
 
 import { useAvailableRoles } from '@/hooks/useCollaborators';
-import type { InviteCollaboratorFormData } from '@/types';
+import type { CustomRole, InviteCollaboratorFormData } from '@/types';
 
 type InviteFormValues = {
   email: string;
-  roles: string[];
+  roles?: string[];
+  custom_role_ids?: number[];
 };
 
 interface InviteCollaboratorFormProps {
@@ -27,6 +28,7 @@ interface InviteCollaboratorFormProps {
   onSubmit: (data: InviteCollaboratorFormData) => void;
   isSubmitting?: boolean;
   availableRoles?: string[];
+  customRoles?: CustomRole[];
 }
 
 export function InviteCollaboratorForm({
@@ -35,6 +37,7 @@ export function InviteCollaboratorForm({
   onSubmit,
   isSubmitting = false,
   availableRoles = [],
+  customRoles = [],
 }: InviteCollaboratorFormProps) {
   // Fetch available roles from API
   const { data: rolesData, isLoading: isLoadingRoles } = useAvailableRoles();
@@ -47,10 +50,23 @@ export function InviteCollaboratorForm({
       : availableRoleDefinitions;
 
   // Create schema for invitation form
-  const inviteSchema = z.object({
-    email: z.string().email('Email invalide'),
-    roles: z.array(z.string()).min(1, 'Au moins un rôle doit être sélectionné'),
-  });
+  const inviteSchema = z
+    .object({
+      email: z.string().email('Email invalide'),
+      roles: z.array(z.string()).optional(),
+      custom_role_ids: z.array(z.number()).optional(),
+    })
+    .superRefine((data, ctx) => {
+      const rolesCount = (data.roles || []).length;
+      const customCount = (data.custom_role_ids || []).length;
+      if (rolesCount === 0 && customCount === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Sélectionnez au moins un rôle (système ou personnalisé)',
+          path: ['roles'],
+        });
+      }
+    });
 
   const {
     register,
@@ -64,15 +80,23 @@ export function InviteCollaboratorForm({
     defaultValues: {
       email: '',
       roles: [],
+      custom_role_ids: [],
     },
   });
 
   const selectedRoles = watch('roles');
+  const selectedCustomRoleIds = watch('custom_role_ids') || [];
 
   const handleFormSubmit = (data: InviteFormValues) => {
     onSubmit({
       email: data.email,
-      roles: data.roles,
+      roles:
+        (data.roles || []).length > 0
+          ? data.roles || []
+          : selectedCustomRoleIds.length > 0
+            ? ['viewer']
+            : [],
+      custom_role_ids: selectedCustomRoleIds,
     });
   };
 
@@ -117,8 +141,53 @@ export function InviteCollaboratorForm({
           </div>
 
           <div className="space-y-2">
-            <Label>Rôles *</Label>
+            <Label>Nouveaux rôles *</Label>
             <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
+              {/* Custom roles (if any) */}
+              {customRoles.filter((r) => !r.is_system).length > 0 && (
+                <>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Rôles personnalisés
+                  </p>
+
+                  {customRoles
+                    .filter((r) => !r.is_system)
+                    .map((role) => (
+                      <div key={role.id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`custom-role-${role.id}`}
+                          checked={selectedCustomRoleIds.includes(role.id)}
+                          onChange={() => {
+                            const isChecked = selectedCustomRoleIds.includes(role.id);
+                            const next = isChecked
+                              ? selectedCustomRoleIds.filter((id) => id !== role.id)
+                              : [...selectedCustomRoleIds, role.id];
+                            setValue('custom_role_ids', next);
+                          }}
+                          className="rounded border-gray-300"
+                        />
+                        <label
+                          htmlFor={`custom-role-${role.id}`}
+                          className="text-sm font-medium cursor-pointer flex-1"
+                        >
+                          <div>
+                            <p className="font-medium">{role.name}</p>
+                            {role.description && (
+                              <p className="text-xs text-muted-foreground">{role.description}</p>
+                            )}
+                          </div>
+                        </label>
+                      </div>
+                    ))}
+
+                  <div className="my-2 border-t" />
+                </>
+              )}
+
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Rôles système
+              </p>
               {filteredRoles.map((role) => (
                 <div key={role.value} className="flex items-center space-x-2">
                   <input

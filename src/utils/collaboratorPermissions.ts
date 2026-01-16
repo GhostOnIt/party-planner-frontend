@@ -23,25 +23,28 @@ export interface CollaboratorPermissions {
  * Get effective role names from collaborator
  */
 export function getEffectiveRoles(collaborator: Collaborator): string[] {
-  if (collaborator.custom_role) {
-    return [collaborator.custom_role.name];
+  const names: string[] = [];
+
+  if (Array.isArray(collaborator.custom_roles) && collaborator.custom_roles.length > 0) {
+    names.push(...collaborator.custom_roles.map((r) => r.name));
+  } else if (collaborator.custom_role) {
+    // Legacy single custom role
+    names.push(collaborator.custom_role.name);
   }
 
   if (collaborator.roles && collaborator.roles.length > 0) {
-    return collaborator.roles.map((role) => ROLE_LABELS[role]);
+    names.push(...collaborator.roles.map((role) => ROLE_LABELS[role]));
+  } else if (collaborator.role) {
+    names.push(ROLE_LABELS[collaborator.role]);
   }
 
-  return collaborator.role ? [ROLE_LABELS[collaborator.role]] : ['Aucun'];
+  return names.length > 0 ? Array.from(new Set(names)) : ['Aucun'];
 }
 
 /**
  * Get effective role values (not labels) for collaborator
  */
 export function getEffectiveRoleValues(collaborator: Collaborator): string[] {
-  if (collaborator.custom_role) {
-    return ['custom']; // Special value for custom roles
-  }
-
   // Check if collaborator has multiple roles (new system)
   if (collaborator.roles && collaborator.roles.length > 0) {
     return collaborator.roles;
@@ -170,11 +173,13 @@ export function getCollaboratorPermissions(
   }
 
   const role = collaborator.role;
-  const customRole = collaborator.custom_role;
+  const customRoles = collaborator.custom_roles || (collaborator.custom_role ? [collaborator.custom_role] : []);
 
-  // If has custom role, use custom role permissions
-  if (customRole) {
-    const permissions = customRole.permissions || [];
+  // If has custom role(s), merge their permissions (union)
+  if (customRoles.length > 0) {
+    const permissions = Array.from(
+      new Set(customRoles.flatMap((r: any) => (r?.permissions as string[]) || []))
+    );
     return {
       canManage:
         permissions.includes('collaborators.invite') ||
@@ -188,7 +193,7 @@ export function getCollaboratorPermissions(
       canDelete: permissions.some((p: string) => p.includes('.delete')),
       isOwner: false,
       isCoordinator: false,
-      effectiveRole: customRole.name,
+      effectiveRole: getEffectiveRole(collaborator),
     };
   }
 

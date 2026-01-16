@@ -35,11 +35,11 @@ export function useCreateCustomRole(eventId: string) {
 
   return useMutation({
     mutationFn: async (data: CustomRoleFormData) => {
-      const response = await api.post<CustomRole>(
+      const response = await api.post<{ role: CustomRole }>(
         `/events/${eventId}/roles`,
         data
       );
-      return response.data;
+      return response.data.role;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events', eventId, 'roles'] });
@@ -54,11 +54,11 @@ export function useUpdateCustomRole(eventId: string, roleId: number) {
 
   return useMutation({
     mutationFn: async (data: Partial<CustomRoleFormData>) => {
-      const response = await api.put<CustomRole>(
+      const response = await api.put<{ role: CustomRole }>(
         `/events/${eventId}/roles/${roleId}`,
         data
       );
-      return response.data;
+      return response.data.role;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events', eventId, 'roles'] });
