@@ -85,6 +85,7 @@ const planFormSchema = z.object({
   price: z.number().min(0, 'Le prix doit etre positif'),
   duration_days: z.number().min(1, 'La duree doit etre au moins 1 jour'),
   is_trial: z.boolean(),
+  is_one_time_use: z.boolean().optional(),
   is_active: z.boolean(),
   sort_order: z.number().min(0),
   limits: z.object({
@@ -93,7 +94,7 @@ const planFormSchema = z.object({
     'collaborators.max_per_event': z.number(),
     'photos.max_per_event': z.number(),
   }),
-  features: z.record(z.boolean()),
+  features: z.record(z.string(), z.boolean()), // Accept any string key including dots
 });
 
 type PlanFormValues = z.infer<typeof planFormSchema>;
@@ -151,6 +152,7 @@ export function AdminPlansPage() {
       price: 0,
       duration_days: 30,
       is_trial: false,
+      is_one_time_use: false,
       is_active: true,
       sort_order: 0,
       limits: defaultLimits as any,
@@ -166,6 +168,7 @@ export function AdminPlansPage() {
       price: 0,
       duration_days: 30,
       is_trial: false,
+      is_one_time_use: false,
       is_active: true,
       sort_order: plans.length,
       limits: defaultLimits as any,
@@ -179,14 +182,14 @@ export function AdminPlansPage() {
   const openEditForm = (plan: Plan) => {
     const limits = plan.limits || defaultLimits;
     const newUnlimitedFlags: Record<string, boolean> = {};
-    
-    Object.keys(PLAN_LIMIT_LABELS).forEach(key => {
+
+    Object.keys(PLAN_LIMIT_LABELS).forEach((key) => {
       const value = limits[key];
       newUnlimitedFlags[key] = value === -1;
     });
-    
+
     setUnlimitedFlags(newUnlimitedFlags);
-    
+
     form.reset({
       name: plan.name,
       slug: plan.slug,
@@ -194,6 +197,7 @@ export function AdminPlansPage() {
       price: plan.price,
       duration_days: plan.duration_days,
       is_trial: plan.is_trial,
+      is_one_time_use: plan.is_one_time_use ?? false,
       is_active: plan.is_active,
       sort_order: plan.sort_order,
       limits: {
@@ -210,16 +214,40 @@ export function AdminPlansPage() {
 
   const handleSubmit = (data: PlanFormValues) => {
     // Apply unlimited flags to limits
-    const finalLimits = { ...data.limits };
-    Object.keys(unlimitedFlags).forEach(key => {
+    const finalLimits: Record<string, number> = { ...data.limits };
+    Object.keys(unlimitedFlags).forEach((key) => {
       if (unlimitedFlags[key]) {
-        (finalLimits as any)[key] = -1;
+        finalLimits[key] = -1;
       }
     });
 
-    const formData = {
-      ...data,
-      limits: finalLimits,
+    // Backend expects nested structure: { events: { creations_per_billing_period: ... }, guests: { max_per_event: ... }, ... }
+    const transformedLimits: Record<string, Record<string, number>> = {};
+
+    Object.entries(finalLimits).forEach(([key, value]) => {
+      if (key === 'events.creations_per_billing_period') {
+        transformedLimits.events = { creations_per_billing_period: value };
+      } else if (key === 'guests.max_per_event') {
+        transformedLimits.guests = { max_per_event: value };
+      } else if (key === 'collaborators.max_per_event') {
+        transformedLimits.collaborators = { max_per_event: value };
+      } else if (key === 'photos.max_per_event') {
+        transformedLimits.photos = { max_per_event: value };
+      }
+    });
+
+    const formData: any = {
+      name: data.name,
+      slug: data.slug || undefined,
+      description: data.description || undefined,
+      price: data.price,
+      duration_days: data.duration_days,
+      is_trial: data.is_trial,
+      is_one_time_use: data.is_one_time_use ?? false,
+      is_active: data.is_active,
+      sort_order: data.sort_order,
+      limits: transformedLimits,
+      features: data.features,
     };
 
     if (editPlan) {
@@ -301,9 +329,7 @@ export function AdminPlansPage() {
       <Card>
         <CardHeader>
           <CardTitle>Liste des plans</CardTitle>
-          <CardDescription>
-            {plans.length} plan(s) configures
-          </CardDescription>
+          <CardDescription>{plans.length} plan(s) configures</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -347,13 +373,15 @@ export function AdminPlansPage() {
                     <TableRow key={plan.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                            plan.is_trial 
-                              ? 'bg-blue-100 text-blue-600' 
-                              : plan.price >= 25000 
-                                ? 'bg-purple-100 text-purple-600'
-                                : 'bg-green-100 text-green-600'
-                          }`}>
+                          <div
+                            className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                              plan.is_trial
+                                ? 'bg-blue-100 text-blue-600'
+                                : plan.price >= 25000
+                                  ? 'bg-purple-100 text-purple-600'
+                                  : 'bg-green-100 text-green-600'
+                            }`}
+                          >
                             {plan.is_trial ? (
                               <Gift className="h-5 w-5" />
                             ) : (
@@ -468,11 +496,21 @@ export function AdminPlansPage() {
             <DialogDescription>
               {editPlan
                 ? 'Modifiez les informations du plan'
-                : 'Creez un nouveau plan d\'abonnement'}
+                : "Creez un nouveau plan d'abonnement"}
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit, (errors) => {
+              console.error('Form validation errors:', errors);
+              toast({
+                title: 'Erreur de validation',
+                description: 'Veuillez corriger les erreurs dans le formulaire.',
+                variant: 'destructive',
+              });
+            })}
+            className="space-y-6"
+          >
             <Tabs defaultValue="general" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="general">General</TabsTrigger>
@@ -487,7 +525,9 @@ export function AdminPlansPage() {
                     <Label htmlFor="name">Nom *</Label>
                     <Input id="name" {...form.register('name')} />
                     {form.formState.errors.name && (
-                      <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+                      <p className="text-sm text-destructive">
+                        {form.formState.errors.name.message}
+                      </p>
                     )}
                   </div>
                   <div className="space-y-2">
@@ -533,9 +573,29 @@ export function AdminPlansPage() {
                     <Switch
                       id="is_trial"
                       checked={form.watch('is_trial')}
-                      onCheckedChange={(checked) => form.setValue('is_trial', checked)}
+                      onCheckedChange={(checked) => {
+                        form.setValue('is_trial', checked);
+                        // If trial is enabled, automatically set is_one_time_use to true
+                        if (checked) {
+                          form.setValue('is_one_time_use', true);
+                        }
+                      }}
                     />
                     <Label htmlFor="is_trial">Plan d'essai gratuit</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="is_one_time_use"
+                      checked={form.watch('is_one_time_use') ?? false}
+                      onCheckedChange={(checked) => form.setValue('is_one_time_use', checked)}
+                      disabled={form.watch('is_trial')}
+                    />
+                    <Label
+                      htmlFor="is_one_time_use"
+                      className={form.watch('is_trial') ? 'text-muted-foreground' : ''}
+                    >
+                      Usage unique {form.watch('is_trial') && '(activé automatiquement)'}
+                    </Label>
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch
@@ -551,9 +611,10 @@ export function AdminPlansPage() {
               {/* Limits Tab */}
               <TabsContent value="limits" className="space-y-4 pt-4">
                 <p className="text-sm text-muted-foreground">
-                  Definissez les quotas et limites pour ce plan. Cochez "Illimite" pour ne pas imposer de limite.
+                  Definissez les quotas et limites pour ce plan. Cochez "Illimite" pour ne pas
+                  imposer de limite.
                 </p>
-                
+
                 <div className="space-y-4">
                   {Object.entries(PLAN_LIMIT_LABELS).map(([key, label]) => (
                     <div key={key} className="flex items-center gap-4 rounded-lg border p-4">
@@ -573,7 +634,7 @@ export function AdminPlansPage() {
                             id={`unlimited-${key}`}
                             checked={unlimitedFlags[key] || false}
                             onCheckedChange={(checked) => {
-                              setUnlimitedFlags(prev => ({
+                              setUnlimitedFlags((prev) => ({
                                 ...prev,
                                 [key]: !!checked,
                               }));
@@ -594,25 +655,36 @@ export function AdminPlansPage() {
                 <p className="text-sm text-muted-foreground">
                   Selectionnez les fonctionnalites incluses dans ce plan.
                 </p>
-                
+
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {Object.entries(PLAN_FEATURE_LABELS).map(([key, label]) => (
-                    <div
-                      key={key}
-                      className="flex items-center space-x-3 rounded-lg border p-3"
-                    >
-                      <Checkbox
-                        id={`feature-${key}`}
-                        checked={form.watch(`features.${key}`) || false}
-                        onCheckedChange={(checked) => {
-                          form.setValue(`features.${key}`, !!checked);
-                        }}
-                      />
-                      <Label htmlFor={`feature-${key}`} className="flex-1 cursor-pointer">
-                        {label}
-                      </Label>
-                    </div>
-                  ))}
+                  {Object.entries(PLAN_FEATURE_LABELS).map(([key, label]) => {
+                    // Access features using getValues to handle keys with dots properly
+                    const features = form.watch('features') || {};
+                    const currentValue = features[key as keyof typeof features] || false;
+
+                    return (
+                      <div key={key} className="flex items-center space-x-3 rounded-lg border p-3">
+                        <Checkbox
+                          id={`feature-${key}`}
+                          checked={!!currentValue}
+                          onCheckedChange={(checked) => {
+                            const currentFeatures = form.getValues('features') || {};
+                            form.setValue(
+                              'features',
+                              {
+                                ...currentFeatures,
+                                [key]: !!checked,
+                              },
+                              { shouldValidate: true }
+                            );
+                          }}
+                        />
+                        <Label htmlFor={`feature-${key}`} className="flex-1 cursor-pointer">
+                          {label}
+                        </Label>
+                      </div>
+                    );
+                  })}
                 </div>
               </TabsContent>
             </Tabs>
@@ -640,11 +712,13 @@ export function AdminPlansPage() {
             <AlertDialogTitle>Supprimer le plan ?</AlertDialogTitle>
             <AlertDialogDescription>
               Cette action est irreversible. Le plan "{deletePlan?.name}" sera supprime.
-              {deletePlan?.active_subscriptions_count && deletePlan.active_subscriptions_count > 0 && (
-                <span className="mt-2 block text-destructive">
-                  Attention: {deletePlan.active_subscriptions_count} abonnement(s) actif(s) utilisent ce plan.
-                </span>
-              )}
+              {deletePlan?.active_subscriptions_count &&
+                deletePlan.active_subscriptions_count > 0 && (
+                  <span className="mt-2 block text-destructive">
+                    Attention: {deletePlan.active_subscriptions_count} abonnement(s) actif(s)
+                    utilisent ce plan.
+                  </span>
+                )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

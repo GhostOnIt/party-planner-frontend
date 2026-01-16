@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Crown, Check, ArrowRight, Calendar, Clock, Gift, Infinity } from 'lucide-react';
+import { Crown, Check, ArrowRight, Calendar, Clock, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -13,12 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/layout/page-header';
 import { cn } from '@/lib/utils';
-import {
-  usePlans,
-  PLAN_FEATURE_LABELS,
-  PLAN_LIMIT_LABELS,
-  formatLimitValue,
-} from '@/hooks/useAdminPlans';
+import { useToast } from '@/hooks/use-toast';
+import { usePlans, PLAN_FEATURE_LABELS, formatLimitValue } from '@/hooks/useAdminPlans';
+import { useSubscribeToPlan } from '@/hooks/useSubscription';
 import type { Plan } from '@/hooks/useAdminPlans';
 
 const formatCurrency = (amount: number) => {
@@ -49,6 +46,8 @@ function getFeatureText(featureKey: string, plan: Plan): string {
 
 function PricingCard({ plan, isPopular = false }: { plan: Plan; isPopular?: boolean }) {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { mutate: subscribeToPlan, isPending: isSubscribing } = useSubscribeToPlan();
 
   // Get enabled features
   const enabledFeatures = Object.entries(plan.features || {})
@@ -61,11 +60,32 @@ function PricingCard({ plan, isPopular = false }: { plan: Plan; isPopular?: bool
   const collaboratorsLimit = plan.limits?.['collaborators.max_per_event'];
 
   const handleSelectPlan = () => {
-    if (plan.is_trial) {
-      // Trial is auto-assigned, redirect to dashboard
-      navigate('/dashboard');
+    if (plan.is_trial && plan.price === 0) {
+      // Trial plan - subscribe directly (no payment needed)
+      subscribeToPlan(
+        { plan_id: plan.id },
+        {
+          onSuccess: () => {
+            toast({
+              title: 'Essai gratuit activé',
+              description: 'Votre essai gratuit a été activé avec succès.',
+            });
+            navigate('/dashboard');
+          },
+          onError: (error: unknown) => {
+            const errorMessage =
+              (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+              "Impossible d'activer l'essai gratuit.";
+            toast({
+              title: 'Erreur',
+              description: errorMessage,
+              variant: 'destructive',
+            });
+          },
+        }
+      );
     } else {
-      // Navigate to subscribe page
+      // Paid plan - navigate to subscribe page
       navigate(`/subscribe/${plan.slug}`);
     }
   };
@@ -164,10 +184,15 @@ function PricingCard({ plan, isPopular = false }: { plan: Plan; isPopular?: bool
           variant={isPopular ? 'default' : 'outline'}
           size="lg"
           onClick={handleSelectPlan}
-          disabled={plan.is_trial}
+          disabled={isSubscribing}
         >
-          {plan.is_trial ? (
-            <>Déjà inclus</>
+          {isSubscribing ? (
+            <>Traitement...</>
+          ) : plan.is_trial ? (
+            <>
+              Activer l'essai gratuit
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </>
           ) : plan.price === 0 ? (
             <>
               Commencer
@@ -189,15 +214,16 @@ export function PlansPage() {
   const { data: plansData, isLoading, error } = usePlans();
   const plans = plansData || [];
 
-  // Filter out trial plan from pricing (it's auto-assigned)
-  const paidPlans = plans.filter((p) => !p.is_trial && p.is_active);
+  // Include all active plans (trial included, backend already filters out used one-time-use plans)
+  const activePlans = plans.filter((p) => p.is_active);
 
   // Debug: log plans data
   if (process.env.NODE_ENV === 'development') {
-    console.log('Plans data:', { plansData, plans, paidPlans, isLoading, error });
+    console.log('Plans data:', { plansData, plans, activePlans, isLoading, error });
   }
 
-  // Find popular plan (usually the middle one or PRO)
+  // Find popular plan (usually the middle one or PRO, excluding trial)
+  const paidPlans = activePlans.filter((p) => !p.is_trial);
   const popularPlanIndex = paidPlans.length > 1 ? Math.floor(paidPlans.length / 2) : -1;
 
   if (isLoading) {
@@ -251,15 +277,17 @@ export function PlansPage() {
       />
 
       {/* Pricing Cards */}
-      {paidPlans.length === 0 ? (
+      {activePlans.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">Aucun plan disponible pour le moment.</p>
         </div>
       ) : (
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-          {paidPlans.map((plan, index) => (
-            <PricingCard key={plan.id} plan={plan} isPopular={index === popularPlanIndex} />
-          ))}
+          {activePlans.map((plan, index) => {
+            // Only mark paid plans as popular (not trial)
+            const isPopular = !plan.is_trial && index === popularPlanIndex;
+            return <PricingCard key={plan.id} plan={plan} isPopular={isPopular} />;
+          })}
         </div>
       )}
 
@@ -276,8 +304,8 @@ export function PlansPage() {
             <h4 className="font-medium">Comment fonctionne la facturation ?</h4>
             <p className="text-sm text-muted-foreground mt-1">
               Chaque plan est facturé mensuellement. Vous bénéficiez de toutes les fonctionnalités
-              incluses pendant la durée de votre abonnement. L'essai gratuit de 14 jours est
-              automatiquement activé à l'inscription.
+              incluses pendant la durée de votre abonnement. L'essai gratuit est disponible une
+              seule fois par compte et peut être activé depuis cette page.
             </p>
           </div>
           <div>
