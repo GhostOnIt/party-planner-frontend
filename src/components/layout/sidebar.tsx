@@ -13,6 +13,7 @@ import {
   User,
   FileText,
   Activity,
+  Package,
   LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -47,6 +48,7 @@ const adminNavItems: NavItem[] = [
   { to: '/admin/events', icon: Calendar, labelKey: 'nav.adminEvents' },
   { to: '/admin/payments', icon: CreditCard, labelKey: 'nav.adminPayments' },
   { to: '/admin/subscriptions', icon: FileText, labelKey: 'nav.adminSubscriptions' },
+  { to: '/admin/plans', icon: Package, labelKey: 'nav.adminPlans' },
   { to: '/admin/templates', icon: FileText, labelKey: 'nav.adminTemplates' },
   { to: '/admin/activity-logs', icon: Activity, labelKey: 'nav.adminActivityLogs' },
 ];

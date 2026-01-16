@@ -177,3 +177,71 @@ export function useRenewSubscription(eventId: string | number) {
     },
   });
 }
+
+// Get current user's account-level subscription
+export interface CurrentSubscriptionResponse {
+  subscription: Subscription | null;
+  quota: {
+    base_quota: number;
+    topup_credits: number;
+    total_quota: number;
+    used: number;
+    remaining: number;
+    is_unlimited: boolean;
+    percentage_used: number;
+    can_create: boolean;
+  };
+  has_subscription: boolean;
+}
+
+export function useCurrentSubscription() {
+  return useQuery({
+    queryKey: ['user', 'subscription', 'current'],
+    queryFn: async (): Promise<CurrentSubscriptionResponse> => {
+      const response = await api.get<CurrentSubscriptionResponse>('/user/subscription');
+      return response.data;
+    },
+  });
+}
+
+// Get user's quota
+export interface QuotaResponse {
+  quota: {
+    base_quota: number;
+    topup_credits: number;
+    total_quota: number;
+    used: number;
+    remaining: number;
+    is_unlimited: boolean;
+    percentage_used: number;
+    can_create: boolean;
+  };
+  warning: 'quota_reached' | 'quota_90' | 'quota_80' | null;
+}
+
+export function useQuota() {
+  return useQuery({
+    queryKey: ['user', 'quota'],
+    queryFn: async (): Promise<QuotaResponse> => {
+      const response = await api.get<QuotaResponse>('/user/quota');
+      return response.data;
+    },
+  });
+}
+
+// Subscribe to a plan (account-level)
+export function useSubscribeToPlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { plan_id: number }) => {
+      const response = await api.post('/subscriptions/subscribe', data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user', 'subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['user', 'quota'] });
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+    },
+  });
+}
