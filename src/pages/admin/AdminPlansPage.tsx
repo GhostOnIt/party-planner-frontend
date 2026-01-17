@@ -57,12 +57,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader } from '@/components/layout/page-header';
 import { useToast } from '@/hooks/use-toast';
@@ -74,7 +68,6 @@ import {
   useTogglePlanActive,
   PLAN_FEATURE_LABELS,
   PLAN_LIMIT_LABELS,
-  formatLimitValue,
 } from '@/hooks/useAdminPlans';
 import type { Plan, PlanFeatures, PlanLimits } from '@/hooks/useAdminPlans';
 

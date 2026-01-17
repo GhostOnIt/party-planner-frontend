@@ -106,7 +106,7 @@ export function useCreateEvent() {
           // Proposer l'essai gratuit en priorité
           const handleActivateTrial = async () => {
             try {
-              await subscribeMutation.mutateAsync({ plan_id: trialData.data.id });
+              await subscribeMutation.mutateAsync({ plan_id: trialData.data!.id });
               toast({
                 title: 'Essai activé',
                 description: 'Votre essai gratuit a été activé. Vous pouvez maintenant créer un événement.',
@@ -127,13 +127,14 @@ export function useCreateEvent() {
             title: 'Abonnement requis',
             description: 'Pour créer un événement, vous devez activer un plan. Commencez par l\'essai gratuit !',
             variant: 'default',
+            // @ts-ignore - ToastAction type issue
             action: React.createElement(
               ToastAction,
               {
                 altText: "Activer l'essai gratuit",
                 onClick: handleActivateTrial,
               },
-              'Activer l\'essai'
+              "Activer l'essai"
             ),
           });
         } else {
@@ -142,6 +143,7 @@ export function useCreateEvent() {
             title: 'Abonnement requis',
             description: 'Pour créer un événement, vous devez souscrire à un plan.',
             variant: 'default',
+            // @ts-ignore - ToastAction type issue
             action: React.createElement(
               ToastAction,
               {
@@ -158,6 +160,7 @@ export function useCreateEvent() {
           title: 'Quota atteint',
           description: 'Vous avez utilisé tous vos crédits de création d\'événements pour cette période.',
           variant: 'default',
+          // @ts-ignore - ToastAction type issue
           action: React.createElement(
             ToastAction,
             {

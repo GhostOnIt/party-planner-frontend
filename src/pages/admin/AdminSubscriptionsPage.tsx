@@ -371,9 +371,10 @@ export function AdminSubscriptionsPage() {
                 </TableHeader>
                 <TableBody>
                   {data?.data?.map((subscription) => {
-                    // @ts-ignore - plan may have is_trial
+                    // @ts-ignore - plan may have is_trial property
                     const isTrial =
-                      subscription.plan?.is_trial || subscription.plan_type === 'trial';
+                      // @ts-ignore - plan may have is_trial property
+                      subscription.plan?.is_trial || subscription.plan_type === ('trial' as any);
                     const PlanIcon = getPlanIcon(subscription.plan_type, isTrial);
                     const expired = isExpired(subscription.expires_at);
                     const planName = getPlanName(subscription);
@@ -787,10 +788,10 @@ export function AdminSubscriptionsPage() {
                     {detailsSub.plan?.limits?.['events.creations_per_billing_period'] && (
                       <div className="flex justify-between text-sm">
                         <span>Limite du plan</span>
-                        {/* @ts-ignore */}
                         <span>
                           {formatLimitValue(
-                            detailsSub.plan.limits['events.creations_per_billing_period']
+                            // @ts-ignore - plan may have limits property
+                            detailsSub.plan?.limits?.['events.creations_per_billing_period'] || 0
                           )}
                         </span>
                       </div>

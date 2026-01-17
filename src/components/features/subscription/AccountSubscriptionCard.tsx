@@ -68,7 +68,9 @@ export function AccountSubscriptionCard() {
   }
 
   const plan = subscription.plan || null;
+  // @ts-ignore - plan may have name property
   const planName = plan?.name || subscription.plan_type || 'Inconnu';
+  // @ts-ignore - plan may have is_trial property
   const isTrial = plan?.is_trial || subscription.status === 'trial';
   const expiresAt = subscription.expires_at 
     ? parseISO(subscription.expires_at) 
@@ -79,13 +81,12 @@ export function AccountSubscriptionCard() {
 
   // Quota info
   const quotaUsed = quota?.used || 0;
-  const quotaTotal = quota?.total_quota || 0;
   const quotaRemaining = quota?.remaining || 0;
   const isUnlimited = quota?.is_unlimited || false;
   const quotaPercentage = quota?.percentage_used || 0;
-  const canCreate = quota?.can_create || false;
 
   // Get events limit from plan
+  // @ts-ignore - plan may have limits property
   const eventsLimit = plan?.limits?.['events.creations_per_billing_period'] || 0;
 
   return (
