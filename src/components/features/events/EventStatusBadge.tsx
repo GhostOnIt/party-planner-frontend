@@ -2,22 +2,24 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { EventStatus } from '@/types';
 
+// J'ai ajouté les classes 'hover' correspondantes pour éviter que 
+// le badge ne redevienne transparent ou change de couleur au survol.
 const statusConfig: Record<EventStatus, { label: string; className: string }> = {
   upcoming: {
     label: 'À venir',
-    className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    className: '!bg-blue-600 hover:!bg-blue-600 !text-white dark:!bg-blue-700 dark:hover:!bg-blue-700 dark:!text-white border-0',
   },
   ongoing: {
     label: 'En cours',
-    className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    className: '!bg-amber-600 hover:!bg-amber-600 !text-white dark:!bg-amber-700 dark:hover:!bg-amber-700 dark:!text-white border-0',
   },
   completed: {
     label: 'Terminé',
-    className: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    className: '!bg-green-600 hover:!bg-green-600 !text-white dark:!bg-green-700 dark:hover:!bg-green-700 dark:!text-white border-0',
   },
   cancelled: {
     label: 'Annulé',
-    className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+    className: '!bg-red-600 hover:!bg-red-600 !text-white dark:!bg-red-700 dark:hover:!bg-red-700 dark:!text-white border-0',
   },
 };
 
@@ -30,7 +32,13 @@ export function EventStatusBadge({ status, className }: EventStatusBadgeProps) {
   const config = statusConfig[status] || statusConfig.upcoming;
 
   return (
-    <Badge className={cn(config.className, className)}>
+    // L'ajout de variant="secondary" (ou "default") force souvent shadcn 
+    // à utiliser un style "rempli" plutôt qu'un style "outline" transparent de base.
+    // Les classes CSS viendront ensuite écraser la couleur.
+    <Badge 
+      variant="secondary" 
+      className={cn("font-medium shadow-none", config.className, className)}
+    >
       {config.label}
     </Badge>
   );

@@ -64,6 +64,14 @@ export interface Event {
   } | null;
   created_at: string;
   updated_at: string;
+  // Statistics from backend
+  guests_count?: number;
+  guests_confirmed_count?: number;
+  guests_declined_count?: number;
+  guests_pending_count?: number;
+  tasks_count?: number;
+  tasks_completed_count?: number;
+  budget_spent?: string | number;
 }
 
 // Guest
