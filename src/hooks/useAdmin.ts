@@ -28,6 +28,36 @@ export function useAdminStats() {
   });
 }
 
+// Admin dashboard stats with filters (like user dashboard)
+export function useAdminDashboardStats(
+  period: string = '7days',
+  customRange?: { start: Date; end: Date }
+) {
+  return useQuery({
+    queryKey: ['admin', 'dashboard-stats', period, customRange],
+    queryFn: async () => {
+      const params: Record<string, string> = { period };
+      if (period === 'custom' && customRange) {
+        params.start_date = customRange.start.toISOString().split('T')[0];
+        params.end_date = customRange.end.toISOString().split('T')[0];
+      }
+      const response = await api.get('/admin/dashboard/stats', { params });
+      return response.data;
+    },
+  });
+}
+
+// Plan distribution chart
+export function useAdminPlanDistribution() {
+  return useQuery({
+    queryKey: ['admin', 'plan-distribution'],
+    queryFn: async () => {
+      const response = await api.get('/admin/subscriptions/distribution');
+      return response.data;
+    },
+  });
+}
+
 // ============== Users ==============
 
 export function useAdminUsers(filters: AdminUserFilters = {}) {

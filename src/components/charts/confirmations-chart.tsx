@@ -1,8 +1,9 @@
 import { useState } from "react"
-import { Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import { useConfirmationsChart } from "@/hooks/useDashboard"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useNavigate } from "react-router-dom"
+import { SearchInput } from "@/components/forms/search-input"
 
 type SortField = "name" | "confirmed" | "declined" | "pending" | "confirmRate"
 type SortOrder = "asc" | "desc"
@@ -15,20 +16,23 @@ interface ConfirmationsChartProps {
 export function ConfirmationsChart({ filter = "7days", eventTypeFilter = "all" }: ConfirmationsChartProps) {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState("")
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [sortField, setSortField] = useState<SortField>("confirmRate")
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
   const itemsPerPage = 5
 
-  const { data, isLoading, error } = useConfirmationsChart(filter, eventTypeFilter, {
+  const { data, isLoading, isFetching, error } = useConfirmationsChart(filter, eventTypeFilter, {
     page: currentPage,
     per_page: itemsPerPage,
-    search: searchQuery,
+    search: debouncedSearchQuery,
     sort_by: sortField,
     sort_order: sortOrder,
   })
 
-  if (isLoading) {
+  const isInitialLoading = isLoading && !data
+
+  if (isInitialLoading) {
     return (
       <div className="bg-white rounded-xl p-5 border border-[#e5e7eb] mt-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
@@ -111,22 +115,30 @@ export function ConfirmationsChart({ filter = "7days", eventTypeFilter = "all" }
       </div>
 
       {/* Barre de recherche */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af]" />
-        <input
-          type="text"
-          placeholder="Rechercher par nom ou type d'événement..."
+      <div className="mb-4">
+        <SearchInput
           value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value)
+          onChange={(value) => {
+            setSearchQuery(value)
+            setDebouncedSearchQuery(value)
             setCurrentPage(1)
           }}
-          className="w-full pl-10 pr-4 py-2.5 border border-[#e5e7eb] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5]"
+          placeholder="Rechercher par nom ou type d'événement..."
+          debounceMs={300}
+          className="w-full"
         />
       </div>
 
       {/* Tableau avec en-têtes triables */}
-      <div className="overflow-x-auto rounded-lg border border-[#e5e7eb]">
+      <div className="overflow-x-auto rounded-lg border border-[#e5e7eb] relative">
+        {isFetching && !isInitialLoading && (
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex items-center justify-center">
+            <div className="flex items-center gap-2 text-sm text-[#6b7280]">
+              <div className="w-4 h-4 border-2 border-[#4F46E5] border-t-transparent rounded-full animate-spin"></div>
+              Recherche en cours...
+            </div>
+          </div>
+        )}
         <table className="w-full text-sm">
           <thead className="bg-[#F5F7FA]">
             <tr>
@@ -178,12 +190,34 @@ export function ConfirmationsChart({ filter = "7days", eventTypeFilter = "all" }
             </tr>
           </thead>
           <tbody>
-            {paginatedEvents.map((event, idx) => (
-              <tr
-                key={event.id}
-                onClick={() => navigate(`/events/${event.id}`)}
-                className={`border-t border-[#e5e7eb] hover:bg-[#F5F7FA] transition-colors cursor-pointer ${idx % 2 === 0 ? "bg-white" : "bg-[#FAFBFC]"}`}
-              >
+            {isFetching && !isInitialLoading ? (
+              Array.from({ length: itemsPerPage }).map((_, i) => (
+                <tr key={i} className="border-t border-[#e5e7eb]">
+                  <td className="py-3 px-3">
+                    <Skeleton className="h-4 w-32 mb-2" />
+                    <Skeleton className="h-3 w-24" />
+                  </td>
+                  <td className="text-center py-3 px-3">
+                    <Skeleton className="h-4 w-12 mx-auto" />
+                  </td>
+                  <td className="text-center py-3 px-3">
+                    <Skeleton className="h-4 w-12 mx-auto" />
+                  </td>
+                  <td className="text-center py-3 px-3">
+                    <Skeleton className="h-4 w-12 mx-auto" />
+                  </td>
+                  <td className="text-center py-3 px-3">
+                    <Skeleton className="h-6 w-16 mx-auto rounded-full" />
+                  </td>
+                </tr>
+              ))
+            ) : (
+              paginatedEvents.map((event, idx) => (
+                <tr
+                  key={event.id}
+                  onClick={() => navigate(`/events/${event.id}`)}
+                  className={`border-t border-[#e5e7eb] hover:bg-[#F5F7FA] transition-colors cursor-pointer ${idx % 2 === 0 ? "bg-white" : "bg-[#FAFBFC]"}`}
+                >
                 <td className="py-3 px-3">
                   <div className="font-medium text-[#1a1a2e]">{event.name}</div>
                   <div className="text-xs text-[#9ca3af]">
@@ -228,7 +262,8 @@ export function ConfirmationsChart({ filter = "7days", eventTypeFilter = "all" }
                   </div>
                 </td>
               </tr>
-            ))}
+              ))
+            )}
           </tbody>
         </table>
       </div>

@@ -216,6 +216,11 @@ export interface Subscription {
   expires_at: string;
   created_at: string;
   updated_at: string;
+  // Relations
+  user?: User;
+  event?: Event & {
+    user?: User;
+  };
   // Computed/legacy fields for compatibility
   plan?: PlanType;
   status?: string;
@@ -226,7 +231,24 @@ export interface Subscription {
 }
 
 // Payment
-export interface Payment {  id: number;  subscription_id: number;  amount: number;  currency: string;  payment_method: PaymentMethod | null;  transaction_reference: string | null;  status: PaymentStatus;  metadata: Record<string, unknown> | null;  created_at: string;  updated_at: string;}
+export interface Payment {
+  id: number;
+  subscription_id: number;
+  amount: number;
+  currency: string;
+  payment_method: PaymentMethod | null;
+  transaction_reference: string | null;
+  status: PaymentStatus;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+  subscription?: Subscription & {
+    user?: User;
+    event?: Event & {
+      user?: User;
+    };
+  };
+}
 
 // Event Template (Admin)
 export interface EventTemplate {
@@ -252,6 +274,10 @@ export interface EventTemplate {
 
 // API Response Types
 export interface PaginatedResponse<T> {  data: T[];  current_page: number;  last_page: number;  per_page: number;  total: number;  from: number | null;  to: number | null;}
+
+// Export dashboard types
+export * from './dashboard';
+export * from './admin-dashboard';
 
 // Guest Statistics
 export interface GuestStats {
@@ -533,6 +559,8 @@ export interface AdminUser extends User {
 export interface AdminEvent extends Event {
   owner?: User;
   guests_count?: number;
+  tasks_count?: number;
+  budget_items_count?: number;
   subscription?: Subscription;
 }
 
@@ -551,6 +579,8 @@ export interface AdminEventFilters {
   search?: string;
   page?: number;
   per_page?: number;
+  sort_by?: string;
+  sort_dir?: 'asc' | 'desc';
 }
 
 export interface AdminSubscriptionFilters {
