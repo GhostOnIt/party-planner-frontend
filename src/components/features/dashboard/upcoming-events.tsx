@@ -3,6 +3,7 @@ import { useUpcomingEvents } from "@/hooks/useDashboard"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useNavigate } from "react-router-dom"
 
 const typeColors: Record<string, string> = {
   mariage: "bg-[#E91E8C]",
@@ -20,6 +21,7 @@ const typeColors: Record<string, string> = {
 
 export function UpcomingEvents() {
   const { data: events, isLoading, error } = useUpcomingEvents(4)
+  const navigate = useNavigate()
 
   if (isLoading) {
     return (
@@ -62,7 +64,10 @@ export function UpcomingEvents() {
     <div className="bg-white rounded-xl p-5 border border-[#e5e7eb]">
       <div className="flex items-center justify-between mb-1">
         <h3 className="font-semibold text-[#1a1a2e]">Evenements a venir</h3>
-        <button className="flex items-center gap-1 text-sm text-[#6b7280] hover:text-[#1a1a2e] transition-colors">
+        <button
+          onClick={() => navigate("/events")}
+          className="flex items-center gap-1 text-sm text-[#6b7280] hover:text-[#1a1a2e] transition-colors"
+        >
           Voir tout
           <ArrowRight className="w-4 h-4" />
         </button>
@@ -79,7 +84,8 @@ export function UpcomingEvents() {
           return (
           <div
             key={index}
-            className="flex items-start gap-3 p-3 rounded-lg border border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors"
+            onClick={() => navigate(`/events/${event.id}`)}
+            className="flex items-start gap-3 p-3 rounded-lg border border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer"
           >
             <div className="w-10 h-10 bg-[#FCE7F3] rounded-lg flex items-center justify-center flex-shrink-0">
               <Calendar className="w-5 h-5 text-[#E91E8C]" />

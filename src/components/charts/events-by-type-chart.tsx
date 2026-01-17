@@ -40,10 +40,34 @@ export function EventsByTypeChart({ filter = "7days", eventTypeFilter = "all" }:
     )
   }
 
-  if (error || !data || data.length === 0) {
+  if (error) {
     return (
       <div className="bg-white rounded-2xl p-5 border border-[#e5e7eb]">
+        <div className="mb-3">
+          <h3 className="text-lg font-semibold text-[#1a1a2e]">Répartition par type</h3>
+          <p className="text-sm text-[#6b7280]">Distribution de vos événements</p>
+        </div>
         <p className="text-sm text-red-500">Erreur lors du chargement des données</p>
+      </div>
+    )
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl p-5 border border-[#e5e7eb]">
+        <div className="mb-3">
+          <h3 className="text-lg font-semibold text-[#1a1a2e]">Répartition par type</h3>
+          <p className="text-sm text-[#6b7280]">Distribution de vos événements</p>
+        </div>
+        <div className="h-[200px] flex items-center justify-center">
+          <p className="text-sm text-[#6b7280]">Aucun événement dans cette période</p>
+        </div>
+        <div className="mt-3 pt-3 border-t border-[#e5e7eb]">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[#6b7280]">Total événements</span>
+            <span className="text-xl font-bold text-[#1a1a2e]">0</span>
+          </div>
+        </div>
       </div>
     )
   }

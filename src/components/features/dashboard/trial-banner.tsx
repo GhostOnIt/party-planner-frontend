@@ -1,51 +1,86 @@
-import { useState, useEffect } from "react"
-import { X, Sparkles, Clock, CheckCircle2, ArrowRight, Gift } from "lucide-react"
+import { useState } from "react"
+import { X, Sparkles, CheckCircle2, ArrowRight, Gift } from "lucide-react"
+import { useAvailableTrial, formatLimitValue } from "@/hooks/useAdminPlans"
+import { useSubscribeToPlan } from "@/hooks/useSubscription"
+import { useToast } from "@/hooks/use-toast"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface TrialBannerProps {
-  trialDays?: number
-  features?: string[]
-  onStartTrial?: () => void
   onDismiss?: () => void
   dismissible?: boolean
 }
 
 export function TrialBanner({
-  trialDays = 14,
-  features = ["Événements illimités", "Invitations personnalisées", "Analyses avancées", "Support prioritaire"],
-  onStartTrial,
   onDismiss,
   dismissible = true,
 }: TrialBannerProps) {
+  const { data: trialData, isLoading } = useAvailableTrial()
+  const subscribeMutation = useSubscribeToPlan()
+  const { toast } = useToast()
   const [isVisible, setIsVisible] = useState(true)
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 23,
-    minutes: 59,
-    seconds: 59,
-  })
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 }
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 }
-        } else if (prev.hours > 0) {
-          return { hours: prev.hours - 1, minutes: 59, seconds: 59 }
-        }
-        return prev
-      })
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [])
+  const [isSubscribing, setIsSubscribing] = useState(false)
 
   const handleDismiss = () => {
     setIsVisible(false)
     onDismiss?.()
   }
 
+  const handleSubscribe = async () => {
+    if (!trialData?.data) return
+
+    setIsSubscribing(true)
+    try {
+      await subscribeMutation.mutateAsync({ plan_id: trialData.data.id })
+      toast({
+        title: 'Essai gratuit activé',
+        description: `Votre essai gratuit de ${trialData.data.duration_label} a été activé avec succès.`,
+      })
+      // Refresh the page to show updated subscription
+      window.location.reload()
+    } catch (error: unknown) {
+      toast({
+        title: 'Erreur',
+        description:
+          (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          "Impossible d'activer l'essai gratuit.",
+        variant: 'destructive',
+      })
+    } finally {
+      setIsSubscribing(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      null
+    )
+  }
+
+  // No trial available (already used or doesn't exist)
+  if (!trialData?.available || !trialData.data) {
+    return null
+  }
+
   if (!isVisible) return null
+
+  const trialPlan = trialData.data
+  const trialDays = trialPlan.duration_days || 14
+
+  // Get key limits for display
+  const eventsLimit = trialPlan.limits?.['events.creations_per_billing_period']
+  const guestsLimit = trialPlan.limits?.['guests.max_per_event']
+
+  // Build features list
+  const features: string[] = []
+  if (eventsLimit !== undefined) {
+    features.push(`${formatLimitValue(eventsLimit)} événement${eventsLimit !== -1 && eventsLimit > 1 ? 's' : ''}`)
+  }
+  if (guestsLimit !== undefined) {
+    features.push(`${formatLimitValue(guestsLimit)} invités`)
+  }
+  if (trialPlan.features?.['budget.enabled']) {
+    features.push('Gestion budget & tâches')
+  }
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4F46E5] via-[#6366F1] to-[#7C3AED] p-6 mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
@@ -68,22 +103,20 @@ export function TrialBanner({
           <div className="flex items-center gap-2 mb-3">
             <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
               <Gift className="w-4 h-4 text-yellow-300" />
-              <span className="text-sm font-medium text-white">Offre spéciale</span>
+              <span className="text-sm font-medium text-white">{trialPlan.name}</span>
             </div>
-            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full">
-              <Clock className="w-3.5 h-3.5 text-white/80" />
-              <span className="text-sm text-white/90 font-mono">
-                {String(timeLeft.hours).padStart(2, "0")}:{String(timeLeft.minutes).padStart(2, "0")}:
-                {String(timeLeft.seconds).padStart(2, "0")}
-              </span>
-            </div>
+            {trialPlan.is_trial && (
+              <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full">
+                <span className="text-sm text-white/90">Offre spéciale</span>
+              </div>
+            )}
           </div>
 
           <h2 className="text-2xl font-bold text-white mb-2">
-            Essayez Party Planner Pro gratuitement pendant {trialDays} jours
+            {trialPlan.title}
           </h2>
           <p className="text-white/80 mb-4 max-w-xl">
-            Débloquez toutes les fonctionnalités premium et transformez vos événements. Aucune carte bancaire requise.
+            {trialPlan.description || ""}
           </p>
 
           <div className="flex flex-wrap gap-x-4 gap-y-2">
@@ -106,11 +139,12 @@ export function TrialBanner({
           </div>
 
           <button
-            onClick={onStartTrial}
-            className="group flex items-center gap-2 bg-white text-[#4F46E5] px-6 py-3 rounded-xl font-semibold hover:bg-white/95 transition-all shadow-lg hover:shadow-xl hover:shadow-white/20"
+            onClick={handleSubscribe}
+            disabled={isSubscribing}
+            className="group flex items-center gap-2 bg-white text-[#4F46E5] px-6 py-3 rounded-xl font-semibold hover:bg-white/95 transition-all shadow-lg hover:shadow-xl hover:shadow-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Sparkles className="w-5 h-5" />
-            Démarrer l'essai gratuit
+            {isSubscribing ? 'Activation...' : "Démarrer l'essai gratuit"}
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
 

@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import { useConfirmationsChart } from "@/hooks/useDashboard"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useNavigate } from "react-router-dom"
 
 type SortField = "name" | "confirmed" | "declined" | "pending" | "confirmRate"
 type SortOrder = "asc" | "desc"
@@ -12,6 +13,7 @@ interface ConfirmationsChartProps {
 }
 
 export function ConfirmationsChart({ filter = "7days", eventTypeFilter = "all" }: ConfirmationsChartProps) {
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [sortField, setSortField] = useState<SortField>("confirmRate")
@@ -179,7 +181,8 @@ export function ConfirmationsChart({ filter = "7days", eventTypeFilter = "all" }
             {paginatedEvents.map((event, idx) => (
               <tr
                 key={event.id}
-                className={`border-t border-[#e5e7eb] hover:bg-[#F5F7FA] transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-[#FAFBFC]"}`}
+                onClick={() => navigate(`/events/${event.id}`)}
+                className={`border-t border-[#e5e7eb] hover:bg-[#F5F7FA] transition-colors cursor-pointer ${idx % 2 === 0 ? "bg-white" : "bg-[#FAFBFC]"}`}
               >
                 <td className="py-3 px-3">
                   <div className="font-medium text-[#1a1a2e]">{event.name}</div>

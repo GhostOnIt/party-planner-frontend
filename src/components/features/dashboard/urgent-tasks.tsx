@@ -3,6 +3,7 @@ import { useUrgentTasks } from "@/hooks/useDashboard"
 import { format, isToday, isPast, isFuture } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useNavigate } from "react-router-dom"
 
 const priorityColors = {
   high: "bg-red-100 text-red-600",
@@ -26,6 +27,7 @@ function getTaskStatus(dueDate: string | null): "overdue" | "today" | "upcoming"
 
 export function UrgentTasks() {
   const { data: tasks, isLoading, error } = useUrgentTasks(4)
+  const navigate = useNavigate()
 
   if (isLoading) {
     return (
@@ -66,7 +68,10 @@ export function UrgentTasks() {
     <div className="bg-white rounded-xl p-5 border border-[#e5e7eb]">
       <div className="flex items-center justify-between mb-1">
         <h3 className="font-semibold text-[#1a1a2e]">Taches urgentes</h3>
-        <button className="flex items-center gap-1 text-sm text-[#6b7280] hover:text-[#1a1a2e] transition-colors">
+        <button
+          onClick={() => navigate("/events")}
+          className="flex items-center gap-1 text-sm text-[#6b7280] hover:text-[#1a1a2e] transition-colors"
+        >
           Voir tout
           <ArrowRight className="w-4 h-4" />
         </button>
@@ -80,10 +85,12 @@ export function UrgentTasks() {
             ? format(new Date(task.due_date), "d MMM yyyy", { locale: fr })
             : null
           const eventName = (task.event as any)?.title || "Événement"
+          const eventId = (task.event as any)?.id || task.event_id
 
           return (
           <div
             key={task.id}
+            onClick={() => eventId && navigate(`/events/${eventId}?tab=tasks`)}
             className="flex items-start gap-3 p-3 rounded-lg bg-[#F9FAFB] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
           >
             <div className={`p-2 rounded-lg ${task.priority === "high" ? "bg-red-100" : "bg-orange-100"}`}>

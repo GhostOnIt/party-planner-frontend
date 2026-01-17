@@ -35,10 +35,7 @@ export function DashboardPage() {
 
   return (
     <div>
-      <TrialBanner
-        onStartTrial={() => navigate("/subscriptions")}
-        dismissible={true}
-      />
+      <TrialBanner dismissible={true} />
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1a1a2e]">Tableau de bord</h1>
