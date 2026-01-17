@@ -15,6 +15,7 @@ export interface Plan {
   is_trial: boolean;
   is_one_time_use?: boolean;
   is_active: boolean;
+  is_popular?: boolean; // Calculated by backend based on subscription statistics
   sort_order: number;
   limits: PlanLimits;
   features: PlanFeatures;
@@ -191,7 +192,10 @@ export function usePlans() {
     queryKey: ['plans'],
     queryFn: async (): Promise<Plan[]> => {
       const response = await api.get('/plans');
-      return response.data.data;
+      // Handle different response structures
+      const data = response.data?.data ?? response.data ?? [];
+      // Ensure it's always an array
+      return Array.isArray(data) ? data : [];
     },
   });
 }

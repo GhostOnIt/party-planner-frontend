@@ -131,7 +131,6 @@ function PricingCard({ plan, isPopular = false }: { plan: Plan; isPopular?: bool
               {plan.price === 0 ? 'Gratuit' : formatCurrency(plan.price)}
             </span>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">par mois</p>
           <div className="mt-2 flex items-center justify-center gap-1 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />
             <span>{plan.duration_label}</span>
@@ -212,19 +211,15 @@ function PricingCard({ plan, isPopular = false }: { plan: Plan; isPopular?: bool
 
 export function PlansPage() {
   const { data: plansData, isLoading, error } = usePlans();
-  const plans = plansData || [];
 
-  // Include all active plans (trial included, backend already filters out used one-time-use plans)
-  const activePlans = plans.filter((p) => p.is_active);
+  // Ensure plans is always an array
+  // Backend already filters active plans and calculates is_popular
+  const plans = Array.isArray(plansData) ? plansData : [];
 
   // Debug: log plans data
   if (process.env.NODE_ENV === 'development') {
-    console.log('Plans data:', { plansData, plans, activePlans, isLoading, error });
+    console.log('Plans data:', { plansData, plans, isLoading, error });
   }
-
-  // Find popular plan (usually the middle one or PRO, excluding trial)
-  const paidPlans = activePlans.filter((p) => !p.is_trial);
-  const popularPlanIndex = paidPlans.length > 1 ? Math.floor(paidPlans.length / 2) : -1;
 
   if (isLoading) {
     return (
@@ -277,15 +272,15 @@ export function PlansPage() {
       />
 
       {/* Pricing Cards */}
-      {activePlans.length === 0 ? (
+      {plans.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">Aucun plan disponible pour le moment.</p>
         </div>
       ) : (
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-          {activePlans.map((plan, index) => {
-            // Only mark paid plans as popular (not trial)
-            const isPopular = !plan.is_trial && index === popularPlanIndex;
+          {plans.map((plan) => {
+            // Backend calculates is_popular based on real subscription statistics
+            const isPopular = plan.is_popular ?? false;
             return <PricingCard key={plan.id} plan={plan} isPopular={isPopular} />;
           })}
         </div>

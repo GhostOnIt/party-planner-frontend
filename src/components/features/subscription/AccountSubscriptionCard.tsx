@@ -72,9 +72,7 @@ export function AccountSubscriptionCard() {
   const planName = plan?.name || subscription.plan_type || 'Inconnu';
   // @ts-ignore - plan may have is_trial property
   const isTrial = plan?.is_trial || subscription.status === 'trial';
-  const expiresAt = subscription.expires_at 
-    ? parseISO(subscription.expires_at) 
-    : null;
+  const expiresAt = subscription.expires_at ? parseISO(subscription.expires_at) : null;
   const isExpired = expiresAt ? isPast(expiresAt) : false;
   const daysRemaining = expiresAt ? differenceInDays(expiresAt, new Date()) : 0;
   const isExpiringSoon = daysRemaining <= 3 && daysRemaining > 0 && !isExpired;
@@ -121,7 +119,8 @@ export function AccountSubscriptionCard() {
           <div className="flex items-center gap-2 rounded-lg bg-yellow-50 p-3 text-yellow-800 border border-yellow-200">
             <AlertTriangle className="h-4 w-4" />
             <span className="text-sm font-medium">
-              Votre {isTrial ? 'essai' : 'abonnement'} expire dans {daysRemaining} jour{daysRemaining > 1 ? 's' : ''}
+              Votre {isTrial ? 'essai' : 'abonnement'} expire dans {daysRemaining} jour
+              {daysRemaining > 1 ? 's' : ''}
             </span>
           </div>
         )}
@@ -140,7 +139,8 @@ export function AccountSubscriptionCard() {
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">Événements créés</span>
             <span className="text-muted-foreground">
-              {quotaUsed} / {isUnlimited ? (
+              {quotaUsed} /{' '}
+              {isUnlimited ? (
                 <span className="flex items-center gap-1">
                   <Infinity className="h-4 w-4" />
                   Illimité
@@ -152,20 +152,15 @@ export function AccountSubscriptionCard() {
           </div>
           {!isUnlimited && (
             <>
-              <Progress 
-                value={quotaPercentage} 
-                className="h-2"
-              />
+              <Progress value={quotaPercentage} className="h-2" />
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>
-                  {quotaRemaining > 0 
+                  {quotaRemaining > 0
                     ? `${quotaRemaining} événement${quotaRemaining > 1 ? 's' : ''} restant${quotaRemaining > 1 ? 's' : ''}`
                     : 'Quota atteint'}
                 </span>
                 {quotaPercentage >= 80 && quotaRemaining > 0 && (
-                  <span className="text-yellow-600 font-medium">
-                    ⚠️ Quota presque atteint
-                  </span>
+                  <span className="text-yellow-600 font-medium">⚠️ Quota presque atteint</span>
                 )}
               </div>
             </>
@@ -177,10 +172,9 @@ export function AccountSubscriptionCard() {
           <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
             <Calendar className="h-4 w-4" />
             <span>
-              {isExpired 
+              {isExpired
                 ? `Expiré le ${format(expiresAt, 'dd MMMM yyyy', { locale: fr })}`
-                : `Expire le ${format(expiresAt, 'dd MMMM yyyy', { locale: fr })}`
-              }
+                : `Expire le ${format(expiresAt, 'dd MMMM yyyy', { locale: fr })}`}
             </span>
           </div>
         )}
@@ -195,7 +189,7 @@ export function AccountSubscriptionCard() {
               </Link>
             </Button>
           )}
-          
+
           {!isTrial && !isExpired && (
             <Button asChild variant="outline" className="w-full">
               <Link to="/plans">
@@ -215,13 +209,10 @@ export function AccountSubscriptionCard() {
           )}
 
           <Button asChild variant="ghost" className="w-full">
-            <Link to="/subscriptions">
-              Gérer mon abonnement
-            </Link>
+            <Link to="/subscriptions">Gérer mon abonnement</Link>
           </Button>
         </div>
       </CardContent>
     </Card>
   );
 }
-
