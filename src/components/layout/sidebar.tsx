@@ -3,23 +3,19 @@ import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard,
   Calendar,
-  Users,
-  Bell,
-  Settings,
-  LogOut,
-  Crown,
   Mail,
   CreditCard,
-  User,
+  Bell,
+  Users,
   FileText,
+  Settings,
   Activity,
-  Package,
+  FileCheck,
+  Layers,
+  LogOut,
   LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import logo from '@/assets/logo.png';
 
 interface SidebarProps {
@@ -43,62 +39,57 @@ const mainNavItems: NavItem[] = [
 ];
 
 const adminNavItems: NavItem[] = [
-  { to: '/admin', icon: Crown, labelKey: 'nav.adminDashboard', end: true },
+  { to: '/admin', icon: LayoutDashboard, labelKey: 'nav.adminDashboard', end: true },
   { to: '/admin/users', icon: Users, labelKey: 'nav.adminUsers' },
   { to: '/admin/events', icon: Calendar, labelKey: 'nav.adminEvents' },
   { to: '/admin/payments', icon: CreditCard, labelKey: 'nav.adminPayments' },
   { to: '/admin/subscriptions', icon: FileText, labelKey: 'nav.adminSubscriptions' },
-  { to: '/admin/plans', icon: Package, labelKey: 'nav.adminPlans' },
-  { to: '/admin/templates', icon: FileText, labelKey: 'nav.adminTemplates' },
+  { to: '/admin/plans', icon: Layers, labelKey: 'nav.adminPlans' },
+  { to: '/admin/templates', icon: FileCheck, labelKey: 'nav.adminTemplates' },
   { to: '/admin/activity-logs', icon: Activity, labelKey: 'nav.adminActivityLogs' },
-];
-
-const bottomNavItems: NavItem[] = [
-  { to: '/profile', icon: User, labelKey: 'nav.profile' },
-  { to: '/settings', icon: Settings, labelKey: 'nav.settings' },
 ];
 
 export function Sidebar({ isAdmin = false, onLogout }: SidebarProps) {
   const { t } = useTranslation();
+  
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r bg-card">
+    <aside className="fixed left-0 top-0 h-screen w-[250px] bg-white border-r border-[#e5e7eb] flex flex-col">
       {/* Logo */}
-      <div className="flex h-16 items-center border-b px-6">
+      <div className="p-4 flex items-center gap-2">
         <NavLink to="/dashboard" className="flex items-center gap-2">
           <img src={logo} alt={t('app.name')} className="h-8 w-8 object-contain" />
-          <span className="text-lg font-semibold">{t('app.name')}</span>
+          <span className="font-semibold text-[#1a1a2e] text-lg">{t('app.name')}</span>
         </NavLink>
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-4">
-        <nav className="space-y-1">
+      <nav className="flex-1 px-3 py-2">
+        <div className="space-y-1">
           {mainNavItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors",
                   isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    ? "bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white"
+                    : "text-[#6b7280] hover:bg-[#f3f4f6]"
                 )
               }
             >
-              <item.icon className="h-5 w-5" />
+              <item.icon className="w-5 h-5" />
               {t(item.labelKey)}
             </NavLink>
           ))}
-        </nav>
+        </div>
 
         {isAdmin && (
-          <>
-            <Separator className="my-4" />
-            <p className="mb-2 px-3 text-xs font-semibold uppercase text-muted-foreground">
+          <div className="mt-6">
+            <p className="px-3 text-xs font-semibold text-[#9ca3af] uppercase tracking-wider mb-2">
               Administration
             </p>
-            <nav className="space-y-1">
+            <div className="space-y-1">
               {adminNavItems.map((item) => (
                 <NavLink
                   key={item.to}
@@ -106,51 +97,46 @@ export function Sidebar({ isAdmin = false, onLogout }: SidebarProps) {
                   end={item.end}
                   className={({ isActive }) =>
                     cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors",
                       isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        ? "bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white"
+                        : "text-[#6b7280] hover:bg-[#f3f4f6]"
                     )
                   }
                 >
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className="w-5 h-5" />
                   {t(item.labelKey)}
                 </NavLink>
               ))}
-            </nav>
-          </>
+            </div>
+          </div>
         )}
-      </ScrollArea>
+      </nav>
 
       {/* Bottom section */}
-      <div className="border-t p-3">
-        <nav className="space-y-1">
-          {bottomNavItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                )
-              }
-            >
-              <item.icon className="h-5 w-5" />
-              {t(item.labelKey)}
-            </NavLink>
-          ))}
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-3 px-3 text-muted-foreground hover:bg-muted hover:text-foreground"
-            onClick={onLogout}
-          >
-            <LogOut className="h-5 w-5" />
-            {t('nav.logout')}
-          </Button>
-        </nav>
+      <div className="px-3 py-4 border-t border-[#e5e7eb] space-y-2">
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors",
+              isActive
+                ? "bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white"
+                : "text-[#6b7280] hover:bg-[#f3f4f6]"
+            )
+          }
+        >
+          <Settings className="w-5 h-5" />
+          {t('nav.settings')}
+        </NavLink>
+
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white hover:opacity-90 transition-opacity"
+        >
+          <LogOut className="w-4 h-4" />
+          {t('nav.logout')}
+        </button>
       </div>
     </aside>
   );

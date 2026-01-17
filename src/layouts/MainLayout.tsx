@@ -42,13 +42,13 @@ export function MainLayout() {
 
       {/* Mobile Sidebar */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <SheetContent side="left" className="w-64 p-0">
+        <SheetContent side="left" className="w-[250px] p-0">
           <Sidebar isAdmin={user.role === 'admin'} onLogout={handleLogout} />
         </SheetContent>
       </Sheet>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="lg:pl-[250px]">
         <Header
           user={user}
           unreadNotifications={unreadCount || 0}
