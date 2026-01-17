@@ -12,6 +12,13 @@ const paymentStatusColors: Record<string, { bg: string; text: string }> = {
   refunded: { bg: "bg-[#F3F4F6]", text: "text-[#6b7280]" },
 }
 
+const paymentStatusLabels: Record<string, string> = {
+  completed: "Payé",
+  pending: "En attente",
+  failed: "Échoué",
+  refunded: "Remboursé",
+}
+
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('fr-FR').format(amount) + " FCFA"
 }
@@ -94,7 +101,7 @@ export function RecentPaymentsCard() {
                 <div className="text-right">
                   <p className="font-semibold text-[#1a1a2e] text-sm">{formatCurrency(payment.amount)}</p>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColors.bg} ${statusColors.text}`}>
-                    {payment.status}
+                    {paymentStatusLabels[payment.status] || payment.status}
                   </span>
                 </div>
               </div>
