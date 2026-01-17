@@ -16,3 +16,17 @@ export {
   useExportBudget,
 } from './useBudget';
 export { useNotificationSettings, useUpdateNotificationSettings } from './useSettings';
+export {
+  useAdminPlans,
+  useAdminPlan,
+  useCreatePlan,
+  useUpdatePlan,
+  useDeletePlan,
+  useTogglePlanActive,
+  usePlans,
+  PLAN_FEATURE_LABELS,
+  PLAN_LIMIT_LABELS,
+  formatLimitValue,
+  isUnlimited,
+} from './useAdminPlans';
+export type { Plan, PlanLimits, PlanFeatures, CreatePlanData, UpdatePlanData, PlanFilters } from './useAdminPlans';

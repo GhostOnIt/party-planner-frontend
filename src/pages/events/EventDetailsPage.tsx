@@ -12,7 +12,6 @@ import {
   UserPlus,
   Calendar,
   MapPin,
-  Crown,
   UserCheck,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -37,19 +36,13 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { EventStatusBadge, EventTypeBadge } from '@/components/features/events';
 import { useEvent, useDeleteEvent, useDuplicateEvent } from '@/hooks/useEvents';
 import { useAuthStore } from '@/stores/authStore';
-import {
-  useGuestsPermissions,
-  useTasksPermissions,
-  useBudgetPermissions,
-  useCollaboratorsPermissions,
-} from '@/hooks/usePermissions';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { PermissionGuard } from '@/components/ui/permission-guard';
 import { GuestsPage } from './GuestsPage';
 import { TasksPage } from './TasksPage';
 import { BudgetPage } from './BudgetPage';
 import { PhotosPage } from './PhotosPage';
 import { CollaboratorsPage } from './CollaboratorsPage';
-import { EventSubscriptionPage } from './EventSubscriptionPage';
 import { getApiErrorMessage } from '@/api/client';
 
 export function EventDetailsPage() {
@@ -59,15 +52,7 @@ export function EventDetailsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { user } = useAuthStore();
 
-  const validTabs = [
-    'overview',
-    'guests',
-    'tasks',
-    'budget',
-    'photos',
-    'collaborators',
-    'subscription',
-  ];
+  const validTabs = ['overview', 'guests', 'tasks', 'budget', 'photos', 'collaborators'];
   const tabFromUrl = searchParams.get('tab');
   const activeTab = validTabs.includes(tabFromUrl || '') ? tabFromUrl : 'overview';
 
@@ -78,10 +63,7 @@ export function EventDetailsPage() {
   const { data: event, isLoading, error } = useEvent(id);
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
   const { mutate: duplicateEvent } = useDuplicateEvent();
-  const guestPermissions = useGuestsPermissions(id!);
-  const tasksPermissions = useTasksPermissions(id!);
-  const budgetPermissions = useBudgetPermissions(id!);
-  const collaboratorsPermissions = useCollaboratorsPermissions(id!);
+  const featureAccess = useFeatureAccess(id!);
 
   if (isLoading) {
     return (
@@ -241,24 +223,24 @@ export function EventDetailsPage() {
           <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
           <TabsTrigger
             value="guests"
-            className={`gap-2 ${!guestPermissions.hasAnyPermission ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={!guestPermissions.hasAnyPermission}
+            className={`gap-2 ${!featureAccess.guests.canAccess ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!featureAccess.guests.canAccess}
           >
             <Users className="h-4 w-4" />
             Invites
           </TabsTrigger>
           <TabsTrigger
             value="tasks"
-            className={`gap-2 ${!tasksPermissions.hasAnyPermission ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={!tasksPermissions.hasAnyPermission}
+            className={`gap-2 ${!featureAccess.tasks.canAccess ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!featureAccess.tasks.canAccess}
           >
             <CheckSquare className="h-4 w-4" />
             Taches
           </TabsTrigger>
           <TabsTrigger
             value="budget"
-            className={`gap-2 ${!budgetPermissions.hasAnyPermission ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={!budgetPermissions.hasAnyPermission}
+            className={`gap-2 ${!featureAccess.budget.canAccess ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!featureAccess.budget.canAccess}
           >
             <Wallet className="h-4 w-4" />
             Budget
@@ -269,18 +251,12 @@ export function EventDetailsPage() {
           </TabsTrigger>
           <TabsTrigger
             value="collaborators"
-            className={`gap-2 ${!collaboratorsPermissions.hasAnyPermission ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={!collaboratorsPermissions.hasAnyPermission}
+            className={`gap-2 ${!featureAccess.collaborators.canAccess ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!featureAccess.collaborators.canAccess}
           >
             <UserPlus className="h-4 w-4" />
             Collaborateurs
           </TabsTrigger>
-          {collaboratorsPermissions.isOwner && (
-            <TabsTrigger value="subscription" className="gap-2">
-              <Crown className="h-4 w-4" />
-              Abonnement
-            </TabsTrigger>
-          )}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -334,7 +310,11 @@ export function EventDetailsPage() {
               <EmptyState
                 icon={Users}
                 title="Accès restreint"
-                description="Vous n'avez pas les permissions nécessaires pour consulter les invités de cet événement."
+                description={
+                  !featureAccess.guests.canAccess
+                    ? 'Cette fonctionnalité nécessite un abonnement actif.'
+                    : "Vous n'avez pas les permissions nécessaires pour consulter les invités de cet événement."
+                }
               />
             }
           >
@@ -350,7 +330,11 @@ export function EventDetailsPage() {
               <EmptyState
                 icon={CheckSquare}
                 title="Accès restreint"
-                description="Vous n'avez pas les permissions nécessaires pour consulter les tâches de cet événement."
+                description={
+                  !featureAccess.tasks.canAccess
+                    ? 'Cette fonctionnalité nécessite un abonnement actif.'
+                    : "Vous n'avez pas les permissions nécessaires pour consulter les tâches de cet événement."
+                }
               />
             }
           >
@@ -366,7 +350,11 @@ export function EventDetailsPage() {
               <EmptyState
                 icon={Wallet}
                 title="Accès restreint"
-                description="Vous n'avez pas les permissions nécessaires pour consulter le budget de cet événement."
+                description={
+                  !featureAccess.budget.canAccess
+                    ? 'Cette fonctionnalité nécessite un abonnement actif.'
+                    : "Vous n'avez pas les permissions nécessaires pour consulter le budget de cet événement."
+                }
               />
             }
           >
@@ -386,24 +374,16 @@ export function EventDetailsPage() {
               <EmptyState
                 icon={UserPlus}
                 title="Accès restreint"
-                description="Vous n'avez pas les permissions nécessaires pour consulter les collaborateurs de cet événement."
+                description={
+                  !featureAccess.collaborators.canAccess
+                    ? 'Cette fonctionnalité nécessite un abonnement actif.'
+                    : "Vous n'avez pas les permissions nécessaires pour consulter les collaborateurs de cet événement."
+                }
               />
             }
           >
             <CollaboratorsPage eventId={id} />
           </PermissionGuard>
-        </TabsContent>
-
-        <TabsContent value="subscription">
-          {collaboratorsPermissions.isOwner ? (
-            <EventSubscriptionPage eventId={id} />
-          ) : (
-            <EmptyState
-              icon={Crown}
-              title="Accès restreint"
-              description="Seul le propriétaire de l'événement peut gérer les abonnements."
-            />
-          )}
         </TabsContent>
       </Tabs>
 

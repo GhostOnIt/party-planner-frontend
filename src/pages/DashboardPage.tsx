@@ -3,19 +3,24 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/page-header';
 import { StatsCard, UpcomingEvents, UrgentTasks, RecentActivity } from '@/components/features/dashboard';
+import { AccountSubscriptionCard } from '@/components/features/subscription/AccountSubscriptionCard';
+import { TrialBanner } from '@/components/features/subscription/TrialBanner';
 import { RsvpBarChart } from '@/components/charts';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useRsvpChartData } from '@/hooks/useChartData';
 import { useRecentNotifications } from '@/hooks/useNotifications';
+import { useCurrentSubscription } from '@/hooks/useSubscription';
 
 export function DashboardPage() {
   const { data: dashboardData, isLoading: isDashboardLoading } = useDashboard();
   const { data: rsvpChartData, isLoading: isChartLoading } = useRsvpChartData();
   const { data: recentNotifications, isLoading: isNotificationsLoading } = useRecentNotifications(5);
+  const { data: subscriptionData } = useCurrentSubscription();
 
   const stats = dashboardData?.stats;
   const upcomingEvents = dashboardData?.upcoming_events || [];
   const urgentTasks = dashboardData?.urgent_tasks || [];
+  const hasActiveSubscription = subscriptionData?.has_subscription || false;
 
   const formatCurrency = (value: number | null | undefined) => {
     const safeValue = value ?? 0;
@@ -40,6 +45,9 @@ export function DashboardPage() {
           </Link>
         }
       />
+
+      {/* Trial Banner - Only show if no active subscription */}
+      {!hasActiveSubscription && <TrialBanner />}
 
       {/* Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -77,11 +85,19 @@ export function DashboardPage() {
         />
       </div>
 
-      {/* Events, Tasks and Activity */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <UpcomingEvents events={upcomingEvents} isLoading={isDashboardLoading} />
-        <UrgentTasks tasks={urgentTasks} isLoading={isDashboardLoading} />
-        <RecentActivity notifications={recentNotifications || []} isLoading={isNotificationsLoading} />
+      {/* Subscription Card and Events, Tasks and Activity */}
+      <div className="grid gap-6 lg:grid-cols-4">
+        {/* Subscription Card - Always visible */}
+        <div className="lg:col-span-1">
+          <AccountSubscriptionCard />
+        </div>
+
+        {/* Events, Tasks and Activity */}
+        <div className="lg:col-span-3 grid gap-6 lg:grid-cols-3">
+          <UpcomingEvents events={upcomingEvents} isLoading={isDashboardLoading} />
+          <UrgentTasks tasks={urgentTasks} isLoading={isDashboardLoading} />
+          <RecentActivity notifications={recentNotifications || []} isLoading={isNotificationsLoading} />
+        </div>
       </div>
 
       {/* RSVP Chart */}

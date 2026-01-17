@@ -24,7 +24,6 @@ import {
 import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/stores/authStore';
-import { SubscriptionRequired } from '@/components/features/subscription';
 import {
   CollaboratorList,
   InviteCollaboratorForm,
@@ -53,7 +52,7 @@ import {
   useRemoveCollaborator,
   useResendInvitation,
 } from '@/hooks/useCollaborators';
-import { useEventSubscription } from '@/hooks/useSubscription';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { getAssignableRoles } from '@/utils/collaboratorPermissions';
 import type {
   Collaborator,
@@ -90,7 +89,7 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
   const { mutate: updateCollaborator, isPending: isUpdating } = useUpdateCollaborator(eventId!);
   const { mutate: removeCollaborator, isPending: isRemoving } = useRemoveCollaborator(eventId!);
   const { mutate: resendInvitation } = useResendInvitation(eventId!);
-  const { data: subscription, isLoading: isLoadingSubscription } = useEventSubscription(eventId!);
+  const featureAccess = useFeatureAccess(eventId!);
 
   const { data: rolesData } = useCustomRoles(eventId!);
   const { data: permissionsData, isLoading: permissionsModulesLoading } = usePermissions();
@@ -100,13 +99,11 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
 
   const collaborators = collaboratorsData?.data || [];
 
-  // Check if subscription is active
-  const subscriptionStatus: string = subscription?.payment_status || subscription?.status || '';
-  const hasActiveSubscription = subscriptionStatus === 'paid' || subscriptionStatus === 'active';
+  // Check access using featureAccess (combines entitlements + permissions)
   const canManage = userPermissions?.canManage || false;
-  const canInvite = (userPermissions?.canInvite && hasActiveSubscription) || false;
+  const canInvite = featureAccess.collaborators.canInvite;
   const canCreateCustomRoles =
-    (userPermissions?.canCreateCustomRoles && hasActiveSubscription) || false;
+    (userPermissions?.canCreateCustomRoles && featureAccess.collaborators.canAccess) || false;
   const customRoles = (rolesData?.roles || []).filter((r) => !r.is_system);
 
   const permissionNameToId = new Map<string, number>();
@@ -369,21 +366,16 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
         </CardContent>
       </Card>
 
-      {/* Subscription Required Message */}
-      {!isLoadingSubscription && !hasActiveSubscription && (
-        <SubscriptionRequired
-          eventId={eventId!}
-          feature="la gestion des collaborateurs"
-          message="Un abonnement actif est necessaire pour ajouter et gerer des collaborateurs pour votre evenement."
-        />
-      )}
-
       {/* Collaborators List */}
       {!isLoading && collaborators.length === 0 ? (
         <EmptyState
           icon={UserPlus}
           title="Aucun collaborateur"
-          description="Vous n'avez pas encore invite de collaborateurs. Invitez des personnes pour travailler ensemble sur cet evenement."
+          description={
+            !featureAccess.collaborators.canAccess
+              ? 'Cette fonctionnalité nécessite un abonnement actif.'
+              : "Vous n'avez pas encore invite de collaborateurs. Invitez des personnes pour travailler ensemble sur cet evenement."
+          }
           action={
             canInvite
               ? {
@@ -396,7 +388,7 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
       ) : (
         <CollaboratorList
           collaborators={collaborators}
-          isLoading={isLoading || permissionsLoading || isLoadingSubscription}
+          isLoading={isLoading || permissionsLoading || featureAccess.isLoading}
           currentUserId={user?.id}
           canManage={canManage}
           onChangeRole={setCollaboratorToChangeRole}

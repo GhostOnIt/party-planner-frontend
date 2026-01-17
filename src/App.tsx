@@ -28,6 +28,7 @@ const InvitationsPage = lazy(() => import('@/pages/InvitationsPage').then(m => (
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
 const SubscriptionsPage = lazy(() => import('@/pages/SubscriptionsPage').then(m => ({ default: m.SubscriptionsPage })));
 const PlansPage = lazy(() => import('@/pages/PlansPage').then(m => ({ default: m.PlansPage })));
+const SubscribePage = lazy(() => import('@/pages/SubscribePage').then(m => ({ default: m.SubscribePage })));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
@@ -48,6 +49,7 @@ const AdminUsersPage = lazy(() => import('@/pages/admin').then(m => ({ default: 
 const AdminEventsPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminEventsPage })));
 const AdminPaymentsPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminPaymentsPage })));
 const AdminSubscriptionsPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminSubscriptionsPage })));
+const AdminPlansPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminPlansPage })));
 const AdminTemplatesPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminTemplatesPage })));
 const AdminActivityLogsPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminActivityLogsPage })));
 
@@ -110,6 +112,7 @@ function App() {
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/subscriptions" element={<SubscriptionsPage />} />
                 <Route path="/plans" element={<PlansPage />} />
+                <Route path="/subscribe/:slug" element={<SubscribePage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
@@ -123,6 +126,7 @@ function App() {
                 <Route path="/admin/events" element={<AdminEventsPage />} />
                 <Route path="/admin/payments" element={<AdminPaymentsPage />} />
                 <Route path="/admin/subscriptions" element={<AdminSubscriptionsPage />} />
+                <Route path="/admin/plans" element={<AdminPlansPage />} />
                 <Route path="/admin/templates" element={<AdminTemplatesPage />} />
                 <Route path="/admin/activity-logs" element={<AdminActivityLogsPage />} />
               </Route>

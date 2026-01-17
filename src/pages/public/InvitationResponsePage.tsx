@@ -142,7 +142,7 @@ export function InvitationResponsePage() {
               guestName={invitation.guest.name}
               eventDate={invitation.event.date}
               eventLocation={invitation.event.location ?? null}
-              plusOneName={displayPlusOneName}
+              plusOneName={displayPlusOneName ?? null}
             />
 
             <div className="text-center">

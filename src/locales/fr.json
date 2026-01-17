@@ -50,6 +50,7 @@
     "adminEvents": "Evenements",
     "adminPayments": "Paiements",
     "adminSubscriptions": "Abonnements",
+    "adminPlans": "Plans",
     "adminTemplates": "Templates",
     "adminActivityLogs": "Journal d'activite"
   },

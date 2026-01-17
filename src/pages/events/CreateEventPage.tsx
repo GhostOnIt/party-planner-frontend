@@ -37,11 +37,11 @@ export function CreateEventPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {error && (
+            {error ? (
               <Alert variant="destructive" className="mb-6">
                 <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
               </Alert>
-            )}
+            ) : null}
 
             <EventForm onSubmit={createEvent} isSubmitting={isPending} />
           </CardContent>

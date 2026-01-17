@@ -69,6 +69,7 @@ import {
   useChangePlan,
   type AdminSubscription,
 } from '@/hooks/useAdmin';
+import { useAdminPlans, formatLimitValue } from '@/hooks/useAdminPlans';
 import type { AdminSubscriptionFilters, PlanType } from '@/types';
 
 function formatCurrency(amount: number | string): string {
@@ -80,20 +81,33 @@ function formatCurrency(amount: number | string): string {
   }).format(num);
 }
 
-const planLabels: Record<PlanType, string> = {
+// Legacy plan labels (for backward compatibility)
+const legacyPlanLabels: Record<string, string> = {
   starter: 'Starter',
   pro: 'Pro',
+  trial: 'Essai',
 };
 
-const planColors: Record<PlanType, string> = {
-  starter: 'bg-blue-100 text-blue-800 border-blue-200',
-  pro: 'bg-amber-100 text-amber-800 border-amber-200',
-};
+// Dynamic plan color based on price
+function getPlanColor(planType: string, price?: number): string {
+  if (planType === 'trial' || planType === 'essai-gratuit') {
+    return 'bg-blue-100 text-blue-800 border-blue-200';
+  }
+  if (price && price >= 25000) {
+    return 'bg-purple-100 text-purple-800 border-purple-200';
+  }
+  if (price && price > 0) {
+    return 'bg-amber-100 text-amber-800 border-amber-200';
+  }
+  return 'bg-gray-100 text-gray-800 border-gray-200';
+}
 
-const planIcons: Record<PlanType, typeof Sparkles> = {
-  starter: Sparkles,
-  pro: Crown,
-};
+function getPlanIcon(planType: string, isTrial?: boolean) {
+  if (isTrial || planType === 'trial' || planType === 'essai-gratuit') {
+    return Sparkles;
+  }
+  return Crown;
+}
 
 const paymentStatusLabels: Record<string, string> = {
   pending: 'En attente',
@@ -118,13 +132,31 @@ export function AdminSubscriptionsPage() {
   const [extendSub, setExtendSub] = useState<AdminSubscription | null>(null);
   const [extendDays, setExtendDays] = useState(30);
   const [changePlanSub, setChangePlanSub] = useState<AdminSubscription | null>(null);
-  const [newPlanType, setNewPlanType] = useState<PlanType>('pro');
+  const [newPlanId, setNewPlanId] = useState<number | null>(null);
   const [detailsSub, setDetailsSub] = useState<AdminSubscription | null>(null);
 
   const { data, isLoading } = useAdminSubscriptions(filters);
+  const { data: plansData } = useAdminPlans({ active: true });
+  const plans = plansData?.data || [];
   const { mutate: cancelMutation, isPending: isCancelling } = useCancelSubscription();
   const { mutate: extendMutation, isPending: isExtending } = useExtendSubscription();
   const { mutate: changePlanMutation, isPending: isChangingPlan } = useChangePlan();
+
+  // Helper to get plan name from subscription
+  const getPlanName = (subscription: AdminSubscription): string => {
+    // @ts-ignore - plan may be loaded via relation
+    if (subscription.plan?.name) {
+      // @ts-ignore
+      return subscription.plan.name;
+    }
+    return legacyPlanLabels[subscription.plan_type] || subscription.plan_type;
+  };
+
+  // Helper to get plan price from subscription
+  const getPlanPrice = (subscription: AdminSubscription): number => {
+    // @ts-ignore - plan may be loaded via relation
+    return subscription.plan?.price || 0;
+  };
 
   const handleSearch = () => {
     setFilters((prev) => ({ ...prev, search: searchInput, page: 1 }));
@@ -148,7 +180,11 @@ export function AdminSubscriptionsPage() {
         return { ...rest, page: 1 };
       });
     } else {
-      setFilters((prev) => ({ ...prev, payment_status: status as 'pending' | 'paid' | 'failed', page: 1 }));
+      setFilters((prev) => ({
+        ...prev,
+        payment_status: status as 'pending' | 'paid' | 'failed',
+        page: 1,
+      }));
     }
   };
 
@@ -166,40 +202,62 @@ export function AdminSubscriptionsPage() {
       onError: () => {
         toast({
           title: 'Erreur',
-          description: 'Impossible d\'annuler l\'abonnement.',
+          description: "Impossible d'annuler l'abonnement.",
           variant: 'destructive',
         });
       },
     });
   };
 
-  
-
   const handleExtend = () => {
     if (!extendSub) return;
-    extendMutation({ subscriptionId: extendSub.id, days: extendDays }, {
-      onSuccess: () => {
-        toast({ title: 'Abonnement prolonge', description: `L'abonnement a ete prolonge de ${extendDays} jours.` });
-        setExtendSub(null);
-        setExtendDays(30);
-      },
-      onError: () => {
-        toast({ title: 'Erreur', description: "Impossible de prolonger l'abonnement.", variant: 'destructive' });
-      },
-    });
+    extendMutation(
+      { subscriptionId: extendSub.id, days: extendDays },
+      {
+        onSuccess: () => {
+          toast({
+            title: 'Abonnement prolonge',
+            description: `L'abonnement a ete prolonge de ${extendDays} jours.`,
+          });
+          setExtendSub(null);
+          setExtendDays(30);
+        },
+        onError: () => {
+          toast({
+            title: 'Erreur',
+            description: "Impossible de prolonger l'abonnement.",
+            variant: 'destructive',
+          });
+        },
+      }
+    );
   };
 
   const handleChangePlan = () => {
-    if (!changePlanSub) return;
-    changePlanMutation({ subscriptionId: changePlanSub.id, planType: newPlanType }, {
-      onSuccess: () => {
-        toast({ title: 'Plan modifie', description: `Le plan a ete change en ${planLabels[newPlanType]}.` });
-        setChangePlanSub(null);
-      },
-      onError: () => {
-        toast({ title: 'Erreur', description: 'Impossible de changer le plan.', variant: 'destructive' });
-      },
-    });
+    if (!changePlanSub || !newPlanId) return;
+    const selectedPlan = plans.find((p) => p.id === newPlanId);
+    // For now, use plan slug as plan_type for backward compatibility
+    const planType = selectedPlan?.slug || 'pro';
+    changePlanMutation(
+      { subscriptionId: changePlanSub.id, planType: planType as PlanType },
+      {
+        onSuccess: () => {
+          toast({
+            title: 'Plan modifie',
+            description: `Le plan a ete change en ${selectedPlan?.name || planType}.`,
+          });
+          setChangePlanSub(null);
+          setNewPlanId(null);
+        },
+        onError: () => {
+          toast({
+            title: 'Erreur',
+            description: 'Impossible de changer le plan.',
+            variant: 'destructive',
+          });
+        },
+      }
+    );
   };
 
   const handleContactUser = (subscription: AdminSubscription) => {
@@ -207,7 +265,11 @@ export function AdminSubscriptionsPage() {
     if (email) {
       window.location.href = `mailto:${email}?subject=Concernant votre abonnement Party Planner`;
     } else {
-      toast({ title: 'Email non disponible', description: "L'adresse email de l'utilisateur n'est pas disponible.", variant: 'destructive' });
+      toast({
+        title: 'Email non disponible',
+        description: "L'adresse email de l'utilisateur n'est pas disponible.",
+        variant: 'destructive',
+      });
     }
   };
 
@@ -218,10 +280,7 @@ export function AdminSubscriptionsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Abonnements"
-        description="Gestion des abonnements de la plateforme"
-      />
+      <PageHeader title="Abonnements" description="Gestion des abonnements de la plateforme" />
 
       {/* Filters */}
       <Card>
@@ -237,18 +296,15 @@ export function AdminSubscriptionsPage() {
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               />
             </div>
-            <Select
-              value={filters.plan_type || 'all'}
-              onValueChange={handlePlanFilter}
-            >
+            <Select value={filters.plan_type || 'all'} onValueChange={handlePlanFilter}>
               <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder="Plan" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les plans</SelectItem>
-                {Object.entries(planLabels).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
+                {plans.map((plan) => (
+                  <SelectItem key={plan.slug} value={plan.slug}>
+                    {plan.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -278,9 +334,7 @@ export function AdminSubscriptionsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Liste des abonnements</CardTitle>
-          <CardDescription>
-            {data?.total || 0} abonnement(s) au total
-          </CardDescription>
+          <CardDescription>{data?.total || 0} abonnement(s) au total</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -317,8 +371,14 @@ export function AdminSubscriptionsPage() {
                 </TableHeader>
                 <TableBody>
                   {data?.data?.map((subscription) => {
-                    const PlanIcon = planIcons[subscription.plan_type] || Sparkles;
+                    // @ts-ignore - plan may have is_trial property
+                    const isTrial =
+                      // @ts-ignore - plan may have is_trial property
+                      subscription.plan?.is_trial || subscription.plan_type === ('trial' as any);
+                    const PlanIcon = getPlanIcon(subscription.plan_type, isTrial);
                     const expired = isExpired(subscription.expires_at);
+                    const planName = getPlanName(subscription);
+                    const planPrice = getPlanPrice(subscription);
 
                     return (
                       <TableRow key={subscription.id}>
@@ -326,7 +386,9 @@ export function AdminSubscriptionsPage() {
                           {subscription.event?.user ? (
                             <div>
                               <p className="text-sm font-medium">{subscription.event.user.name}</p>
-                              <p className="text-xs text-muted-foreground">{subscription.event.user.email}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {subscription.event.user.email}
+                              </p>
                             </div>
                           ) : (
                             <span className="text-sm text-muted-foreground">
@@ -337,24 +399,30 @@ export function AdminSubscriptionsPage() {
                         <TableCell>
                           {subscription.event ? (
                             <p className="text-sm">{subscription.event.title}</p>
-                          ) : (
+                          ) : subscription.event_id ? (
                             <span className="text-sm text-muted-foreground">
                               Evenement #{subscription.event_id}
                             </span>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">
+                              Compte
+                            </Badge>
                           )}
                         </TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
-                            className={planColors[subscription.plan_type]}
+                            className={getPlanColor(subscription.plan_type, planPrice)}
                           >
                             <PlanIcon className="mr-1 h-3 w-3" />
-                            {planLabels[subscription.plan_type] || subscription.plan_type}
+                            {planName}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <div>
-                            <p className="font-semibold">{formatCurrency(subscription.total_price)}</p>
+                            <p className="font-semibold">
+                              {formatCurrency(subscription.total_price)}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {subscription.guest_count} invites
                             </p>
@@ -362,7 +430,8 @@ export function AdminSubscriptionsPage() {
                         </TableCell>
                         <TableCell>
                           <Badge className={paymentStatusColors[subscription.payment_status]}>
-                            {paymentStatusLabels[subscription.payment_status] || subscription.payment_status}
+                            {paymentStatusLabels[subscription.payment_status] ||
+                              subscription.payment_status}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -370,14 +439,24 @@ export function AdminSubscriptionsPage() {
                             <Calendar className="h-4 w-4 text-muted-foreground" />
                             <div>
                               <p className="text-sm">
-                                {subscription.expires_at ? format(parseISO(subscription.expires_at), 'dd MMM yyyy', { locale: fr }) : '-'}
+                                {subscription.expires_at
+                                  ? format(parseISO(subscription.expires_at), 'dd MMM yyyy', {
+                                      locale: fr,
+                                    })
+                                  : '-'}
                               </p>
                               {expired ? (
-                                <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700">
+                                <Badge
+                                  variant="outline"
+                                  className="border-red-200 bg-red-50 text-red-700"
+                                >
                                   Expire
                                 </Badge>
                               ) : (
-                                <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
+                                <Badge
+                                  variant="outline"
+                                  className="border-green-200 bg-green-50 text-green-700"
+                                >
                                   Actif
                                 </Badge>
                               )}
@@ -406,11 +485,22 @@ export function AdminSubscriptionsPage() {
                                     <CalendarPlus className="mr-2 h-4 w-4" />
                                     Prolonger
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => { setChangePlanSub(subscription); setNewPlanType(subscription.plan_type === 'starter' ? 'pro' : 'starter'); }}>
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setChangePlanSub(subscription);
+                                      setNewPlanId(
+                                        plans.find((p) => p.slug !== subscription.plan_type)?.id ||
+                                          null
+                                      );
+                                    }}
+                                  >
                                     <RefreshCw className="mr-2 h-4 w-4" />
                                     Changer de plan
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem className="text-destructive" onClick={() => setCancelSub(subscription)}>
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() => setCancelSub(subscription)}
+                                  >
                                     <Ban className="mr-2 h-4 w-4" />
                                     Annuler
                                   </DropdownMenuItem>
@@ -466,7 +556,7 @@ export function AdminSubscriptionsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Annuler l'abonnement ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Vous allez annuler l'abonnement {planLabels[cancelSub?.plan_type || 'starter']} de{' '}
+              Vous allez annuler l'abonnement {cancelSub ? getPlanName(cancelSub) : ''} de{' '}
               {cancelSub?.event?.user?.name || `l'utilisateur #${cancelSub?.user_id}`}.
               L'utilisateur perdra l'acces aux fonctionnalites premium.
             </AlertDialogDescription>
@@ -478,12 +568,11 @@ export function AdminSubscriptionsPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isCancelling}
             >
-              {isCancelling ? 'Annulation...' : 'Confirmer l\'annulation'}
+              {isCancelling ? 'Annulation...' : "Confirmer l'annulation"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
 
       {/* Extend Dialog */}
       <Dialog open={!!extendSub} onOpenChange={(open) => !open && setExtendSub(null)}>
@@ -491,15 +580,24 @@ export function AdminSubscriptionsPage() {
           <DialogHeader>
             <DialogTitle>Prolonger l'abonnement</DialogTitle>
             <DialogDescription>
-              Prolonger l'abonnement de {extendSub?.event?.user?.name || `l'utilisateur #${extendSub?.user_id}`}.
-              Expiration actuelle : {extendSub?.expires_at ? format(parseISO(extendSub.expires_at), 'dd MMM yyyy', { locale: fr }) : '-'}
+              Prolonger l'abonnement de{' '}
+              {extendSub?.event?.user?.name || `l'utilisateur #${extendSub?.user_id}`}. Expiration
+              actuelle :{' '}
+              {extendSub?.expires_at
+                ? format(parseISO(extendSub.expires_at), 'dd MMM yyyy', { locale: fr })
+                : '-'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="days">Nombre de jours</Label>
-              <Select value={extendDays.toString()} onValueChange={(v) => setExtendDays(parseInt(v))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={extendDays.toString()}
+                onValueChange={(v) => setExtendDays(parseInt(v))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="7">7 jours</SelectItem>
                   <SelectItem value="14">14 jours</SelectItem>
@@ -512,42 +610,82 @@ export function AdminSubscriptionsPage() {
             </div>
             {extendSub?.expires_at && (
               <p className="text-sm text-muted-foreground">
-                Nouvelle expiration : {format(addDays(parseISO(extendSub.expires_at), extendDays), 'dd MMM yyyy', { locale: fr })}
+                Nouvelle expiration :{' '}
+                {format(addDays(parseISO(extendSub.expires_at), extendDays), 'dd MMM yyyy', {
+                  locale: fr,
+                })}
               </p>
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setExtendSub(null)}>Annuler</Button>
-            <Button onClick={handleExtend} disabled={isExtending}>{isExtending ? 'Prolongation...' : 'Prolonger'}</Button>
+            <Button variant="outline" onClick={() => setExtendSub(null)}>
+              Annuler
+            </Button>
+            <Button onClick={handleExtend} disabled={isExtending}>
+              {isExtending ? 'Prolongation...' : 'Prolonger'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Change Plan Dialog */}
-      <Dialog open={!!changePlanSub} onOpenChange={(open) => !open && setChangePlanSub(null)}>
+      <Dialog
+        open={!!changePlanSub}
+        onOpenChange={(open) => {
+          if (!open) {
+            setChangePlanSub(null);
+            setNewPlanId(null);
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Changer de plan</DialogTitle>
             <DialogDescription>
-              Changer le plan de {changePlanSub?.event?.user?.name || `l'utilisateur #${changePlanSub?.user_id}`}. Plan actuel : {changePlanSub ? planLabels[changePlanSub.plan_type] : ''}
+              Changer le plan de{' '}
+              {changePlanSub?.event?.user?.name || `l'utilisateur #${changePlanSub?.user_id}`}. Plan
+              actuel : {changePlanSub ? getPlanName(changePlanSub) : ''}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Nouveau plan</Label>
-              <Select value={newPlanType} onValueChange={(v) => setNewPlanType(v as PlanType)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={newPlanId?.toString() || ''}
+                onValueChange={(v) => setNewPlanId(parseInt(v))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selectionner un plan" />
+                </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(planLabels).map(([value, label]) => (
-                    <SelectItem key={value} value={value} disabled={value === changePlanSub?.plan_type}>{label} {value === changePlanSub?.plan_type && '(actuel)'}</SelectItem>
+                  {plans.map((plan) => (
+                    <SelectItem
+                      key={plan.id}
+                      value={plan.id.toString()}
+                      disabled={plan.slug === changePlanSub?.plan_type}
+                    >
+                      {plan.name} -{' '}
+                      {plan.price === 0 ? 'Gratuit' : `${plan.price.toLocaleString()} FCFA`}
+                      {plan.slug === changePlanSub?.plan_type && ' (actuel)'}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setChangePlanSub(null)}>Annuler</Button>
-            <Button onClick={handleChangePlan} disabled={isChangingPlan || newPlanType === changePlanSub?.plan_type}>{isChangingPlan ? 'Changement...' : 'Changer'}</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setChangePlanSub(null);
+                setNewPlanId(null);
+              }}
+            >
+              Annuler
+            </Button>
+            <Button onClick={handleChangePlan} disabled={isChangingPlan || !newPlanId}>
+              {isChangingPlan ? 'Changement...' : 'Changer'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -555,14 +693,20 @@ export function AdminSubscriptionsPage() {
       {/* Details Dialog */}
       <Dialog open={!!detailsSub} onOpenChange={(open) => !open && setDetailsSub(null)}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Details de l'abonnement</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Details de l'abonnement</DialogTitle>
+          </DialogHeader>
           {detailsSub && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Utilisateur</p>
-                  <p className="text-sm">{detailsSub.event?.user?.name || `#${detailsSub.user_id}`}</p>
-                  {detailsSub.event?.user?.email && <p className="text-xs text-muted-foreground">{detailsSub.event.user.email}</p>}
+                  <p className="text-sm">
+                    {detailsSub.event?.user?.name || `#${detailsSub.user_id}`}
+                  </p>
+                  {detailsSub.event?.user?.email && (
+                    <p className="text-xs text-muted-foreground">{detailsSub.event.user.email}</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Evenement</p>
@@ -570,19 +714,32 @@ export function AdminSubscriptionsPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Plan</p>
-                  <Badge variant="outline" className={planColors[detailsSub.plan_type]}>{planLabels[detailsSub.plan_type]}</Badge>
+                  <Badge
+                    variant="outline"
+                    className={getPlanColor(detailsSub.plan_type, getPlanPrice(detailsSub))}
+                  >
+                    {getPlanName(detailsSub)}
+                  </Badge>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Statut paiement</p>
-                  <Badge className={paymentStatusColors[detailsSub.payment_status]}>{paymentStatusLabels[detailsSub.payment_status]}</Badge>
+                  <Badge className={paymentStatusColors[detailsSub.payment_status]}>
+                    {paymentStatusLabels[detailsSub.payment_status]}
+                  </Badge>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Date de creation</p>
-                  <p className="text-sm">{format(parseISO(detailsSub.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}</p>
+                  <p className="text-sm">
+                    {format(parseISO(detailsSub.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Date d'expiration</p>
-                  <p className="text-sm">{detailsSub.expires_at ? format(parseISO(detailsSub.expires_at), 'dd MMM yyyy', { locale: fr }) : '-'}</p>
+                  <p className="text-sm">
+                    {detailsSub.expires_at
+                      ? format(parseISO(detailsSub.expires_at), 'dd MMM yyyy', { locale: fr })
+                      : '-'}
+                  </p>
                 </div>
               </div>
 
@@ -591,22 +748,64 @@ export function AdminSubscriptionsPage() {
                 <p className="text-sm font-semibold mb-3">Calcul du revenu</p>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Prix de base ({planLabels[detailsSub.plan_type]})</span>
+                    <span>Prix de base ({getPlanName(detailsSub)})</span>
                     <span>{formatCurrency(detailsSub.base_price)}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Invites ({detailsSub.guest_count} x {formatCurrency(detailsSub.guest_price_per_unit)})</span>
-                    <span>{formatCurrency(detailsSub.guest_count * parseFloat(String(detailsSub.guest_price_per_unit)))}</span>
-                  </div>
+                  {detailsSub.guest_count > 0 &&
+                    parseFloat(String(detailsSub.guest_price_per_unit)) > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span>
+                          Invites ({detailsSub.guest_count} x{' '}
+                          {formatCurrency(detailsSub.guest_price_per_unit)})
+                        </span>
+                        <span>
+                          {formatCurrency(
+                            detailsSub.guest_count *
+                              parseFloat(String(detailsSub.guest_price_per_unit))
+                          )}
+                        </span>
+                      </div>
+                    )}
                   <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
                     <span>Revenu total</span>
-                    <span className="text-green-600">{formatCurrency(parseFloat(String(detailsSub.base_price)) + (detailsSub.guest_count * parseFloat(String(detailsSub.guest_price_per_unit))))}</span>
+                    <span className="text-green-600">{formatCurrency(detailsSub.total_price)}</span>
                   </div>
                 </div>
               </div>
+
+              {/* Quota Info (for dynamic plans) */}
+              {/* @ts-ignore */}
+              {detailsSub.creations_used !== undefined && (
+                <div className="rounded-lg border bg-blue-50 p-4">
+                  <p className="text-sm font-semibold mb-3">Quota d'evenements</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Creations utilisees</span>
+                      {/* @ts-ignore */}
+                      <span>{detailsSub.creations_used || 0}</span>
+                    </div>
+                    {/* @ts-ignore */}
+                    {detailsSub.plan?.limits?.['events.creations_per_billing_period'] && (
+                      <div className="flex justify-between text-sm">
+                        <span>Limite du plan</span>
+                        <span>
+                          {formatLimitValue(
+                            // @ts-ignore - plan may have limits property
+                            detailsSub.plan?.limits?.['events.creations_per_billing_period'] || 0
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
-          <DialogFooter><Button variant="outline" onClick={() => setDetailsSub(null)}>Fermer</Button></DialogFooter>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDetailsSub(null)}>
+              Fermer
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
