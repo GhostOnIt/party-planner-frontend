@@ -327,23 +327,6 @@ export function PlansPage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* CTA */}
-      <div className="text-center max-w-2xl mx-auto py-8">
-        <h2 className="text-2xl font-bold mb-4">Prêt à organiser vos événements ?</h2>
-        <p className="text-muted-foreground mb-6">Choisissez le plan qui vous convient.</p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" asChild>
-            <Link to="/events/create">
-              Créer un événement
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link to="/subscriptions">Voir mon abonnement</Link>
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }
