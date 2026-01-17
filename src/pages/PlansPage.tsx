@@ -1,4 +1,3 @@
-import { Link, useNavigate } from 'react-router-dom';
 import { Crown, Check, ArrowRight, Calendar, Clock, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { usePlans, PLAN_FEATURE_LABELS, formatLimitValue } from '@/hooks/useAdminPlans';
 import { useSubscribeToPlan } from '@/hooks/useSubscription';
 import type { Plan } from '@/hooks/useAdminPlans';
+import { useNavigate } from 'react-router-dom';
 
 const formatCurrency = (amount: number) => {
   return `${amount.toLocaleString('fr-FR')} FCFA`;
