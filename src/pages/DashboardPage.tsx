@@ -1,107 +1,105 @@
-import { Calendar, Users, CheckSquare, Wallet, Plus } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/layout/page-header';
-import { StatsCard, UpcomingEvents, UrgentTasks, RecentActivity } from '@/components/features/dashboard';
-import { AccountSubscriptionCard } from '@/components/features/subscription/AccountSubscriptionCard';
-import { TrialBanner } from '@/components/features/subscription/TrialBanner';
-import { RsvpBarChart } from '@/components/charts';
-import { useDashboard } from '@/hooks/useDashboard';
-import { useRsvpChartData } from '@/hooks/useChartData';
-import { useRecentNotifications } from '@/hooks/useNotifications';
-import { useCurrentSubscription } from '@/hooks/useSubscription';
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { StatCards } from "@/components/features/dashboard/stat-cards"
+import { SubscriptionCard } from "@/components/features/subscription/subscription-card"
+import { UpcomingEvents } from "@/components/features/dashboard/upcoming-events"
+import { UrgentTasks } from "@/components/features/dashboard/urgent-tasks"
+import { RecentActivity } from "@/components/features/dashboard/recent-activity"
+import { ConfirmationsChart } from "@/components/charts/confirmations-chart"
+import { DateFilter } from "@/components/features/dashboard/date-filter"
+import { PromoCard } from "@/components/features/dashboard/promo-card"
+import { EventsByTypeChart } from "@/components/charts/events-by-type-chart"
+import { TrialBanner } from "@/components/features/dashboard/trial-banner"
+import { Plus } from "lucide-react"
+import { useAuthStore } from "@/stores/authStore"
 
 export function DashboardPage() {
-  const { data: dashboardData, isLoading: isDashboardLoading } = useDashboard();
-  const { data: rsvpChartData, isLoading: isChartLoading } = useRsvpChartData();
-  const { data: recentNotifications, isLoading: isNotificationsLoading } = useRecentNotifications(5);
-  const { data: subscriptionData } = useCurrentSubscription();
+  const navigate = useNavigate()
+  const { user } = useAuthStore()
 
-  const stats = dashboardData?.stats;
-  const upcomingEvents = dashboardData?.upcoming_events || [];
-  const urgentTasks = dashboardData?.urgent_tasks || [];
-  const hasActiveSubscription = subscriptionData?.has_subscription || false;
+  const [filter, setFilter] = useState("7days")
+  const [eventTypeFilter, setEventTypeFilter] = useState("all")
+  const [customRange, setCustomRange] = useState<{ start: Date; end: Date } | undefined>(undefined)
+  const [showPromo, setShowPromo] = useState(true)
 
-  const formatCurrency = (value: number | null | undefined) => {
-    const safeValue = value ?? 0;
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XAF',
-      maximumFractionDigits: 0,
-    }).format(safeValue);
-  };
+  const userName = user?.name || "Utilisateur"
+
+  const handleFilterChange = (newFilter: string, customRangeParam?: { start: Date; end: Date }) => {
+    setFilter(newFilter)
+    setCustomRange(customRangeParam)
+  }
+
+  const handleEventTypeChange = (eventType: string) => {
+    setEventTypeFilter(eventType)
+  }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Tableau de bord"
-        description="Bienvenue sur Party Planner"
-        actions={
-          <Link to="/events/create">
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nouvel evenement
-            </Button>
-          </Link>
-        }
+    <div>
+      <TrialBanner
+        onStartTrial={() => navigate("/subscriptions")}
+        dismissible={true}
       />
-
-      {/* Trial Banner - Only show if no active subscription */}
-      {!hasActiveSubscription && <TrialBanner />}
-
-      {/* Stats Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          title="Evenements actifs"
-          value={stats?.events_count ?? 0}
-          icon={Calendar}
-          iconColor="text-primary"
-          iconBgColor="bg-primary/10"
-          isLoading={isDashboardLoading}
-        />
-        <StatsCard
-          title="Invites confirmes"
-          value={stats?.guests_confirmed ?? 0}
-          icon={Users}
-          iconColor="text-event-mariage"
-          iconBgColor="bg-event-mariage/10"
-          isLoading={isDashboardLoading}
-        />
-        <StatsCard
-          title="Taches en cours"
-          value={stats?.tasks_pending ?? 0}
-          icon={CheckSquare}
-          iconColor="text-success"
-          iconBgColor="bg-success/10"
-          isLoading={isDashboardLoading}
-        />
-        <StatsCard
-          title="Budget total"
-          value={formatCurrency(stats?.total_budget)}
-          icon={Wallet}
-          iconColor="text-warning"
-          iconBgColor="bg-warning/10"
-          isLoading={isDashboardLoading}
-        />
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1a1a2e]">Tableau de bord</h1>
+          <p className="text-[#6b7280]">
+            Bienvenue, <span className="font-semibold text-[#4F46E5]">{userName}</span>
+          </p>
+        </div>
+        <button
+          onClick={() => navigate("/events/create")}
+          className="flex items-center gap-2 bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white px-5 py-2.5 rounded-lg font-medium hover:shadow-lg hover:shadow-[#4F46E5]/25 transition-all"
+        >
+          <Plus className="w-5 h-5" />
+          Nouvel evenement
+        </button>
       </div>
 
-      {/* Subscription Card and Events, Tasks and Activity */}
-      <div className="grid gap-6 lg:grid-cols-4">
-        {/* Subscription Card - Always visible */}
-        <div className="lg:col-span-1">
-          <AccountSubscriptionCard />
+      <DateFilter onFilterChange={handleFilterChange} onEventTypeChange={handleEventTypeChange} />
+
+      <StatCards filter={filter} eventTypeFilter={eventTypeFilter} customRange={customRange} />
+
+      <div className="mt-6 space-y-6">
+        {showPromo && (
+          <PromoCard
+            type="banner"
+            badge="En direct"
+            badgeType="live"
+            title="Party Planner Summit 2026"
+            description="Rejoignez plus de 2 000 organisateurs d'événements pour notre conférence annuelle. En direct depuis Paris."
+            primaryButton={{ label: "Rejoindre", href: "https://example.com/stream" }}
+            secondaryButton={{ label: "Voir les détails", href: "https://example.com/details" }}
+            pollQuestion="Quel type d'événement préférez-vous organiser ?"
+            pollOptions={[
+              { id: "1", label: "Mariage", votes: 145 },
+              { id: "2", label: "Anniversaire", votes: 98 },
+              { id: "3", label: "Conférence", votes: 67 },
+              { id: "4", label: "Fête privée", votes: 52 },
+            ]}
+            onVote={(optionId) => console.log("Vote pour:", optionId)}
+            dismissible={true}
+            onDismiss={() => setShowPromo(false)}
+          />
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <SubscriptionCard />
+            <UpcomingEvents />
+            <UrgentTasks />
+          </div>
+          <div className="lg:col-span-1">
+            <EventsByTypeChart filter={filter} eventTypeFilter={eventTypeFilter} />
+          </div>
         </div>
 
-        {/* Events, Tasks and Activity */}
-        <div className="lg:col-span-3 grid gap-6 lg:grid-cols-3">
-          <UpcomingEvents events={upcomingEvents} isLoading={isDashboardLoading} />
-          <UrgentTasks tasks={urgentTasks} isLoading={isDashboardLoading} />
-          <RecentActivity notifications={recentNotifications || []} isLoading={isNotificationsLoading} />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
+            <ConfirmationsChart filter={filter} eventTypeFilter={eventTypeFilter} />
+          </div>
+          <RecentActivity />
         </div>
       </div>
-
-      {/* RSVP Chart */}
-      <RsvpBarChart data={rsvpChartData || []} isLoading={isChartLoading} />
     </div>
-  );
+  )
 }

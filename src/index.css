@@ -10,9 +10,11 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  /* Primary color set to pink/magenta matching the design */
-  --primary: oklch(0.65 0.25 350);
+  /* Primary color set to blue-violet (indigo-violet gradient) */
+  --primary: oklch(0.55 0.2 280);
   --primary-foreground: oklch(0.985 0 0);
+  /* Pink/magenta as accent color for occasional use */
+  --accent-pink: oklch(0.65 0.25 350);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);

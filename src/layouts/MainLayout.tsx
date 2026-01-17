@@ -34,7 +34,7 @@ export function MainLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/50">
+    <div className="min-h-screen bg-[#F5F7FA]">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <Sidebar isAdmin={user.role === 'admin'} onLogout={handleLogout} />
