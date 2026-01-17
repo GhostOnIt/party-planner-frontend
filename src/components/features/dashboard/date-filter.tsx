@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Calendar, ChevronDown, X, Tag } from "lucide-react"
 
 type FilterOption = "7days" | "1month" | "3months" | "custom"
@@ -17,6 +17,23 @@ export function DateFilter({ onFilterChange, onEventTypeChange }: DateFilterProp
   const [eventTypeFilter, setEventTypeFilter] = useState<EventTypeOption>("all")
   const [showEventTypeDropdown, setShowEventTypeDropdown] = useState(false)
   const [dateError, setDateError] = useState("")
+
+  const customRangeRef = useRef<HTMLDivElement>(null)
+  const eventTypeRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (customRangeRef.current && !customRangeRef.current.contains(event.target as Node)) {
+        setShowCustomRange(false)
+      }
+      if (eventTypeRef.current && !eventTypeRef.current.contains(event.target as Node)) {
+        setShowEventTypeDropdown(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   const filters = [
     { id: "7days" as FilterOption, label: "7 derniers jours" },
@@ -145,7 +162,7 @@ export function DateFilter({ onFilterChange, onEventTypeChange }: DateFilterProp
         </button>
       ))}
 
-      <div className="relative">
+      <div className="relative" ref={customRangeRef}>
         <button
           onClick={handleCustomRange}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -212,7 +229,7 @@ export function DateFilter({ onFilterChange, onEventTypeChange }: DateFilterProp
 
       <div className="h-6 w-px bg-[#e5e7eb] mx-2" />
 
-      <div className="relative">
+      <div className="relative" ref={eventTypeRef}>
         <button
           onClick={() => setShowEventTypeDropdown(!showEventTypeDropdown)}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${

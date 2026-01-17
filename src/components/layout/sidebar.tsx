@@ -55,7 +55,7 @@ export function Sidebar({ isAdmin = false, onLogout }: SidebarProps) {
   return (
     <aside className="fixed left-0 top-0 h-screen w-[250px] bg-white border-r border-[#e5e7eb] flex flex-col">
       {/* Logo */}
-      <div className="p-4 flex items-center gap-2">
+      <div className="p-4 flex items-center gap-2 border-b">
         <NavLink to="/dashboard" className="flex items-center gap-2">
           <img src={logo} alt={t('app.name')} className="h-8 w-8 object-contain" />
           <span className="font-semibold text-[#1a1a2e] text-lg">{t('app.name')}</span>
@@ -63,7 +63,7 @@ export function Sidebar({ isAdmin = false, onLogout }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-2">
+      <nav className="flex-1 px-3 py-2 overflow-y-auto">
         <div className="space-y-1">
           {mainNavItems.map((item) => (
             <NavLink
@@ -113,8 +113,11 @@ export function Sidebar({ isAdmin = false, onLogout }: SidebarProps) {
         )}
       </nav>
 
+      {/* Separator */}
+      <div className="border-t border-[#e5e7eb] mx-3"></div>
+
       {/* Bottom section */}
-      <div className="px-3 py-4 border-t border-[#e5e7eb] space-y-2">
+      <div className="px-3 py-4 space-y-2 shrink-0">
         <NavLink
           to="/settings"
           className={({ isActive }) =>
