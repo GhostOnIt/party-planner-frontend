@@ -25,12 +25,14 @@ interface PaymentStatusResponse {
 }
 
 interface InitiatePaymentData {
-  event_id: number;
+  event_id?: number;
+  subscription_id?: number;
   phone_number: string;
   plan_type?: PlanType;
   method?: PaymentMethod;
   amount?: number;
   currency?: string;
+  description?: string;
 }
 
 // Get payment history

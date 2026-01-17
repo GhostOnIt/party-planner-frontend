@@ -177,3 +177,144 @@ export function useRenewSubscription(eventId: string | number) {
     },
   });
 }
+
+// Get current user's account-level subscription
+export interface CurrentSubscriptionResponse {
+  subscription: Subscription | null;
+  quota: {
+    base_quota: number;
+    topup_credits: number;
+    total_quota: number;
+    used: number;
+    remaining: number;
+    is_unlimited: boolean;
+    percentage_used: number;
+    can_create: boolean;
+  };
+  has_subscription: boolean;
+}
+
+export function useCurrentSubscription() {
+  return useQuery({
+    queryKey: ['user', 'subscription', 'current'],
+    queryFn: async (): Promise<CurrentSubscriptionResponse> => {
+      const response = await api.get<CurrentSubscriptionResponse>('/user/subscription');
+      return response.data;
+    },
+  });
+}
+
+// Get user's quota
+export interface QuotaResponse {
+  quota: {
+    base_quota: number;
+    topup_credits: number;
+    total_quota: number;
+    used: number;
+    remaining: number;
+    is_unlimited: boolean;
+    percentage_used: number;
+    can_create: boolean;
+  };
+  warning: 'quota_reached' | 'quota_90' | 'quota_80' | null;
+}
+
+export function useQuota() {
+  return useQuery({
+    queryKey: ['user', 'quota'],
+    queryFn: async (): Promise<QuotaResponse> => {
+      const response = await api.get<QuotaResponse>('/user/quota');
+      return response.data;
+    },
+  });
+}
+
+// Subscribe to a plan (account-level)
+export function useSubscribeToPlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { plan_id: number }) => {
+      const response = await api.post('/subscriptions/subscribe', data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user', 'subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['user', 'quota'] });
+      queryClient.invalidateQueries({ queryKey: ['user', 'entitlements'] });
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+    },
+  });
+}
+
+// Entitlements response type
+export interface EntitlementsResponse {
+  plan: {
+    id: number;
+    name: string;
+    slug: string;
+  } | null;
+  subscription: {
+    id: number;
+    status: string;
+    starts_at: string;
+    expires_at: string;
+  } | null;
+  limits: {
+    'events.creations_per_billing_period': number;
+    'guests.max_per_event': number;
+    'collaborators.max_per_event': number;
+    'photos.max_per_event': number;
+  };
+  features: {
+    'budget.enabled': boolean;
+    'planning.enabled': boolean;
+    'tasks.enabled': boolean;
+    'guests.manage': boolean;
+    'guests.import': boolean;
+    'guests.export': boolean;
+    'invitations.sms': boolean;
+    'invitations.whatsapp': boolean;
+    'collaborators.manage': boolean;
+    'roles_permissions.enabled': boolean;
+    'exports.pdf': boolean;
+    'exports.excel': boolean;
+    'exports.csv': boolean;
+    'history.enabled': boolean;
+    'reporting.enabled': boolean;
+    'branding.custom': boolean;
+    'support.whatsapp_priority': boolean;
+    'support.dedicated': boolean;
+    'multi_client.enabled': boolean;
+    'assistance.human': boolean;
+  };
+  is_active: boolean;
+  is_trial: boolean;
+}
+
+// Get user's entitlements (limits and features from account-level subscription)
+export function useEntitlements() {
+  return useQuery({
+    queryKey: ['user', 'entitlements'],
+    queryFn: async (): Promise<EntitlementsResponse> => {
+      const response = await api.get<EntitlementsResponse>('/user/entitlements');
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
+// Get event owner's entitlements (for collaborators to check if features are available)
+export function useEventEntitlements(eventId: string | number) {
+  return useQuery({
+    queryKey: ['events', eventId, 'entitlements'],
+    queryFn: async (): Promise<EntitlementsResponse> => {
+      const response = await api.get<EntitlementsResponse>(`/events/${eventId}/entitlements`);
+      return response.data;
+    },
+    enabled: !!eventId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+}

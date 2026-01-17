@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -9,7 +9,9 @@ import {
   useSensors,
   useDroppable,
   DragStartEvent,
+  DragOverEvent,
   DragEndEvent,
+  DragCancelEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -150,11 +152,17 @@ export function TaskKanban({
   onStatusChange,
 }: TaskKanbanProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
+
+  // Keep local state in sync with server results (after refetch / mutation)
+  useEffect(() => {
+    setLocalTasks(tasks);
+  }, [tasks]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 4,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -162,11 +170,35 @@ export function TaskKanban({
     })
   );
 
+  const getStatusFromOverId = (overId: unknown): TaskStatus | null => {
+    const column = columns.find((col) => col.id === overId);
+    if (column) return column.id;
+    const overTask = localTasks.find((t) => t.id === overId);
+    return overTask?.status ?? null;
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
-    const task = tasks.find((t) => t.id === event.active.id);
+    const task = localTasks.find((t) => t.id === event.active.id);
     if (task) {
       setActiveTask(task);
     }
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id;
+    const targetStatus = getStatusFromOverId(over.id);
+    if (!targetStatus) return;
+
+    setLocalTasks((prev) => {
+      const current = prev.find((t) => t.id === activeId);
+      if (!current || current.status === targetStatus) return prev;
+      return prev.map((t) => (t.id === activeId ? { ...t, status: targetStatus } : t));
+    });
+
+    setActiveTask((prev) => (prev ? { ...prev, status: targetStatus } : prev));
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -176,21 +208,20 @@ export function TaskKanban({
 
     if (!over) return;
 
-    const activeTask = tasks.find((t) => t.id === active.id);
-    if (!activeTask) return;
+    const originalTask = tasks.find((t) => t.id === active.id);
+    if (!originalTask) return;
 
-    // Check if dropped over a column
-    const targetColumn = columns.find((col) => col.id === over.id);
-    if (targetColumn && activeTask.status !== targetColumn.id) {
-      onStatusChange(activeTask.id, targetColumn.id);
-      return;
-    }
+    const targetStatus = getStatusFromOverId(over.id);
+    if (!targetStatus) return;
 
-    // Check if dropped over another task
-    const overTask = tasks.find((t) => t.id === over.id);
-    if (overTask && activeTask.status !== overTask.status) {
-      onStatusChange(activeTask.id, overTask.status);
+    if (originalTask.status !== targetStatus) {
+      onStatusChange(originalTask.id, targetStatus);
     }
+  };
+
+  const handleDragCancel = (_event: DragCancelEvent) => {
+    setActiveTask(null);
+    setLocalTasks(tasks);
   };
 
   if (isLoading) {
@@ -208,7 +239,7 @@ export function TaskKanban({
   }
 
   const getTasksByStatus = (status: TaskStatus) =>
-    tasks.filter((task) => task.status === status);
+    localTasks.filter((task) => task.status === status);
 
   const handleTaskStatusChange = (task: Task, status: TaskStatus) => {
     onStatusChange(task.id, status);
@@ -219,7 +250,9 @@ export function TaskKanban({
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {columns.map((column) => (

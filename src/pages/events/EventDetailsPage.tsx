@@ -12,8 +12,6 @@ import {
   UserPlus,
   Calendar,
   MapPin,
-  Clock,
-  Crown,
   UserCheck,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -38,19 +36,13 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { EventStatusBadge, EventTypeBadge } from '@/components/features/events';
 import { useEvent, useDeleteEvent, useDuplicateEvent } from '@/hooks/useEvents';
 import { useAuthStore } from '@/stores/authStore';
-import {
-  useGuestsPermissions,
-  useTasksPermissions,
-  useBudgetPermissions,
-  useCollaboratorsPermissions,
-} from '@/hooks/usePermissions';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { PermissionGuard } from '@/components/ui/permission-guard';
 import { GuestsPage } from './GuestsPage';
 import { TasksPage } from './TasksPage';
 import { BudgetPage } from './BudgetPage';
 import { PhotosPage } from './PhotosPage';
 import { CollaboratorsPage } from './CollaboratorsPage';
-import { EventSubscriptionPage } from './EventSubscriptionPage';
 import { getApiErrorMessage } from '@/api/client';
 
 export function EventDetailsPage() {
@@ -60,15 +52,7 @@ export function EventDetailsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { user } = useAuthStore();
 
-  const validTabs = [
-    'overview',
-    'guests',
-    'tasks',
-    'budget',
-    'photos',
-    'collaborators',
-    'subscription',
-  ];
+  const validTabs = ['overview', 'guests', 'tasks', 'budget', 'photos', 'collaborators'];
   const tabFromUrl = searchParams.get('tab');
   const activeTab = validTabs.includes(tabFromUrl || '') ? tabFromUrl : 'overview';
 
@@ -79,10 +63,7 @@ export function EventDetailsPage() {
   const { data: event, isLoading, error } = useEvent(id);
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
   const { mutate: duplicateEvent } = useDuplicateEvent();
-  const guestPermissions = useGuestsPermissions(id!);
-  const tasksPermissions = useTasksPermissions(id!);
-  const budgetPermissions = useBudgetPermissions(id!);
-  const collaboratorsPermissions = useCollaboratorsPermissions(id!);
+  const featureAccess = useFeatureAccess(id!);
 
   if (isLoading) {
     return (
@@ -172,57 +153,64 @@ export function EventDetailsPage() {
 
       {/* Event Info Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        {/* Date & Heure */}
+        <Card className="overflow-hidden">
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <Calendar className="h-5 w-5 text-primary" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+              <Calendar className="h-6 w-6 text-primary" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Date</p>
-              <p className="font-medium">
+            <div className="min-w-0">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {event.time ? 'Date & heure' : 'Date'}
+              </p>
+              <p className="font-semibold text-foreground truncate">
                 {format(parseISO(event.date), 'dd MMMM yyyy', { locale: fr })}
               </p>
+              {event.time && (
+                <p className="text-sm font-medium text-muted-foreground">
+                  {event.time.replace(':', 'h')}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {event.time && (
-          <Card>
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10">
-                <Clock className="h-5 w-5 text-info" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Heure</p>
-                <p className="font-medium">{event.time}</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
+        {/* Lieu */}
         {event.location && (
-          <Card>
+          <Card className="overflow-hidden">
             <CardContent className="flex items-center gap-4 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
-                <MapPin className="h-5 w-5 text-success" />
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-success/10">
+                <MapPin className="h-6 w-6 text-success" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Lieu</p>
-                <p className="font-medium truncate">{event.location}</p>
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Lieu
+                </p>
+                <p
+                  className="font-semibold text-foreground line-clamp-2 leading-snug"
+                  title={event.location}
+                >
+                  {event.location}
+                </p>
               </div>
             </CardContent>
           </Card>
         )}
 
+        {/* Invités */}
         {event.expected_guests && (
-          <Card>
+          <Card className="overflow-hidden">
             <CardContent className="flex items-center gap-4 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10">
-                <Users className="h-5 w-5 text-warning" />
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-warning/10">
+                <Users className="h-6 w-6 text-warning" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Invites prevus</p>
-                <p className="font-medium">{event.expected_guests}</p>
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Invités
+                </p>
+                <p className="text-lg font-bold text-foreground">
+                  {event.expected_guests.toLocaleString()}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -235,24 +223,24 @@ export function EventDetailsPage() {
           <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
           <TabsTrigger
             value="guests"
-            className={`gap-2 ${!guestPermissions.hasAnyPermission ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={!guestPermissions.hasAnyPermission}
+            className={`gap-2 ${!featureAccess.guests.canAccess ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!featureAccess.guests.canAccess}
           >
             <Users className="h-4 w-4" />
             Invites
           </TabsTrigger>
           <TabsTrigger
             value="tasks"
-            className={`gap-2 ${!tasksPermissions.hasAnyPermission ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={!tasksPermissions.hasAnyPermission}
+            className={`gap-2 ${!featureAccess.tasks.canAccess ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!featureAccess.tasks.canAccess}
           >
             <CheckSquare className="h-4 w-4" />
             Taches
           </TabsTrigger>
           <TabsTrigger
             value="budget"
-            className={`gap-2 ${!budgetPermissions.hasAnyPermission ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={!budgetPermissions.hasAnyPermission}
+            className={`gap-2 ${!featureAccess.budget.canAccess ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!featureAccess.budget.canAccess}
           >
             <Wallet className="h-4 w-4" />
             Budget
@@ -263,18 +251,12 @@ export function EventDetailsPage() {
           </TabsTrigger>
           <TabsTrigger
             value="collaborators"
-            className={`gap-2 ${!collaboratorsPermissions.hasAnyPermission ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={!collaboratorsPermissions.hasAnyPermission}
+            className={`gap-2 ${!featureAccess.collaborators.canAccess ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!featureAccess.collaborators.canAccess}
           >
             <UserPlus className="h-4 w-4" />
             Collaborateurs
           </TabsTrigger>
-          {collaboratorsPermissions.isOwner && (
-            <TabsTrigger value="subscription" className="gap-2">
-              <Crown className="h-4 w-4" />
-              Abonnement
-            </TabsTrigger>
-          )}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -328,7 +310,11 @@ export function EventDetailsPage() {
               <EmptyState
                 icon={Users}
                 title="Accès restreint"
-                description="Vous n'avez pas les permissions nécessaires pour consulter les invités de cet événement."
+                description={
+                  !featureAccess.guests.canAccess
+                    ? 'Cette fonctionnalité nécessite un abonnement actif.'
+                    : "Vous n'avez pas les permissions nécessaires pour consulter les invités de cet événement."
+                }
               />
             }
           >
@@ -344,7 +330,11 @@ export function EventDetailsPage() {
               <EmptyState
                 icon={CheckSquare}
                 title="Accès restreint"
-                description="Vous n'avez pas les permissions nécessaires pour consulter les tâches de cet événement."
+                description={
+                  !featureAccess.tasks.canAccess
+                    ? 'Cette fonctionnalité nécessite un abonnement actif.'
+                    : "Vous n'avez pas les permissions nécessaires pour consulter les tâches de cet événement."
+                }
               />
             }
           >
@@ -360,7 +350,11 @@ export function EventDetailsPage() {
               <EmptyState
                 icon={Wallet}
                 title="Accès restreint"
-                description="Vous n'avez pas les permissions nécessaires pour consulter le budget de cet événement."
+                description={
+                  !featureAccess.budget.canAccess
+                    ? 'Cette fonctionnalité nécessite un abonnement actif.'
+                    : "Vous n'avez pas les permissions nécessaires pour consulter le budget de cet événement."
+                }
               />
             }
           >
@@ -380,24 +374,16 @@ export function EventDetailsPage() {
               <EmptyState
                 icon={UserPlus}
                 title="Accès restreint"
-                description="Vous n'avez pas les permissions nécessaires pour consulter les collaborateurs de cet événement."
+                description={
+                  !featureAccess.collaborators.canAccess
+                    ? 'Cette fonctionnalité nécessite un abonnement actif.'
+                    : "Vous n'avez pas les permissions nécessaires pour consulter les collaborateurs de cet événement."
+                }
               />
             }
           >
             <CollaboratorsPage eventId={id} />
           </PermissionGuard>
-        </TabsContent>
-
-        <TabsContent value="subscription">
-          {collaboratorsPermissions.isOwner ? (
-            <EventSubscriptionPage eventId={id} />
-          ) : (
-            <EmptyState
-              icon={Crown}
-              title="Accès restreint"
-              description="Seul le propriétaire de l'événement peut gérer les abonnements."
-            />
-          )}
         </TabsContent>
       </Tabs>
 

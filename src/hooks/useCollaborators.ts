@@ -76,16 +76,18 @@ export function useUpdateCollaborator(eventId: string) {
       collaboratorId,
       userId,
       roles,
+      custom_role_ids,
     }: {
       collaboratorId: number;
       userId?: number;
       roles: CollaboratorRole[];
+      custom_role_ids?: number[];
     }) => {
       // Use userId for the route (backend expects user id)
       const userIdParam = userId || collaboratorId;
       const response = await api.put<Collaborator>(
         `/events/${eventId}/collaborators/${userIdParam}`,
-        { roles }
+        { roles, custom_role_ids }
       );
       return response.data;
     },
