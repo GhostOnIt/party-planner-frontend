@@ -130,13 +130,13 @@ export function BannersCarousel({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Carrousel container - utilise grid pour superposer les slides */}
-      <div className="relative overflow-hidden rounded-2xl">
+      <div className="relative overflow-visible rounded-2xl">
         {/* Slides container - grid avec tous les slides dans la même cellule */}
         <div className="grid *:col-start-1 *:row-start-1">
           {/* Trial Banner */}
           {hasTrial && (
             <div
-              className={`transition-opacity duration-500 ease-in-out [&>div]:rounded-none ${
+              className={`transition-opacity duration-500 ease-in-out [&>div]:rounded-2xl ${
                 currentSlide === "trial"
                   ? "opacity-100 pointer-events-auto z-10"
                   : "opacity-0 pointer-events-none z-0"
@@ -149,7 +149,7 @@ export function BannersCarousel({
           {/* Promo Card */}
           {hasPromo && (
             <div
-              className={`transition-opacity duration-500 ease-in-out [&>div]:rounded-none ${
+              className={`transition-opacity duration-500 ease-in-out [&>div]:rounded-2xl ${
                 currentSlide === "promo"
                   ? "opacity-100 pointer-events-auto z-10"
                   : "opacity-0 pointer-events-none z-0"
@@ -189,15 +189,15 @@ export function BannersCarousel({
 
         {/* Dots indicators - seulement si plus d'un slide */}
         {totalSlides > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-30 px-3 py-1.5 rounded-full bg-black/20 backdrop-blur-sm">
             {availableSlides.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
                 className={`h-2 rounded-full transition-all ${
                   index === currentIndex
-                    ? "w-8 bg-white"
-                    : "w-2 bg-white/50 hover:bg-white/75"
+                    ? "w-8 bg-white shadow-lg"
+                    : "w-2 bg-white/70 hover:bg-white/90"
                 }`}
                 aria-label={`Aller au slide ${index + 1}`}
               />

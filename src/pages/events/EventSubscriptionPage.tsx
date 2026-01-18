@@ -284,19 +284,7 @@ export function EventSubscriptionPage({ eventId }: EventSubscriptionPageProps) {
               Aucun abonnement actif pour cet evenement
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <EmptyState
-              icon={Crown}
-              title="Aucun abonnement"
-              description="Activez un plan pour debloquer toutes les fonctionnalites premium de cet evenement."
-            />
-            <div className="mt-4 flex justify-center">
-              <Button onClick={handleActivatePlan}>
-                <Crown className="mr-2 h-4 w-4" />
-                Activer un plan
-              </Button>
-            </div>
-          </CardContent>
+          
         </Card>
       )}
 

@@ -102,6 +102,11 @@ function App() {
 
             {/* Protected routes */}
             <Route element={<PrivateRoute />}>
+              {/* Plans page - sans MainLayout (pas de sidebar ni header) */}
+              <Route path="/plans" element={<PlansPage />} />
+              <Route path="/subscribe/:slug" element={<SubscribePage />} />
+              
+              {/* Routes avec MainLayout */}
               <Route element={<MainLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/events" element={<EventsListPage />} />
@@ -111,8 +116,6 @@ function App() {
                 <Route path="/invitations" element={<InvitationsPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/subscriptions" element={<SubscriptionsPage />} />
-                <Route path="/plans" element={<PlansPage />} />
-                <Route path="/subscribe/:slug" element={<SubscribePage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
