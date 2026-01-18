@@ -112,12 +112,7 @@ export function UrgentTasks() {
                 </div>
               )}
             </div>
-            <input
-              type="checkbox"
-              checked={task.status === "completed"}
-              disabled
-              className="mt-1 w-4 h-4 rounded border-[#D1D5DB] text-[#4F46E5] focus:ring-[#4F46E5]"
-            />
+            
           </div>
           )
         })}

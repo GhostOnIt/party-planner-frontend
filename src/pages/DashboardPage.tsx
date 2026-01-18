@@ -16,7 +16,7 @@ export function DashboardPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
 
-  const [filter, setFilter] = useState("7days")
+  const [filter, setFilter] = useState("all")
   const [eventTypeFilter, setEventTypeFilter] = useState("all")
   const [customRange, setCustomRange] = useState<{ start: Date; end: Date } | undefined>(undefined)
   const [showPromo, setShowPromo] = useState(true)

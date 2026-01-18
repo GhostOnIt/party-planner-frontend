@@ -40,24 +40,24 @@ const statusColors: Record<
   { bg: string; text: string; border: string }
 > = {
   upcoming: {
-    bg: 'bg-[#4F46E5]/10',
-    text: 'text-[#4F46E5]',
-    border: 'border-[#4F46E5]/20',
+    bg: 'bg-[#4F46E5]',
+    text: 'text-white',
+    border: 'border-[#4F46E5]',
   },
   ongoing: {
-    bg: 'bg-[#F59E0B]/10',
-    text: 'text-[#F59E0B]',
-    border: 'border-[#F59E0B]/20',
+    bg: 'bg-[#F59E0B]',
+    text: 'text-white',
+    border: 'border-[#F59E0B]',
   },
   completed: {
-    bg: 'bg-[#10B981]/10',
-    text: 'text-[#10B981]',
-    border: 'border-[#10B981]/20',
+    bg: 'bg-[#10B981]',
+    text: 'text-white',
+    border: 'border-[#10B981]',
   },
   cancelled: {
-    bg: 'bg-[#EF4444]/10',
-    text: 'text-[#EF4444]',
-    border: 'border-[#EF4444]/20',
+    bg: 'bg-[#EF4444]',
+    text: 'text-white',
+    border: 'border-[#EF4444]',
   },
 };
 
@@ -93,7 +93,10 @@ export function EventCardGrid({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden hover:shadow-xl hover:shadow-[#4F46E5]/5 transition-all duration-300 group">
+    <Link
+      to={`/events/${event.id}`}
+      className="block bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden hover:shadow-xl hover:shadow-[#4F46E5]/5 transition-all duration-300 group cursor-pointer"
+    >
       {/* Image Section */}
       <div className="relative h-48 bg-gradient-to-br from-[#f3f4f6] to-[#e5e7eb]">
         <div className="relative w-full h-full">
@@ -157,11 +160,9 @@ export function EventCardGrid({
 
       {/* Content Section */}
       <div className="p-4">
-        <Link to={`/events/${event.id}`}>
-          <h3 className="font-semibold text-[#1a1a2e] text-lg mb-2 truncate hover:text-[#4F46E5] transition-colors">
-            {event.name}
-          </h3>
-        </Link>
+        <h3 className="font-semibold text-[#1a1a2e] text-lg mb-2 truncate group-hover:text-[#4F46E5] transition-colors">
+          {event.name}
+        </h3>
 
         <EventMetadata
           date={event.date}
@@ -200,9 +201,21 @@ export function EventCardGrid({
               {event.createdAt}
             </span>
           </div>
-          <div className="relative">
+          <div 
+            className="relative z-40" 
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <button
-              onClick={() => setActiveMenu(!activeMenu)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveMenu(!activeMenu);
+              }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6b7280] hover:bg-[#f3f4f6] transition-colors"
             >
               <MoreHorizontal className="w-4 h-4" />
@@ -219,7 +232,7 @@ export function EventCardGrid({
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 

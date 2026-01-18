@@ -46,10 +46,14 @@ export function EventActionsMenu({
     <div
       ref={menuRef}
       className="absolute right-0 bottom-full mb-2 w-44 bg-white rounded-xl border border-[#e5e7eb] shadow-xl z-30 py-1"
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
     >
       {onView && (
         <button
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             onView(event);
             onOpenChange(false);
           }}
@@ -61,7 +65,9 @@ export function EventActionsMenu({
       )}
       {onEdit && (
         <button
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             onEdit(event);
             onOpenChange(false);
           }}
@@ -73,7 +79,9 @@ export function EventActionsMenu({
       )}
       {onDuplicate && (
         <button
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             onDuplicate(event);
             onOpenChange(false);
           }}
@@ -86,7 +94,9 @@ export function EventActionsMenu({
       <div className="border-t border-[#f3f4f6] my-1" />
       {onDelete && (
         <button
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             onDelete(event);
             onOpenChange(false);
           }}

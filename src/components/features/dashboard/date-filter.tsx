@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Calendar, ChevronDown, X, Tag } from "lucide-react"
 
-type FilterOption = "7days" | "1month" | "3months" | "custom"
+type FilterOption = "all" | "7days" | "1month" | "3months" | "custom"
 type EventTypeOption = "all" | "mariage" | "anniversaire" | "conférence" | "fête privée" | "autre"
 
 interface DateFilterProps {
@@ -10,7 +10,7 @@ interface DateFilterProps {
 }
 
 export function DateFilter({ onFilterChange, onEventTypeChange }: DateFilterProps) {
-  const [activeFilter, setActiveFilter] = useState<FilterOption>("7days")
+  const [activeFilter, setActiveFilter] = useState<FilterOption>("all")
   const [showCustomRange, setShowCustomRange] = useState(false)
   const [customStart, setCustomStart] = useState("")
   const [customEnd, setCustomEnd] = useState("")
@@ -20,6 +20,12 @@ export function DateFilter({ onFilterChange, onEventTypeChange }: DateFilterProp
 
   const customRangeRef = useRef<HTMLDivElement>(null)
   const eventTypeRef = useRef<HTMLDivElement>(null)
+
+  // Call onFilterChange on mount with default "all" filter
+  useEffect(() => {
+    onFilterChange("all")
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -36,6 +42,7 @@ export function DateFilter({ onFilterChange, onEventTypeChange }: DateFilterProp
   }, [])
 
   const filters = [
+    { id: "all" as FilterOption, label: "Tous" },
     { id: "7days" as FilterOption, label: "7 derniers jours" },
     { id: "1month" as FilterOption, label: "Dernier mois" },
     { id: "3months" as FilterOption, label: "3 derniers mois" },

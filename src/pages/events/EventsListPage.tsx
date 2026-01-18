@@ -50,10 +50,15 @@ export function EventsListPage() {
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
 
   const { data, isLoading } = useEvents(filters);
+  // Charger tous les événements pour les stats (sans filtres) - se met à jour automatiquement via React Query
+  const { data: allEventsData } = useEvents({ per_page: 1000 });
   const { data: subscriptions = [] } = useSubscriptions();
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
   const { mutate: duplicateEvent } = useDuplicateEvent();
   const events = useMemo(() => data?.data || [], [data?.data]);
+  
+  // Utiliser directement les données de la requête pour les stats (se met à jour automatiquement)
+  const allEventsForStats = useMemo(() => allEventsData?.data || [], [allEventsData?.data]);
 
   // Synchroniser currentPage avec la réponse API ou les filtres
   const currentPage = data?.current_page ?? filters.page ?? 1;
@@ -128,10 +133,19 @@ export function EventsListPage() {
         }
       />
 
-      {/* Stats Cards */}
-      {!isLoading && events.length > 0 && (
-        <EventStatsCards events={events} />
-      )}
+      {/* Stats Cards - Toujours affichées avec les stats de tous les événements */}
+      {allEventsForStats.length > 0 ? (
+        <EventStatsCards events={allEventsForStats} />
+      ) : !isLoading ? (
+        // Afficher un skeleton pendant le chargement initial des stats
+        <div className="grid grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white rounded-xl p-4 border border-[#e5e7eb]">
+              <Skeleton className="h-16 w-full" />
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       {/* Filters and View Toggle */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

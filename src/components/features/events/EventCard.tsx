@@ -52,9 +52,8 @@ export function EventCard({
   const imageUrl = resolveUrl(event.featured_photo?.thumbnail_url || event.featured_photo?.url);
 
   return (
-    <Card className="group relative flex h-full flex-col overflow-hidden transition-shadow hover:shadow-md">
-      {/* Zone cliquable */}
-      <Link to={`/events/${event.id}`} className="flex flex-1 flex-col">
+    <Link to={`/events/${event.id}`} className="block h-full">
+      <Card className="group relative flex h-full flex-col overflow-hidden transition-shadow hover:shadow-md cursor-pointer">
         {/* Image */}
         <div className="relative aspect-[16/9] bg-muted">
           {imageUrl && !imageError ? (
@@ -117,52 +116,52 @@ export function EventCard({
             )}
           </div>
         </CardContent>
-      </Link>
 
-      {/* Footer toujours aligné */}
-      <CardFooter className="h-12 shrink-0 border-t bg-muted/5 p-0 flex items-center">
-        <div className="flex-1 min-w-0 px-4">
-          <p className="truncate whitespace-nowrap text-[11px] sm:text-xs text-muted-foreground">
-            {event.user ? (
-              <>
-                Crée par <span className="font-semibold text-foreground">{event.user.name}</span>
-              </>
-            ) : (
-              'Créé le'
-            )}
-            <span className="opacity-70">
-              {' • '}
-              {format(parseISO(event.created_at), 'dd/MM/yyyy', { locale: fr })}
-            </span>
-          </p>
-        </div>
+        {/* Footer toujours aligné */}
+        <CardFooter className="h-12 shrink-0 border-t bg-muted/5 p-0 flex items-center">
+          <div className="flex-1 min-w-0 px-4">
+            <p className="truncate whitespace-nowrap text-[11px] sm:text-xs text-muted-foreground">
+              {event.user ? (
+                <>
+                  Crée par <span className="font-semibold text-foreground">{event.user.name}</span>
+                </>
+              ) : (
+                'Créé le'
+              )}
+              <span className="opacity-70">
+                {' • '}
+                {format(parseISO(event.created_at), 'dd/MM/yyyy', { locale: fr })}
+              </span>
+            </p>
+          </div>
 
-        <div className="flex h-full items-center border-l px-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
+          <div className="flex h-full items-center border-l px-2" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit?.(event)}>
-                <Pencil className="mr-2 h-4 w-4" /> Modifier
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDuplicate?.(event)}>
-                <Copy className="mr-2 h-4 w-4" /> Dupliquer
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => onDelete?.(event)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="mr-2 h-4 w-4" /> Supprimer
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardFooter>
-    </Card>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onEdit?.(event)}>
+                  <Pencil className="mr-2 h-4 w-4" /> Modifier
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onDuplicate?.(event)}>
+                  <Copy className="mr-2 h-4 w-4" /> Dupliquer
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onDelete?.(event)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> Supprimer
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardFooter>
+      </Card>
+    </Link>
   );
 }

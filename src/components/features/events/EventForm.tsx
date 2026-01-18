@@ -201,8 +201,7 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
                   : 'Selectionnez une date'}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
+<PopoverContent className="w-auto p-0" align="start">              <Calendar
                 mode="single"
                 selected={selectedDate ? new Date(selectedDate) : undefined}
                 onSelect={(date) => setValue('date', date ? format(date, 'yyyy-MM-dd') : '')}

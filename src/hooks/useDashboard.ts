@@ -20,7 +20,7 @@ export interface UserStats {
  * Get dashboard statistics with filters (period + event type).
  */
 export function useDashboardStats(
-  period: string = '7days',
+  period: string = 'all',
   eventType: string = 'all',
   customRange?: { start: Date; end: Date }
 ) {
@@ -28,9 +28,13 @@ export function useDashboardStats(
     queryKey: ['dashboard', 'stats', period, eventType, customRange],
     queryFn: async (): Promise<DashboardStatsResponse> => {
       const params: Record<string, string> = {
-        period,
         type: eventType,
       };
+
+      // Only add period if it's not "all"
+      if (period !== 'all') {
+        params.period = period;
+      }
 
       if (period === 'custom' && customRange) {
         params.start_date = customRange.start.toISOString().split('T')[0];
@@ -100,7 +104,7 @@ export function useUrgentTasks(limit: number = 5) {
  * Get confirmations chart data with filters.
  */
 export function useConfirmationsChart(
-  period: string = '7days',
+  period: string = 'all',
   eventType: string = 'all',
   filters: {
     page?: number;
@@ -114,13 +118,17 @@ export function useConfirmationsChart(
     queryKey: ['dashboard', 'confirmations', period, eventType, filters],
     queryFn: async (): Promise<ConfirmationsChartResponse> => {
       const params: Record<string, string | number> = {
-        period,
         type: eventType,
         page: filters.page ?? 1,
         per_page: filters.per_page ?? 5,
         sort_by: filters.sort_by ?? 'confirmRate',
         sort_order: filters.sort_order ?? 'desc',
       };
+
+      // Only add period if it's not "all"
+      if (period !== 'all') {
+        params.period = period;
+      }
 
       if (filters.search) {
         params.search = filters.search;
@@ -135,12 +143,21 @@ export function useConfirmationsChart(
 /**
  * Get events by type chart data.
  */
-export function useEventsByType(period: string = '7days', eventType: string = 'all') {
+export function useEventsByType(period: string = 'all', eventType: string = 'all') {
   return useQuery({
     queryKey: ['dashboard', 'events-by-type', period, eventType],
     queryFn: async (): Promise<EventsByTypeResponse> => {
+      const params: Record<string, string> = {
+        type: eventType,
+      };
+
+      // Only add period if it's not "all"
+      if (period !== 'all') {
+        params.period = period;
+      }
+
       const response = await api.get<EventsByTypeResponse>('/dashboard/events-by-type', {
-        params: { period, type: eventType },
+        params,
       });
       return response.data;
     },

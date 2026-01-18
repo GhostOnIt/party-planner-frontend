@@ -30,13 +30,19 @@ export function useAdminStats() {
 
 // Admin dashboard stats with filters (like user dashboard)
 export function useAdminDashboardStats(
-  period: string = '7days',
+  period: string = 'all',
   customRange?: { start: Date; end: Date }
 ) {
   return useQuery({
     queryKey: ['admin', 'dashboard-stats', period, customRange],
     queryFn: async () => {
-      const params: Record<string, string> = { period };
+      const params: Record<string, string> = {};
+      
+      // Only add period if it's not "all"
+      if (period !== 'all') {
+        params.period = period;
+      }
+
       if (period === 'custom' && customRange) {
         params.start_date = customRange.start.toISOString().split('T')[0];
         params.end_date = customRange.end.toISOString().split('T')[0];

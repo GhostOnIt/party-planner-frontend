@@ -8,7 +8,7 @@ import { AdminEventsTable } from "@/components/features/admin/admin-events-table
 import { DateFilter } from "@/components/features/dashboard/date-filter"
 
 export function AdminDashboardPage() {
-  const [filter, setFilter] = useState("7days")
+  const [filter, setFilter] = useState("all")
   const [customRange, setCustomRange] = useState<{ start: Date; end: Date } | undefined>(undefined)
 
   const handleFilterChange = (newFilter: string, customRangeParam?: { start: Date; end: Date }) => {
