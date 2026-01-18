@@ -14,6 +14,7 @@ import {
   Wallet,
   Palette,
   X,
+  Image,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -135,6 +136,8 @@ export function AdminTemplatesPage() {
   const [editTemplate, setEditTemplate] = useState<EventTemplate | null>(null);
   const [deleteTemplate, setDeleteTemplate] = useState<EventTemplate | null>(null);
   const [newTheme, setNewTheme] = useState('');
+  const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
+  const [coverPhotoPreview, setCoverPhotoPreview] = useState<string | null>(null);
 
   const { data: templates, isLoading } = useAdminTemplates();
   const { mutate: createTemplate, isPending: isCreating } = useCreateTemplate();
@@ -186,6 +189,8 @@ export function AdminTemplatesPage() {
       is_active: true,
     });
     setEditTemplate(null);
+    setCoverPhoto(null);
+    setCoverPhotoPreview(null);
     setFormOpen(true);
   };
 
@@ -210,10 +215,11 @@ export function AdminTemplatesPage() {
       estimated_cost: item.estimated_cost && !Number.isNaN(item.estimated_cost) ? item.estimated_cost : undefined,
     }));
 
-    const formData: CreateTemplateFormData = {
+    const formData: CreateTemplateFormData & { cover_photo?: File } = {
       ...data,
       description: data.description || undefined,
       default_budget_categories: cleanedBudgetCategories,
+      cover_photo: coverPhoto || undefined,
     };
 
     if (editTemplate) {
@@ -223,11 +229,16 @@ export function AdminTemplatesPage() {
           onSuccess: () => {
             toast({ title: 'Template mis a jour' });
             setFormOpen(false);
+            setEditTemplate(null);
+            setCoverPhoto(null);
+            setCoverPhotoPreview(null);
+            form.reset();
           },
-          onError: (error: any) => {
+          onError: (error: unknown) => {
+            const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
             toast({
               title: 'Erreur',
-              description: error?.response?.data?.message || 'Impossible de mettre a jour le template.',
+              description: errorMessage || 'Impossible de mettre a jour le template.',
               variant: 'destructive',
             });
           },
@@ -238,11 +249,15 @@ export function AdminTemplatesPage() {
         onSuccess: () => {
           toast({ title: 'Template cree' });
           setFormOpen(false);
+          setCoverPhoto(null);
+          setCoverPhotoPreview(null);
+          form.reset();
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
+          const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
           toast({
             title: 'Erreur',
-            description: error?.response?.data?.message || 'Impossible de creer le template.',
+            description: errorMessage || 'Impossible de creer le template.',
             variant: 'destructive',
           });
         },
@@ -258,10 +273,11 @@ export function AdminTemplatesPage() {
         toast({ title: 'Template supprime' });
         setDeleteTemplate(null);
       },
-      onError: (error: any) => {
+      onError: (error: unknown) => {
+        const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
         toast({
           title: 'Erreur',
-          description: error?.response?.data?.message || 'Impossible de supprimer le template.',
+          description: errorMessage || 'Impossible de supprimer le template.',
           variant: 'destructive',
         });
       },
@@ -448,7 +464,25 @@ export function AdminTemplatesPage() {
       </Card>
 
       {/* Form Dialog */}
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
+      <Dialog 
+        open={formOpen} 
+        onOpenChange={(open) => {
+          setFormOpen(open);
+          if (!open) {
+            // Réinitialiser le formulaire et l'état d'édition quand le dialog se ferme
+            setEditTemplate(null);
+            form.reset({
+              event_type: 'autre',
+              name: '',
+              description: '',
+              default_tasks: [],
+              default_budget_categories: [],
+              suggested_themes: [],
+              is_active: true,
+            });
+          }
+        }}
+      >
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editTemplate ? 'Modifier le template' : 'Nouveau template'}</DialogTitle>
@@ -459,7 +493,20 @@ export function AdminTemplatesPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form 
+            onSubmit={form.handleSubmit(handleSubmit, (errors) => {
+              // Afficher les erreurs de validation
+              const firstError = Object.values(errors)[0];
+              if (firstError) {
+                toast({
+                  title: 'Erreur de validation',
+                  description: firstError.message || 'Veuillez corriger les erreurs dans le formulaire.',
+                  variant: 'destructive',
+                });
+              }
+            })} 
+            className="space-y-6"
+          >
             {/* Basic Info */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -492,6 +539,51 @@ export function AdminTemplatesPage() {
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Textarea id="description" {...form.register('description')} rows={2} />
+            </div>
+
+            {/* Cover Photo */}
+            <div className="space-y-2">
+              <Label>Photo de couverture</Label>
+              {coverPhotoPreview ? (
+                <div className="relative w-full h-48 rounded-lg overflow-hidden border border-[#e5e7eb]">
+                  <img
+                    src={coverPhotoPreview}
+                    alt="Aperçu de la photo de couverture"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCoverPhoto(null);
+                      setCoverPhotoPreview(null);
+                    }}
+                    className="absolute top-2 right-2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center w-full h-48 border-2 border-dashed border-[#e5e7eb] rounded-lg hover:border-[#4F46E5] transition-colors">
+                  <label className="flex flex-col items-center justify-center w-full h-full cursor-pointer">
+                    <Image className="w-8 h-8 text-[#6b7280] mb-2" />
+                    <span className="text-sm text-[#6b7280]">
+                      Cliquez pour ajouter une photo de couverture
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setCoverPhoto(file);
+                          setCoverPhotoPreview(URL.createObjectURL(file));
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-2">

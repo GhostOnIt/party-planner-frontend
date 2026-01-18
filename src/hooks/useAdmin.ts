@@ -288,9 +288,27 @@ export function useCreateTemplate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateTemplateFormData) => {
-      const response = await api.post('/admin/templates', data);
-      return response.data;
+    mutationFn: async (data: CreateTemplateFormData & { cover_photo?: File }) => {
+      const { cover_photo, ...templateData } = data;
+      
+      if (cover_photo) {
+        const formData = new FormData();
+        Object.entries(templateData).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            if (typeof value === 'object' && !(value instanceof File)) {
+              formData.append(key, JSON.stringify(value));
+            } else {
+              formData.append(key, value.toString());
+            }
+          }
+        });
+        formData.append('cover_photo', cover_photo);
+        const response = await api.post('/admin/templates', formData);
+        return response.data;
+      } else {
+        const response = await api.post('/admin/templates', templateData);
+        return response.data;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'templates'] });
@@ -302,9 +320,27 @@ export function useUpdateTemplate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ templateId, data }: { templateId: number; data: Partial<CreateTemplateFormData> }) => {
-      const response = await api.put(`/admin/templates/${templateId}`, data);
-      return response.data;
+    mutationFn: async ({ templateId, data }: { templateId: number; data: Partial<CreateTemplateFormData> & { cover_photo?: File } }) => {
+      const { cover_photo, ...templateData } = data;
+      
+      if (cover_photo) {
+        const formData = new FormData();
+        Object.entries(templateData).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            if (typeof value === 'object' && !(value instanceof File)) {
+              formData.append(key, JSON.stringify(value));
+            } else {
+              formData.append(key, value.toString());
+            }
+          }
+        });
+        formData.append('cover_photo', cover_photo);
+        const response = await api.put(`/admin/templates/${templateId}`, formData);
+        return response.data;
+      } else {
+        const response = await api.put(`/admin/templates/${templateId}`, templateData);
+        return response.data;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'templates'] });

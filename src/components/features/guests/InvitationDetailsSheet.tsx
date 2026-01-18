@@ -60,10 +60,24 @@ export function InvitationDetailsSheet({
     }
   };
 
+  if (!open) {
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent
+          side="right"
+          className="w-full sm:w-lg sm:max-w-lg overflow-y-auto transition-none data-[state=open]:duration-150 data-[state=closed]:duration-150 data-[state=open]:animate-none data-[state=closed]:animate-none"
+        />
+      </Sheet>
+    );
+  }
+
   if (isLoading) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+        <SheetContent
+          side="right"
+          className="w-full sm:w-lg sm:max-w-lg overflow-y-auto transition-none data-[state=open]:duration-150 data-[state=closed]:duration-150 data-[state=open]:animate-none data-[state=closed]:animate-none"
+        >
           <SheetHeader>
             <SheetTitle>Détails de l'invitation</SheetTitle>
             <SheetDescription>
@@ -82,7 +96,10 @@ export function InvitationDetailsSheet({
   if (error || !data) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl">
+        <SheetContent
+          side="right"
+          className="w-full sm:w-lg sm:max-w-lg overflow-y-auto transition-none data-[state=open]:duration-150 data-[state=closed]:duration-150 data-[state=open]:animate-none data-[state=closed]:animate-none"
+        >
           <SheetHeader>
             <SheetTitle>Détails de l'invitation</SheetTitle>
             <SheetDescription>
@@ -102,7 +119,10 @@ export function InvitationDetailsSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent
+        side="right"
+        className="w-full sm:w-lg sm:max-w-lg overflow-y-auto transition-none data-[state=open]:duration-150 data-[state=closed]:duration-150 data-[state=open]:animate-none data-[state=closed]:animate-none"
+      >
         <SheetHeader className="space-y-1 pb-6">
           <SheetTitle className="text-xl">Détails de l'invitation</SheetTitle>
           <SheetDescription>
@@ -255,9 +275,9 @@ export function InvitationDetailsSheet({
               <div className="flex flex-wrap gap-2">
                 {guest.dietary_restrictions
                   .split(',')
-                  .map((restriction) => restriction.trim())
-                  .filter((restriction) => restriction.length > 0)
-                  .map((restriction, index) => (
+                  .map((restriction: string) => restriction.trim())
+                  .filter((restriction: string) => restriction.length > 0)
+                  .map((restriction: string, index: number) => (
                     <Badge
                       key={index}
                       variant="outline"

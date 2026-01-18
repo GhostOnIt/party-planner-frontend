@@ -275,6 +275,7 @@ export interface EventTemplate {
     estimated_cost?: number;
   }>;
   suggested_themes: string[];
+  cover_photo_url: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
