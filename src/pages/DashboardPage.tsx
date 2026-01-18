@@ -7,9 +7,8 @@ import { UrgentTasks } from "@/components/features/dashboard/urgent-tasks"
 import { RecentActivity } from "@/components/features/dashboard/recent-activity"
 import { ConfirmationsChart } from "@/components/charts/confirmations-chart"
 import { DateFilter } from "@/components/features/dashboard/date-filter"
-import { PromoCard } from "@/components/features/dashboard/promo-card"
 import { EventsByTypeChart } from "@/components/charts/events-by-type-chart"
-import { TrialBanner } from "@/components/features/dashboard/trial-banner"
+import { BannersCarousel } from "@/components/features/dashboard/banners-carousel"
 import { Plus } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -35,7 +34,19 @@ export function DashboardPage() {
 
   return (
     <div>
-      <TrialBanner dismissible={true} />
+      <BannersCarousel
+        showPromo={showPromo}
+        onPromoDismiss={() => setShowPromo(false)}
+        promoCardProps={{
+          type: "banner",
+          badge: "En direct",
+          badgeType: "live",
+          title: "Party Planner Summit 2026",
+          description: "Rejoignez plus de 2 000 organisateurs d'événements pour notre conférence annuelle. En direct depuis Paris.",
+          primaryButton: { label: "Rejoindre", href: "https://example.com/stream" },
+          secondaryButton: { label: "Voir les détails", href: "https://example.com/details" },
+        }}
+      />
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1a1a2e]">Tableau de bord</h1>
@@ -57,28 +68,6 @@ export function DashboardPage() {
       <StatCards filter={filter} eventTypeFilter={eventTypeFilter} customRange={customRange} />
 
       <div className="mt-6 space-y-6">
-        {showPromo && (
-          <PromoCard
-            type="banner"
-            badge="En direct"
-            badgeType="live"
-            title="Party Planner Summit 2026"
-            description="Rejoignez plus de 2 000 organisateurs d'événements pour notre conférence annuelle. En direct depuis Paris."
-            primaryButton={{ label: "Rejoindre", href: "https://example.com/stream" }}
-            secondaryButton={{ label: "Voir les détails", href: "https://example.com/details" }}
-            pollQuestion="Quel type d'événement préférez-vous organiser ?"
-            pollOptions={[
-              { id: "1", label: "Mariage", votes: 145 },
-              { id: "2", label: "Anniversaire", votes: 98 },
-              { id: "3", label: "Conférence", votes: 67 },
-              { id: "4", label: "Fête privée", votes: 52 },
-            ]}
-            onVote={(optionId) => console.log("Vote pour:", optionId)}
-            dismissible={true}
-            onDismiss={() => setShowPromo(false)}
-          />
-        )}
-
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
             <SubscriptionCard />

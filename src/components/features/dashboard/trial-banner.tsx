@@ -83,7 +83,7 @@ export function TrialBanner({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4F46E5] via-[#6366F1] to-[#7C3AED] p-6 mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4F46E5] via-[#6366F1] to-[#7C3AED] p-6 animate-in fade-in slide-in-from-top-4 duration-500">
       {/* Background decorations */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
       <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-white/5 rounded-full translate-y-1/2" />
