@@ -54,8 +54,8 @@ export function EventStatsCards({ events }: EventStatsCardsProps) {
             <Calendar className="w-5 h-5 text-[#E91E8C]" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-[#1a1a2e]">0</p>
-            <p className="text-sm text-[#6b7280]">Favoris</p>
+            <p className="text-2xl font-bold text-[#1a1a2e]">{stats.ongoing}</p>
+            <p className="text-sm text-[#6b7280]">En cours</p>
           </div>
         </div>
       </div>

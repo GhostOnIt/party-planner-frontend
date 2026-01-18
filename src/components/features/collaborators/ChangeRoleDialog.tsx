@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -43,15 +43,24 @@ export function ChangeRoleDialog({
   const customRoles: CustomRole[] = (rolesData?.roles || []).filter((r) => !r.is_system);
 
   // Filter system roles based on what the current user can assign
-  const filteredRoles =
-    availableRoles.length > 0
-      ? systemRoles.filter((role) => availableRoles.includes(role.value as CollaboratorRole))
-      : systemRoles;
+  // Memoize to avoid recreating on every render
+  const filteredRoles = useMemo(
+    () =>
+      availableRoles.length > 0
+        ? systemRoles.filter((role) => availableRoles.includes(role.value as CollaboratorRole))
+        : systemRoles,
+    [availableRoles, systemRoles]
+  );
 
   const [selectedRoles, setSelectedRoles] = useState<CollaboratorRole[]>([]);
   const [selectedCustomRoleIds, setSelectedCustomRoleIds] = useState<number[]>([]);
 
   useEffect(() => {
+    // Only update when dialog opens or collaborator changes
+    if (!open) {
+      return;
+    }
+
     if (collaborator) {
       // Get current system roles, excluding owner role
       const currentRoles = (
@@ -84,7 +93,7 @@ export function ChangeRoleDialog({
       setSelectedRoles([filteredRoles[0].value as CollaboratorRole]);
       setSelectedCustomRoleIds([]);
     }
-  }, [collaborator, filteredRoles]);
+  }, [open, collaborator, filteredRoles]);
 
   const handleCustomRoleToggle = (roleId: number, checked: boolean) => {
     setSelectedCustomRoleIds((prev) => {

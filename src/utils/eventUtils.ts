@@ -37,6 +37,7 @@ export interface DisplayEvent {
 export interface EventStats {
   total: number;
   upcoming: number;
+  ongoing: number;
   totalGuests: number;
 }
 
@@ -129,6 +130,7 @@ export function calculateEventStats(events: Event[]): EventStats {
   return {
     total: events.length,
     upcoming: events.filter((e) => e.status === 'upcoming').length,
+    ongoing: events.filter((e) => e.status === 'ongoing').length,
     totalGuests: events.reduce(
       (acc, e) => acc + (e.guests_count || 0),
       0
