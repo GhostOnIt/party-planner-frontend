@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Crown, CreditCard, Plus, Calendar, CheckCircle, Loader2 } from 'lucide-react';
+import { Crown, CreditCard, ArrowRight } from 'lucide-react';
 import { format, parseISO, isPast } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { PageHeader } from '@/components/layout/page-header';
@@ -10,29 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { PaymentHistory, PaymentForm, PaymentStatus as PaymentStatusComponent } from '@/components/features/payment';
-import { PlanSelector } from '@/components/features/subscription';
+import { PaymentHistory } from '@/components/features/payment';
 import { useSubscriptions } from '@/hooks/useSubscription';
-import { usePayments, useRetryPayment, useInitiatePayment } from '@/hooks/usePayment';
-import { useEvents } from '@/hooks/useEvents';
+import { usePayments, useRetryPayment } from '@/hooks/usePayment';
 import { useToast } from '@/hooks/use-toast';
-import { getApiErrorMessage } from '@/api/client';
-import type { Subscription, Event as EventType, PlanType, PaymentMethod } from '@/types';
+import type { Subscription } from '@/types';
 
 const planNames = {
   starter: 'Starter',
@@ -134,12 +115,17 @@ function SubscriptionListSkeleton() {
  
 
 export function SubscriptionsPage() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const defaultTab = searchParams.get('tab') || 'subscriptions';
 
   const { data: subscriptions = [], isLoading: isLoadingSubscriptions } = useSubscriptions();
-  const { data: payments = [], isLoading: isLoadingPayments } = usePayments();
+  const { 
+    data: payments = [], 
+    isLoading: isLoadingPayments,
+    error: paymentsError 
+  } = usePayments();
   const { mutate: retryPayment } = useRetryPayment();
 
   // Filter using new field names with fallbacks
@@ -167,10 +153,19 @@ export function SubscriptionsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Abonnements"
-        description="Gerez vos abonnements et paiements"
-      />
+      <div className="flex items-center justify-between">
+        <PageHeader
+          title="Abonnements"
+          description="Gerez vos abonnements et paiements"
+        />
+        <Button
+          onClick={() => navigate('/plans')}
+          className="gap-2"
+        >
+          Changer de plan
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
 
       <Tabs defaultValue={defaultTab}>
         <TabsList>
@@ -248,11 +243,21 @@ export function SubscriptionsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <PaymentHistory
-                payments={payments}
-                isLoading={isLoadingPayments}
-                onRetry={handleRetryPayment}
-              />
+              {paymentsError ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <CreditCard className="h-12 w-12 text-destructive" />
+                  <h3 className="mt-4 text-lg font-medium">Erreur</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Impossible de charger l'historique des paiements.
+                  </p>
+                </div>
+              ) : (
+                <PaymentHistory
+                  payments={payments}
+                  isLoading={isLoadingPayments}
+                  onRetry={handleRetryPayment}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>

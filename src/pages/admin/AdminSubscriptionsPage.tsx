@@ -424,7 +424,7 @@ export function AdminSubscriptionsPage() {
                               {formatCurrency(subscription.total_price)}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {subscription.guest_count} invites
+                             {subscription.guest_count===-1? 'Illimité' : `${subscription.guest_count} invites`}
                             </p>
                           </div>
                         </TableCell>

@@ -119,7 +119,7 @@ export function SubscriptionCard() {
       )}
 
       <button
-        onClick={() => navigate("/subscriptions")}
+        onClick={() => navigate("/plans")}
         className="w-full flex items-center justify-center gap-2 py-2.5 border border-[#e5e7eb] rounded-lg text-[#1a1a2e] font-medium hover:bg-[#f3f4f6] transition-colors mb-2"
       >
         <ArrowUpRight className="w-4 h-4" />

@@ -33,6 +33,7 @@ import { useCollaborators } from '@/hooks/useCollaborators';
 import { PermissionGuard } from '@/components/ui/permission-guard';
 import { useTasksPermissions } from '@/hooks/usePermissions';
 import { useEvent } from '@/hooks/useEvents';
+import { useAuthStore } from '@/stores/authStore';
 import type { Task, TaskFilters as TaskFiltersType, CreateTaskFormData, TaskStatus } from '@/types';
 
 interface TasksPageProps {
@@ -60,17 +61,35 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
   const { data: collaboratorsData } = useCollaborators(eventId!);
   const { data: eventData } = useEvent(eventId!);
 
+  const { user: currentUser } = useAuthStore();
   const tasks = tasksData?.data || [];
   const collaborators =
     collaboratorsData?.data?.map((c) => ({ id: c.user_id, name: c.user.name })) || [];
 
-  // Build assignable users list (collaborators + owner)
-  const assignableUsers = [
-    // Add owner if available
-    ...(eventData?.user ? [{ id: eventData.user_id, name: eventData.user.name }] : []),
-    // Add collaborators
-    ...collaborators,
-  ];
+  // Build assignable users list (current user + owner + collaborators)
+  // Remove duplicates by using a Map
+  const assignableUsersMap = new Map<number, { id: number; name: string }>();
+  
+  // Add owner if available
+  if (eventData?.user) {
+    assignableUsersMap.set(eventData.user_id, { id: eventData.user_id, name: eventData.user.name });
+  }
+  
+  // Add collaborators
+  collaborators.forEach((c) => {
+    assignableUsersMap.set(c.id, c);
+  });
+  
+  // Convert to array and sort: current user first, then others alphabetically
+  const assignableUsers = Array.from(assignableUsersMap.values()).sort((a, b) => {
+    // Put current user first
+    if (currentUser) {
+      if (a.id === currentUser.id) return -1;
+      if (b.id === currentUser.id) return 1;
+    }
+    // Then sort alphabetically by name
+    return a.name.localeCompare(b.name);
+  });
 
   const handleAddTask = () => {
     setEditingTask(undefined);
@@ -255,6 +274,7 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
         isSubmitting={isCreating || isUpdating}
         collaborators={assignableUsers}
         canAssign={tasksPermissions.canAssign}
+        currentUserId={currentUser?.id}
       />
 
       {/* Delete Confirmation Dialog */}

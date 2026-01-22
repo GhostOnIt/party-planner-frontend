@@ -104,22 +104,28 @@ export function PaymentHistory({
         </TableHeader>
         <TableBody>
           {payments.map((payment) => {
-            const config = statusConfig[payment.status];
+            const config = statusConfig[payment.status] || statusConfig.pending;
             const StatusIcon = config.icon;
 
             return (
               <TableRow key={payment.id}>
                 <TableCell className="whitespace-nowrap">
-                  {format(parseISO(payment.created_at), 'dd MMM yyyy HH:mm', {
-                    locale: fr,
-                  })}
+                  {payment.created_at
+                    ? format(parseISO(payment.created_at), 'dd MMM yyyy HH:mm', {
+                        locale: fr,
+                      })
+                    : '-'}
                 </TableCell>
                 <TableCell className="font-mono text-sm">
-                  {payment.transaction_reference}
+                  {payment.transaction_reference || '-'}
                 </TableCell>
-                <TableCell>{payment.payment_method ? methodLabels[payment.payment_method] : '-'}</TableCell>
+                <TableCell>
+                  {payment.payment_method && methodLabels[payment.payment_method]
+                    ? methodLabels[payment.payment_method]
+                    : payment.payment_method || '-'}
+                </TableCell>
                 <TableCell className="font-medium">
-                  {formatCurrency(payment.amount)}
+                  {formatCurrency(payment.amount || 0)}
                 </TableCell>
                 <TableCell>
                   <Badge variant="secondary" className={config.color}>

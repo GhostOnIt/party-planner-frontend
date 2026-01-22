@@ -262,135 +262,149 @@ export function EventDetailsPage() {
               <Sparkles className="h-4 w-4" />
               Vue d'ensemble
             </TabsTrigger>
-            <TabsTrigger
-              value="guests"
-              className={cn(
-                "gap-2 rounded-lg data-[state=active]:bg-[#4F46E5] data-[state=active]:text-white",
-                !featureAccess.guests.canAccess && 'opacity-50 cursor-not-allowed'
-              )}
-              disabled={!featureAccess.guests.canAccess}
-            >
-              <Users className="h-4 w-4" />
-              Invités
-            </TabsTrigger>
-            <TabsTrigger
-              value="tasks"
-              className={cn(
-                "gap-2 rounded-lg data-[state=active]:bg-[#4F46E5] data-[state=active]:text-white",
-                !featureAccess.tasks.canAccess && 'opacity-50 cursor-not-allowed'
-              )}
-              disabled={!featureAccess.tasks.canAccess}
-            >
-              <CheckSquare className="h-4 w-4" />
-              Tâches
-            </TabsTrigger>
-            <TabsTrigger
-              value="budget"
-              className={cn(
-                "gap-2 rounded-lg data-[state=active]:bg-[#4F46E5] data-[state=active]:text-white",
-                !featureAccess.budget.canAccess && 'opacity-50 cursor-not-allowed'
-              )}
-              disabled={!featureAccess.budget.canAccess}
-            >
-              <Wallet className="h-4 w-4" />
-              Budget
-            </TabsTrigger>
+            {featureAccess.guests.canAccess && (
+              <TabsTrigger
+                value="guests"
+                className="gap-2 rounded-lg data-[state=active]:bg-[#4F46E5] data-[state=active]:text-white"
+              >
+                <Users className="h-4 w-4" />
+                Invités
+              </TabsTrigger>
+            )}
+            {featureAccess.tasks.canAccess && (
+              <TabsTrigger
+                value="tasks"
+                className="gap-2 rounded-lg data-[state=active]:bg-[#4F46E5] data-[state=active]:text-white"
+              >
+                <CheckSquare className="h-4 w-4" />
+                Tâches
+              </TabsTrigger>
+            )}
+            {featureAccess.budget.canAccess && (
+              <TabsTrigger
+                value="budget"
+                className="gap-2 rounded-lg data-[state=active]:bg-[#4F46E5] data-[state=active]:text-white"
+              >
+                <Wallet className="h-4 w-4" />
+                Budget
+              </TabsTrigger>
+            )}
             <TabsTrigger value="photos" className="gap-2 rounded-lg data-[state=active]:bg-[#4F46E5] data-[state=active]:text-white">
               <Image className="h-4 w-4" />
               Photos
             </TabsTrigger>
-            <TabsTrigger
-              value="collaborators"
-              className={cn(
-                "gap-2 rounded-lg data-[state=active]:bg-[#4F46E5] data-[state=active]:text-white",
-                !featureAccess.collaborators.canAccess && 'opacity-50 cursor-not-allowed'
-              )}
-              disabled={!featureAccess.collaborators.canAccess}
-            >
-              <UserPlus className="h-4 w-4" />
-              Collaborateurs
-            </TabsTrigger>
+            {featureAccess.collaborators.canAccess && (
+              <TabsTrigger
+                value="collaborators"
+                className="gap-2 rounded-lg data-[state=active]:bg-[#4F46E5] data-[state=active]:text-white"
+              >
+                <UserPlus className="h-4 w-4" />
+                Collaborateurs
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Vue d'ensemble Tab */}
           <TabsContent value="overview" className="space-y-6 mt-6">
             {/* Quick Stats Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className={cn(
+              "grid gap-4",
+              // Calculer le nombre de colonnes en fonction des cartes visibles
+              (() => {
+                const visibleCards = [
+                  featureAccess.guests.canAccess,
+                  featureAccess.tasks.canAccess,
+                  featureAccess.budget.canAccess,
+                  true, // Date stat toujours visible
+                ].filter(Boolean).length;
+                
+                if (visibleCards === 1) return "grid-cols-1";
+                if (visibleCards === 2) return "grid-cols-1 sm:grid-cols-2";
+                if (visibleCards === 3) return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
+                return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4";
+              })()
+            )}>
               {/* Guests Stat */}
-              <div className="bg-white rounded-2xl p-5 border border-[#e5e7eb] hover:shadow-lg hover:shadow-[#4F46E5]/5 transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-12 h-12 rounded-xl bg-[#10B981]/10 flex items-center justify-center">
-                    <Users className="w-6 h-6 text-[#10B981]" />
+              {featureAccess.guests.canAccess && (
+                <div className="bg-white rounded-2xl p-5 border border-[#e5e7eb] hover:shadow-lg hover:shadow-[#4F46E5]/5 transition-all">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-12 h-12 rounded-xl bg-[#10B981]/10 flex items-center justify-center">
+                      <Users className="w-6 h-6 text-[#10B981]" />
+                    </div>
+                    <span className="text-3xl font-bold text-[#1a1a2e]">{guestsTotal}</span>
                   </div>
-                  <span className="text-3xl font-bold text-[#1a1a2e]">{guestsTotal}</span>
+                  <p className="text-sm font-medium text-[#6b7280] mb-3">Invités</p>
+                  <div className="space-y-2">
+                    <div className="h-2 rounded-full bg-[#f3f4f6] overflow-hidden">
+                      <div
+                        className="h-full bg-linear-to-r from-[#10B981] to-[#34D399] transition-all"
+                        style={{ width: `${guestsProgress}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#10B981] font-medium">{guestsConfirmed} confirmés</span>
+                      <span className="text-[#6b7280]">{guestsProgress}%</span>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-sm font-medium text-[#6b7280] mb-3">Invités</p>
-                <div className="space-y-2">
-                  <div className="h-2 rounded-full bg-[#f3f4f6] overflow-hidden">
-                    <div
-                      className="h-full bg-linear-to-r from-[#10B981] to-[#34D399] transition-all"
-                      style={{ width: `${guestsProgress}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#10B981] font-medium">{guestsConfirmed} confirmés</span>
-                    <span className="text-[#6b7280]">{guestsProgress}%</span>
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Tasks Stat */}
-              <div className="bg-white rounded-2xl p-5 border border-[#e5e7eb] hover:shadow-lg hover:shadow-[#4F46E5]/5 transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-12 h-12 rounded-xl bg-[#4F46E5]/10 flex items-center justify-center">
-                    <ListTodo className="w-6 h-6 text-[#4F46E5]" />
+              {featureAccess.tasks.canAccess && (
+                <div className="bg-white rounded-2xl p-5 border border-[#e5e7eb] hover:shadow-lg hover:shadow-[#4F46E5]/5 transition-all">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-12 h-12 rounded-xl bg-[#4F46E5]/10 flex items-center justify-center">
+                      <ListTodo className="w-6 h-6 text-[#4F46E5]" />
+                    </div>
+                    <span className="text-3xl font-bold text-[#1a1a2e]">{tasksTotal}</span>
                   </div>
-                  <span className="text-3xl font-bold text-[#1a1a2e]">{tasksTotal}</span>
+                  <p className="text-sm font-medium text-[#6b7280] mb-3">Tâches</p>
+                  <div className="space-y-2">
+                    <div className="h-2 rounded-full bg-[#f3f4f6] overflow-hidden">
+                      <div
+                        className="h-full bg-linear-to-r from-[#4F46E5] to-[#7C3AED] transition-all"
+                        style={{ width: `${tasksProgress}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#4F46E5] font-medium">{tasksCompleted} complétées</span>
+                      <span className="text-[#6b7280]">{tasksProgress}%</span>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-sm font-medium text-[#6b7280] mb-3">Tâches</p>
-                <div className="space-y-2">
-                  <div className="h-2 rounded-full bg-[#f3f4f6] overflow-hidden">
-                    <div
-                      className="h-full bg-linear-to-r from-[#4F46E5] to-[#7C3AED] transition-all"
-                      style={{ width: `${tasksProgress}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#4F46E5] font-medium">{tasksCompleted} complétées</span>
-                    <span className="text-[#6b7280]">{tasksProgress}%</span>
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Budget Stat */}
-              <div className="bg-white rounded-2xl p-5 border border-[#e5e7eb] hover:shadow-lg hover:shadow-[#4F46E5]/5 transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-12 h-12 rounded-xl bg-[#F59E0B]/10 flex items-center justify-center">
-                    <PiggyBank className="w-6 h-6 text-[#F59E0B]" />
+              {featureAccess.budget.canAccess && (
+                <div className="bg-white rounded-2xl p-5 border border-[#e5e7eb] hover:shadow-lg hover:shadow-[#4F46E5]/5 transition-all">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-12 h-12 rounded-xl bg-[#F59E0B]/10 flex items-center justify-center">
+                      <PiggyBank className="w-6 h-6 text-[#F59E0B]" />
+                    </div>
+                    <span className="text-lg font-bold text-[#1a1a2e]">{formatBudget(budgetTotal)}</span>
                   </div>
-                  <span className="text-lg font-bold text-[#1a1a2e]">{formatBudget(budgetTotal)}</span>
+                  <p className="text-sm font-medium text-[#6b7280] mb-3">Budget</p>
+                  <div className="space-y-2">
+                    <div className="h-2 rounded-full bg-[#f3f4f6] overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full transition-all",
+                          budgetProgress > 100 
+                            ? "bg-linear-to-r from-[#EF4444] to-[#F87171]" 
+                            : "bg-linear-to-r from-[#F59E0B] to-[#FBBF24]"
+                        )}
+                        style={{ width: `${Math.min(budgetProgress, 100)}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className={cn("font-medium", budgetProgress > 100 ? "text-[#EF4444]" : "text-[#F59E0B]")}>
+                        {formatBudget(budgetSpent)} dépensé
+                      </span>
+                      <span className="text-[#6b7280]">{budgetProgress}%</span>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-sm font-medium text-[#6b7280] mb-3">Budget</p>
-                <div className="space-y-2">
-                  <div className="h-2 rounded-full bg-[#f3f4f6] overflow-hidden">
-                    <div
-                      className={cn(
-                        "h-full transition-all",
-                        budgetProgress > 100 
-                          ? "bg-linear-to-r from-[#EF4444] to-[#F87171]" 
-                          : "bg-linear-to-r from-[#F59E0B] to-[#FBBF24]"
-                      )}
-                      style={{ width: `${Math.min(budgetProgress, 100)}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className={cn("font-medium", budgetProgress > 100 ? "text-[#EF4444]" : "text-[#F59E0B]")}>
-                      {formatBudget(budgetSpent)} dépensé
-                    </span>
-                    <span className="text-[#6b7280]">{budgetProgress}%</span>
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Event Date Stat */}
               <div className="rounded-2xl p-5 border bg-white border-[#e5e7eb] hover:shadow-lg hover:shadow-[#4F46E5]/5 transition-all">
@@ -432,57 +446,59 @@ export function EventDetailsPage() {
                 </div>
 
                 {/* Guest Breakdown & Dietary Restrictions */}
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                  {/* Guest Breakdown */}
-                  <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
-                    <div className="px-6 py-4 border-b border-[#f3f4f6] bg-[#f9fafb]">
-                      <h3 className="font-semibold text-[#1a1a2e]">Répartition des invités</h3>
-                    </div>
-                    <div className="p-6">
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div className="text-center p-4 rounded-xl bg-[#f9fafb]">
-                          <div className="w-10 h-10 rounded-full bg-[#6b7280]/10 flex items-center justify-center mx-auto mb-2">
-                            <Users className="w-5 h-5 text-[#6b7280]" />
+                {featureAccess.guests.canAccess && (
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    {/* Guest Breakdown */}
+                    <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
+                      <div className="px-6 py-4 border-b border-[#f3f4f6] bg-[#f9fafb]">
+                        <h3 className="font-semibold text-[#1a1a2e]">Répartition des invités</h3>
+                      </div>
+                      <div className="p-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                          <div className="text-center p-4 rounded-xl bg-[#f9fafb]">
+                            <div className="w-10 h-10 rounded-full bg-[#6b7280]/10 flex items-center justify-center mx-auto mb-2">
+                              <Users className="w-5 h-5 text-[#6b7280]" />
+                            </div>
+                            <p className="text-2xl font-bold text-[#1a1a2e]">{guestsTotal}</p>
+                            <p className="text-xs text-[#6b7280]">Total</p>
                           </div>
-                          <p className="text-2xl font-bold text-[#1a1a2e]">{guestsTotal}</p>
-                          <p className="text-xs text-[#6b7280]">Total</p>
-                        </div>
-                        <div className="text-center p-4 rounded-xl bg-[#10B981]/5">
-                          <div className="w-10 h-10 rounded-full bg-[#10B981]/10 flex items-center justify-center mx-auto mb-2">
-                            <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+                          <div className="text-center p-4 rounded-xl bg-[#10B981]/5">
+                            <div className="w-10 h-10 rounded-full bg-[#10B981]/10 flex items-center justify-center mx-auto mb-2">
+                              <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+                            </div>
+                            <p className="text-2xl font-bold text-[#10B981]">{guestsConfirmed}</p>
+                            <p className="text-xs text-[#6b7280]">Confirmés</p>
                           </div>
-                          <p className="text-2xl font-bold text-[#10B981]">{guestsConfirmed}</p>
-                          <p className="text-xs text-[#6b7280]">Confirmés</p>
-                        </div>
-                        <div className="text-center p-4 rounded-xl bg-[#F59E0B]/5">
-                          <div className="w-10 h-10 rounded-full bg-[#F59E0B]/10 flex items-center justify-center mx-auto mb-2">
-                            <HelpCircle className="w-5 h-5 text-[#F59E0B]" />
+                          <div className="text-center p-4 rounded-xl bg-[#F59E0B]/5">
+                            <div className="w-10 h-10 rounded-full bg-[#F59E0B]/10 flex items-center justify-center mx-auto mb-2">
+                              <HelpCircle className="w-5 h-5 text-[#F59E0B]" />
+                            </div>
+                            <p className="text-2xl font-bold text-[#F59E0B]">{guestsPending}</p>
+                            <p className="text-xs text-[#6b7280]">En attente</p>
                           </div>
-                          <p className="text-2xl font-bold text-[#F59E0B]">{guestsPending}</p>
-                          <p className="text-xs text-[#6b7280]">En attente</p>
-                        </div>
-                        <div className="text-center p-4 rounded-xl bg-[#EF4444]/5">
-                          <div className="w-10 h-10 rounded-full bg-[#EF4444]/10 flex items-center justify-center mx-auto mb-2">
-                            <XCircle className="w-5 h-5 text-[#EF4444]" />
+                          <div className="text-center p-4 rounded-xl bg-[#EF4444]/5">
+                            <div className="w-10 h-10 rounded-full bg-[#EF4444]/10 flex items-center justify-center mx-auto mb-2">
+                              <XCircle className="w-5 h-5 text-[#EF4444]" />
+                            </div>
+                            <p className="text-2xl font-bold text-[#EF4444]">{guestsDeclined}</p>
+                            <p className="text-xs text-[#6b7280]">Déclinés</p>
                           </div>
-                          <p className="text-2xl font-bold text-[#EF4444]">{guestsDeclined}</p>
-                          <p className="text-xs text-[#6b7280]">Déclinés</p>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Dietary Restrictions */}
-                  {id && (
-                    <DietaryRestrictionsCard 
-                      eventId={id} 
-                      totalGuests={guestsConfirmed} 
-                    />
-                  )}
-                </div>
+                    {/* Dietary Restrictions */}
+                    {id && (
+                      <DietaryRestrictionsCard 
+                        eventId={id} 
+                        totalGuests={guestsConfirmed} 
+                      />
+                    )}
+                  </div>
+                )}
 
                 {/* Budget Breakdown */}
-                {budgetTotal > 0 && (
+                {featureAccess.budget.canAccess && budgetTotal > 0 && (
                   <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
                     <div className="px-6 py-4 border-b border-[#f3f4f6] bg-[#f9fafb]">
                       <h3 className="font-semibold text-[#1a1a2e]">Aperçu du budget</h3>
