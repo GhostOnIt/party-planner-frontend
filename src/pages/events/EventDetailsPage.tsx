@@ -19,7 +19,6 @@ import {
   HelpCircle,
   ListTodo,
   PiggyBank,
-  Camera,
   Sparkles,
 } from 'lucide-react';
 import { format, parseISO, differenceInDays, isPast, isToday } from 'date-fns';
@@ -40,6 +39,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { EventStatusBadge, EventTypeBadge } from '@/components/features/events';
+import { DietaryRestrictionsCard } from '@/components/features/guests';
 import { useEvent, useDeleteEvent, useDuplicateEvent } from '@/hooks/useEvents';
 import { useAuthStore } from '@/stores/authStore';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
@@ -226,21 +226,7 @@ export function EventDetailsPage() {
                 </div>
               </div>
 
-              {/* Countdown Badge */}
-              <div className={cn(
-                "px-4 py-2 rounded-xl backdrop-blur-md",
-                countdown.isUrgent ? "bg-red-500/90 text-white" : "bg-white/20 text-white"
-              )}>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  <div>
-                    <p className="text-sm font-medium">{countdown.label}</p>
-                    {countdown.days > 0 && !isPast(parseISO(event.date)) && (
-                      <p className="text-2xl font-bold">{countdown.days} <span className="text-sm font-normal">jours</span></p>
-                    )}
-                  </div>
-                </div>
-              </div>
+           
             </div>
           </div>
         </div>
@@ -407,21 +393,13 @@ export function EventDetailsPage() {
               </div>
 
               {/* Event Date Stat */}
-              <div className={cn(
-                "rounded-2xl p-5 border transition-all",
-                countdown.isUrgent 
-                  ? "bg-linear-to-br from-red-50 to-orange-50 border-red-200" 
-                  : "bg-white border-[#e5e7eb] hover:shadow-lg hover:shadow-[#4F46E5]/5"
-              )}>
+              <div className="rounded-2xl p-5 border bg-white border-[#e5e7eb] hover:shadow-lg hover:shadow-[#4F46E5]/5 transition-all">
                 <div className="flex items-center justify-between mb-3">
-                  <div className={cn(
-                    "w-12 h-12 rounded-xl flex items-center justify-center",
-                    countdown.isUrgent ? "bg-red-100" : "bg-[#E91E8C]/10"
-                  )}>
-                    <Clock className={cn("w-6 h-6", countdown.isUrgent ? "text-red-500" : "text-[#E91E8C]")} />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#E91E8C]/10">
+                    <Clock className="w-6 h-6 text-[#E91E8C]" />
                   </div>
                   {countdown.days > 0 && !isPast(parseISO(event.date)) && (
-                    <span className={cn("text-3xl font-bold", countdown.isUrgent ? "text-red-600" : "text-[#1a1a2e]")}>
+                    <span className="text-3xl font-bold text-[#1a1a2e]">
                       {countdown.days}
                     </span>
                   )}
@@ -429,7 +407,7 @@ export function EventDetailsPage() {
                 <p className="text-sm font-medium text-[#6b7280] mb-1">
                   {countdown.days > 0 && !isPast(parseISO(event.date)) ? 'Jours restants' : 'Date'}
                 </p>
-                <p className={cn("text-sm font-semibold", countdown.isUrgent ? "text-red-600" : "text-[#1a1a2e]")}>
+                <p className="text-sm font-semibold text-[#1a1a2e]">
                   {countdown.label}
                 </p>
               </div>
@@ -453,43 +431,54 @@ export function EventDetailsPage() {
                   </div>
                 </div>
 
-                {/* Guest Breakdown */}
-                <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
-                  <div className="px-6 py-4 border-b border-[#f3f4f6] bg-[#f9fafb]">
-                    <h3 className="font-semibold text-[#1a1a2e]">Répartition des invités</h3>
-                  </div>
-                  <div className="p-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      <div className="text-center p-4 rounded-xl bg-[#f9fafb]">
-                        <div className="w-10 h-10 rounded-full bg-[#6b7280]/10 flex items-center justify-center mx-auto mb-2">
-                          <Users className="w-5 h-5 text-[#6b7280]" />
+                {/* Guest Breakdown & Dietary Restrictions */}
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  {/* Guest Breakdown */}
+                  <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
+                    <div className="px-6 py-4 border-b border-[#f3f4f6] bg-[#f9fafb]">
+                      <h3 className="font-semibold text-[#1a1a2e]">Répartition des invités</h3>
+                    </div>
+                    <div className="p-6">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="text-center p-4 rounded-xl bg-[#f9fafb]">
+                          <div className="w-10 h-10 rounded-full bg-[#6b7280]/10 flex items-center justify-center mx-auto mb-2">
+                            <Users className="w-5 h-5 text-[#6b7280]" />
+                          </div>
+                          <p className="text-2xl font-bold text-[#1a1a2e]">{guestsTotal}</p>
+                          <p className="text-xs text-[#6b7280]">Total</p>
                         </div>
-                        <p className="text-2xl font-bold text-[#1a1a2e]">{guestsTotal}</p>
-                        <p className="text-xs text-[#6b7280]">Total</p>
-                      </div>
-                      <div className="text-center p-4 rounded-xl bg-[#10B981]/5">
-                        <div className="w-10 h-10 rounded-full bg-[#10B981]/10 flex items-center justify-center mx-auto mb-2">
-                          <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+                        <div className="text-center p-4 rounded-xl bg-[#10B981]/5">
+                          <div className="w-10 h-10 rounded-full bg-[#10B981]/10 flex items-center justify-center mx-auto mb-2">
+                            <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+                          </div>
+                          <p className="text-2xl font-bold text-[#10B981]">{guestsConfirmed}</p>
+                          <p className="text-xs text-[#6b7280]">Confirmés</p>
                         </div>
-                        <p className="text-2xl font-bold text-[#10B981]">{guestsConfirmed}</p>
-                        <p className="text-xs text-[#6b7280]">Confirmés</p>
-                      </div>
-                      <div className="text-center p-4 rounded-xl bg-[#F59E0B]/5">
-                        <div className="w-10 h-10 rounded-full bg-[#F59E0B]/10 flex items-center justify-center mx-auto mb-2">
-                          <HelpCircle className="w-5 h-5 text-[#F59E0B]" />
+                        <div className="text-center p-4 rounded-xl bg-[#F59E0B]/5">
+                          <div className="w-10 h-10 rounded-full bg-[#F59E0B]/10 flex items-center justify-center mx-auto mb-2">
+                            <HelpCircle className="w-5 h-5 text-[#F59E0B]" />
+                          </div>
+                          <p className="text-2xl font-bold text-[#F59E0B]">{guestsPending}</p>
+                          <p className="text-xs text-[#6b7280]">En attente</p>
                         </div>
-                        <p className="text-2xl font-bold text-[#F59E0B]">{guestsPending}</p>
-                        <p className="text-xs text-[#6b7280]">En attente</p>
-                      </div>
-                      <div className="text-center p-4 rounded-xl bg-[#EF4444]/5">
-                        <div className="w-10 h-10 rounded-full bg-[#EF4444]/10 flex items-center justify-center mx-auto mb-2">
-                          <XCircle className="w-5 h-5 text-[#EF4444]" />
+                        <div className="text-center p-4 rounded-xl bg-[#EF4444]/5">
+                          <div className="w-10 h-10 rounded-full bg-[#EF4444]/10 flex items-center justify-center mx-auto mb-2">
+                            <XCircle className="w-5 h-5 text-[#EF4444]" />
+                          </div>
+                          <p className="text-2xl font-bold text-[#EF4444]">{guestsDeclined}</p>
+                          <p className="text-xs text-[#6b7280]">Déclinés</p>
                         </div>
-                        <p className="text-2xl font-bold text-[#EF4444]">{guestsDeclined}</p>
-                        <p className="text-xs text-[#6b7280]">Déclinés</p>
                       </div>
                     </div>
                   </div>
+
+                  {/* Dietary Restrictions */}
+                  {id && (
+                    <DietaryRestrictionsCard 
+                      eventId={id} 
+                      totalGuests={guestsConfirmed} 
+                    />
+                  )}
                 </div>
 
                 {/* Budget Breakdown */}
@@ -622,49 +611,7 @@ export function EventDetailsPage() {
                   </div>
                 )}
 
-                {/* Quick Actions */}
-                <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
-                  <div className="px-6 py-4 border-b border-[#f3f4f6] bg-[#f9fafb]">
-                    <h3 className="font-semibold text-[#1a1a2e]">Actions rapides</h3>
-                  </div>
-                  <div className="p-4 space-y-2">
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start gap-3 text-[#6b7280] hover:text-[#1a1a2e] hover:bg-[#f3f4f6]"
-                      onClick={() => handleTabChange('guests')}
-                      disabled={!featureAccess.guests.canAccess}
-                    >
-                      <Users className="w-4 h-4" />
-                      Gérer les invités
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start gap-3 text-[#6b7280] hover:text-[#1a1a2e] hover:bg-[#f3f4f6]"
-                      onClick={() => handleTabChange('tasks')}
-                      disabled={!featureAccess.tasks.canAccess}
-                    >
-                      <CheckSquare className="w-4 h-4" />
-                      Voir les tâches
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start gap-3 text-[#6b7280] hover:text-[#1a1a2e] hover:bg-[#f3f4f6]"
-                      onClick={() => handleTabChange('budget')}
-                      disabled={!featureAccess.budget.canAccess}
-                    >
-                      <Wallet className="w-4 h-4" />
-                      Gérer le budget
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start gap-3 text-[#6b7280] hover:text-[#1a1a2e] hover:bg-[#f3f4f6]"
-                      onClick={() => handleTabChange('photos')}
-                    >
-                      <Camera className="w-4 h-4" />
-                      Ajouter des photos
-                    </Button>
-                  </div>
-                </div>
+              
               </div>
             </div>
           </TabsContent>

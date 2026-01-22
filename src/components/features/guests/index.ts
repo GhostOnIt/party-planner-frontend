@@ -8,3 +8,4 @@ export { BulkActionsBar } from './BulkActionsBar';
 export { BulkActionDialog } from './BulkActionDialog';
 export { InvitationDetailsSheet } from './InvitationDetailsSheet';
 export { ExportGuestsModal, type ExportFilters } from './ExportGuestsModal';
+export { DietaryRestrictionsCard } from './DietaryRestrictionsCard';
