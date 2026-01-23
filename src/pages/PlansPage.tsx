@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { usePlans, PLAN_FEATURE_LABELS, formatLimitValue } from '@/hooks/useAdminPlans';
 import { useSubscribeToPlan } from '@/hooks/useSubscription';
+import { useFaqs } from '@/hooks/useFaqs';
 import type { Plan } from '@/hooks/useAdminPlans';
 import { useNavigate } from 'react-router-dom';
 
@@ -281,36 +282,9 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
   );
 }
 
-const faqs = [
-  {
-    question: 'Comment fonctionne la facturation ?',
-    answer:
-      "Chaque plan est facturé mensuellement. Vous bénéficiez de toutes les fonctionnalités incluses pendant la durée de votre abonnement. L'essai gratuit est disponible une seule fois par compte et peut être activé depuis cette page.",
-  },
-  {
-    question: 'Puis-je changer de plan ?',
-    answer:
-      'Oui, vous pouvez passer à un plan supérieur à tout moment. La différence de prix sera calculée au prorata de la durée restante.',
-  },
-  {
-    question: 'Quels modes de paiement acceptez-vous ?',
-    answer:
-      'Nous acceptons les paiements via MTN Mobile Money et Airtel Money. Le paiement est sécurisé et confirmé instantanément.',
-  },
-  {
-    question: 'Que se passe-t-il à la fin de mon abonnement ?',
-    answer:
-      "À la fin de votre abonnement, vous conservez l'accès en lecture à vos données mais ne pouvez plus ajouter d'invités ou modifier l'événement. Vous pouvez renouveler à tout moment.",
-  },
-  {
-    question: 'Puis-je annuler mon abonnement à tout moment ?',
-    answer:
-      "Oui, vous pouvez annuler votre abonnement à tout moment depuis les paramètres de votre compte. Aucun frais d'annulation ne sera appliqué.",
-  },
-];
-
 export function PlansPage() {
   const { data: plansData, isLoading, error } = usePlans();
+  const { data: faqs = [], isLoading: isLoadingFaqs } = useFaqs();
   const [hoveredPlan, setHoveredPlan] = useState<number | null>(null);
 
   // Ensure plans is always an array
@@ -384,10 +358,8 @@ export function PlansPage() {
 
           {/* Main Heading */}
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-5 text-balance tracking-tight">
-              <span className="bg-gradient-to-r from-[#4F46E5] via-[#7C3AED] to-[#E91E8C] bg-clip-text text-transparent">
-                Plans tarifaires
-              </span>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-5 text-balance tracking-tight text-[#1a1a2e]">
+              Plans tarifaires
             </h1>
             <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto text-balance leading-relaxed">
               Commencez immédiatement gratuitement. Passez à un plan supérieur pour plus de
@@ -436,22 +408,34 @@ export function PlansPage() {
           </div>
 
           {/* FAQ Accordion */}
-          <Accordion type="single" collapsible className="w-full space-y-4">
-            {faqs.map((faq, index) => (
-              <AccordionItem
-                key={index}
-                value={`item-${index}`}
-                className="border border-slate-200 rounded-lg bg-white shadow-sm px-6 data-[state=open]:shadow-md data-[state=open]:border-[#4F46E5]/30"
-              >
-                <AccordionTrigger className="text-left hover:no-underline py-5">
-                  <span className="font-semibold text-lg text-slate-900">{faq.question}</span>
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 text-slate-600 leading-relaxed">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+          {isLoadingFaqs ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-20 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : faqs.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Aucune question fréquente disponible pour le moment.</p>
+            </div>
+          ) : (
+            <Accordion type="single" collapsible className="w-full space-y-4">
+              {faqs.map((faq) => (
+                <AccordionItem
+                  key={faq.id}
+                  value={`item-${faq.id}`}
+                  className="border border-slate-200 rounded-lg bg-white shadow-sm px-6 data-[state=open]:shadow-md data-[state=open]:border-[#4F46E5]/30"
+                >
+                  <AccordionTrigger className="text-left hover:no-underline py-5">
+                    <span className="font-semibold text-lg text-slate-900">{faq.question}</span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-5 text-slate-600 leading-relaxed">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          )}
 
          
         </div>

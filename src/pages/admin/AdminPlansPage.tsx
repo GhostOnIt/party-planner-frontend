@@ -69,6 +69,7 @@ import {
   PLAN_FEATURE_LABELS,
   PLAN_LIMIT_LABELS,
 } from '@/hooks/useAdminPlans';
+import { FaqManagementTab } from '@/components/features/admin/FaqManagementTab';
 import type { Plan, PlanFeatures, PlanLimits } from '@/hooks/useAdminPlans';
 
 const planFormSchema = z.object({
@@ -314,16 +315,24 @@ export function AdminPlansPage() {
     <div className="space-y-6">
       <PageHeader
         title="Plans d'abonnement"
-        description="Gerez les plans et tarifs de la plateforme"
-        actions={
-          <Button onClick={openCreateForm}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nouveau plan
-          </Button>
-        }
+        description="Gerez les plans, tarifs et questions frequentes de la plateforme"
       />
 
-      {/* Plans Table */}
+      <Tabs defaultValue="plans" className="w-full">
+        <TabsList>
+          <TabsTrigger value="plans">Plans</TabsTrigger>
+          <TabsTrigger value="faqs">Questions frequentes</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="plans" className="space-y-6">
+          <div className="flex justify-end">
+            <Button onClick={openCreateForm}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nouveau plan
+            </Button>
+          </div>
+
+          {/* Plans Table */}
       <Card>
         <CardHeader>
           <CardTitle>Liste des plans</CardTitle>
@@ -743,6 +752,13 @@ export function AdminPlansPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+        </TabsContent>
+
+        <TabsContent value="faqs" className="space-y-6">
+          <FaqManagementTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

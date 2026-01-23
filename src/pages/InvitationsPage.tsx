@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, AlertTriangle } from 'lucide-react';
+import { Mail, HelpCircle } from 'lucide-react';
 import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -195,7 +195,7 @@ export function InvitationsPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <HelpCircle className="h-5 w-5 text-[#4F46E5]" />
               {confirmationDialog.action === 'accept'
                 ? "Accepter l'invitation"
                 : "Refuser l'invitation"}
