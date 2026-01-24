@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard,
@@ -51,6 +52,23 @@ const adminNavItems: NavItem[] = [
 
 export function Sidebar({ isAdmin = false, onLogout }: SidebarProps) {
   const { t } = useTranslation();
+  const location = useLocation();
+  
+  // Détecter si on est dans la section admin
+  const isInAdminSection = location.pathname.startsWith('/admin');
+  // Vérifier si on vient de la section admin (via sessionStorage)
+  const fromAdminSection = sessionStorage.getItem('fromAdminSection') === 'true';
+  
+  // Nettoyer le flag quand on revient à une route admin ou qu'on navigue ailleurs que /events/:id
+  useEffect(() => {
+    if (isInAdminSection) {
+      // Si on revient à une route admin, nettoyer le flag
+      sessionStorage.removeItem('fromAdminSection');
+    } else if (!location.pathname.startsWith('/events/')) {
+      // Si on navigue vers une route qui n'est pas /events/:id, nettoyer aussi le flag
+      sessionStorage.removeItem('fromAdminSection');
+    }
+  }, [location.pathname, isInAdminSection]);
   
   return (
     <aside className="fixed left-0 top-0 h-screen w-[250px] bg-white border-r border-[#e5e7eb] flex flex-col">
@@ -69,14 +87,16 @@ export function Sidebar({ isAdmin = false, onLogout }: SidebarProps) {
             <NavLink
               key={item.to}
               to={item.to}
-              className={({ isActive }) =>
-                cn(
+              className={({ isActive }) => {
+                // Si on est dans la section admin ou qu'on vient de la section admin, ne pas activer les onglets de la section principale
+                const shouldBeActive = (isInAdminSection || fromAdminSection) ? false : isActive;
+                return cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors",
-                  isActive
+                  shouldBeActive
                     ? "bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white"
                     : "text-[#6b7280] hover:bg-[#f3f4f6]"
-                )
-              }
+                );
+              }}
             >
               <item.icon className="w-5 h-5" />
               {t(item.labelKey)}
@@ -95,14 +115,20 @@ export function Sidebar({ isAdmin = false, onLogout }: SidebarProps) {
                   key={item.to}
                   to={item.to}
                   end={item.end}
-                  className={({ isActive }) =>
-                    cn(
+                  className={({ isActive }) => {
+                    // Pour les routes admin, vérifier si on est dans la section admin
+                    // Si on est sur /events/:id mais qu'on vient de /admin/events, garder l'onglet admin actif
+                    let shouldBeActive = isActive;
+                    if (item.to === '/admin/events' && location.pathname.startsWith('/events/') && fromAdminSection) {
+                      shouldBeActive = true;
+                    }
+                    return cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors",
-                      isActive
+                      shouldBeActive
                         ? "bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white"
                         : "text-[#6b7280] hover:bg-[#f3f4f6]"
-                    )
-                  }
+                    );
+                  }}
                 >
                   <item.icon className="w-5 h-5" />
                   {t(item.labelKey)}

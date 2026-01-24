@@ -40,32 +40,20 @@ export function usePayments() {
   return useQuery({
     queryKey: ['payments'],
     queryFn: async (): Promise<Payment[]> => {
-      try {
-        const response = await api.get('/payments');
-        const data = response.data;
+      const response = await api.get('/payments');
+      const data = response.data;
 
-        // Handle paginated response from Laravel
-        if (data && typeof data === 'object' && 'data' in data && Array.isArray(data.data)) {
-          return data.data;
-        }
-        
-        // Handle direct array response
-        if (Array.isArray(data)) {
-          return data;
-        }
-        
-        // Handle alternative structure
-        if (data && 'payments' in data && Array.isArray(data.payments)) {
-          return data.payments;
-        }
-
-        // Return empty array if no valid data found
-        console.warn('Unexpected payment data structure:', data);
-        return [];
-      } catch (error) {
-        console.error('Error fetching payments:', error);
-        return [];
+      if (Array.isArray(data)) {
+        return data;
       }
+      if (data && 'data' in data) {
+        return data.data || [];
+      }
+      if (data && 'payments' in data) {
+        return data.payments || [];
+      }
+
+      return [];
     },
   });
 }

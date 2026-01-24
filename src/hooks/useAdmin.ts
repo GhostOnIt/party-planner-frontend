@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
-import { useToast } from '@/hooks/use-toast';
 import type {
   AdminStats,
   AdminUser,
@@ -127,30 +126,6 @@ export function useToggleUserActive() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
-    },
-  });
-}
-
-export function useSendPasswordReset() {
-  const { toast } = useToast();
-
-  return useMutation({
-    mutationFn: async (userId: number) => {
-      const response = await api.post(`/admin/users/${userId}/send-password-reset`);
-      return response.data;
-    },
-    onSuccess: () => {
-      toast({
-        title: 'Email envoyé',
-        description: 'Un lien de réinitialisation a été envoyé à l\'utilisateur.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Erreur',
-        description: error?.response?.data?.message || 'Impossible d\'envoyer l\'email.',
-        variant: 'destructive',
-      });
     },
   });
 }

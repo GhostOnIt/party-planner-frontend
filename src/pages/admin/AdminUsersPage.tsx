@@ -6,7 +6,7 @@ import {
   MoreHorizontal,
   Shield,
   User as UserIcon,
-  Key,
+  Trash2,
   UserCog,
   Ban,
   CheckCircle,
@@ -61,7 +61,7 @@ import {
 import { PerPageSelector } from '@/components/ui/per-page-selector';
 import { PageHeader } from '@/components/layout/page-header';
 import { useToast } from '@/hooks/use-toast';
-import { useAdminUsers, useUpdateUser, useToggleUserActive, useSendPasswordReset } from '@/hooks/useAdmin';
+import { useAdminUsers, useUpdateUser, useDeleteUser, useToggleUserActive } from '@/hooks/useAdmin';
 import type { AdminUser, AdminUserFilters, UserRole } from '@/types';
 
 export function AdminUsersPage() {
@@ -71,14 +71,14 @@ export function AdminUsersPage() {
     per_page: 20,
   });
   const [searchInput, setSearchInput] = useState('');
+  const [deleteUser, setDeleteUser] = useState<AdminUser | null>(null);
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
   const [editRole, setEditRole] = useState<UserRole>('user');
-  const [resetPasswordUser, setResetPasswordUser] = useState<AdminUser | null>(null);
 
   const { data, isLoading } = useAdminUsers(filters);
   const { mutate: updateUser, isPending: isUpdating } = useUpdateUser();
+  const { mutate: deleteUserMutation, isPending: isDeleting } = useDeleteUser();
   const { mutate: toggleActive } = useToggleUserActive();
-  const { mutate: sendPasswordReset, isPending: isSendingReset } = useSendPasswordReset();
 
   const handleSearch = () => {
     setFilters((prev) => ({ ...prev, search: searchInput, page: 1 }));
@@ -119,16 +119,23 @@ export function AdminUsersPage() {
     );
   };
 
-  const handleSendPasswordReset = (user: AdminUser) => {
-    setResetPasswordUser(user);
-  };
+  const handleDelete = () => {
+    if (!deleteUser) return;
 
-  const confirmSendPasswordReset = () => {
-    if (!resetPasswordUser) return;
-
-    sendPasswordReset(resetPasswordUser.id, {
+    deleteUserMutation(deleteUser.id, {
       onSuccess: () => {
-        setResetPasswordUser(null);
+        toast({
+          title: 'Utilisateur supprime',
+          description: `${deleteUser.name} a ete supprime.`,
+        });
+        setDeleteUser(null);
+      },
+      onError: () => {
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de supprimer l\'utilisateur.',
+          variant: 'destructive',
+        });
       },
     });
   };
@@ -316,11 +323,11 @@ export function AdminUsersPage() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => handleSendPasswordReset(user)}
-                              disabled={isSendingReset}
+                              className="text-destructive"
+                              onClick={() => setDeleteUser(user)}
                             >
-                              <Key className="mr-2 h-4 w-4" />
-                              {isSendingReset ? 'Envoi...' : 'Réinitialiser le mot de passe'}
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Supprimer
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -399,23 +406,24 @@ export function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Password Reset Confirmation */}
-      <AlertDialog open={!!resetPasswordUser} onOpenChange={(open) => !open && setResetPasswordUser(null)}>
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteUser} onOpenChange={(open) => !open && setDeleteUser(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Envoyer un lien de réinitialisation ?</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer l'utilisateur ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Un email contenant un lien de réinitialisation de mot de passe sera envoyé à{' '}
-              <strong>{resetPasswordUser?.email}</strong>. L'utilisateur pourra alors définir un nouveau mot de passe en cliquant sur le lien reçu.
+              Cette action est irreversible. Tous les evenements, donnees et abonnements
+              de {deleteUser?.name} seront egalement supprimes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmSendPasswordReset}
-              disabled={isSendingReset}
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
             >
-              {isSendingReset ? 'Envoi...' : 'Envoyer le lien'}
+              {isDeleting ? 'Suppression...' : 'Supprimer'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

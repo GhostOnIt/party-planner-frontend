@@ -318,7 +318,13 @@ export function AdminEventsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link to={`/events/${event.id}`}>
+                              <Link 
+                                to={`/events/${event.id}`}
+                                onClick={() => {
+                                  // Mémoriser qu'on vient de la section admin
+                                  sessionStorage.setItem('fromAdminSection', 'true');
+                                }}
+                              >
                                 <Eye className="mr-2 h-4 w-4" />
                                 Voir les details
                               </Link>

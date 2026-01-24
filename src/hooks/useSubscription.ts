@@ -69,17 +69,14 @@ export function useSubscriptions() {
       const response = await api.get('/subscriptions');
       const data = response.data;
 
-      // Backend returns { subscriptions: [...], stats: {...} }
-      if (data && 'subscriptions' in data && Array.isArray(data.subscriptions)) {
-        return data.subscriptions;
-      }
-      
-      // Fallback for other formats
       if (Array.isArray(data)) {
         return data;
       }
-      if (data && 'data' in data && Array.isArray(data.data)) {
+      if (data && 'data' in data) {
         return data.data || [];
+      }
+      if (data && 'subscriptions' in data) {
+        return data.subscriptions || [];
       }
 
       return [];

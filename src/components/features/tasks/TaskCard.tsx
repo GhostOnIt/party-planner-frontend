@@ -61,7 +61,7 @@ export function TaskCard({
   return (
     <Card
       className={cn(
-        'transition-shadow hover:shadow-md',
+        'cursor-pointer transition-shadow hover:shadow-md',
         isDragging && 'opacity-50 shadow-lg',
         isCompleted && 'opacity-60'
       )}
@@ -81,25 +81,20 @@ export function TaskCard({
               <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
             )}
           </div>
-          <DropdownMenu modal={false}>
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-6 w-6 shrink-0"
-                onClick={(e) => e.stopPropagation()}
-              >
+              <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0">
                 <MoreHorizontal className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onEdit(task)}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Modifier
               </DropdownMenuItem>
               {onStatusChange ? (
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger onPointerDown={(e) => e.stopPropagation()}>
+                  <DropdownMenuSubTrigger>
                     <RotateCcw className="mr-2 h-4 w-4" />
                     Changer le statut
                   </DropdownMenuSubTrigger>
@@ -109,10 +104,7 @@ export function TaskCard({
                       return (
                         <DropdownMenuItem
                           key={option.value}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onStatusChange(task, option.value);
-                          }}
+                          onClick={() => onStatusChange(task, option.value)}
                           disabled={task.status === option.value}
                           className={cn(task.status === option.value && 'bg-accent')}
                         >
