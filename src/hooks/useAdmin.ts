@@ -179,6 +179,7 @@ export type AdminSubscription = Subscription & {
       email: string;
     };
   };
+  events_count?: number;
 };
 
 export function useAdminSubscriptions(filters: AdminSubscriptionFilters = {}) {

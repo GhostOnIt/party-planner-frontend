@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { ChevronDown, LogOut, User, Settings, HelpCircle } from "lucide-react"
+import { ChevronDown, LogOut, User, Settings } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useCurrentSubscription } from "@/hooks/useSubscription"
@@ -129,16 +129,7 @@ export function ProfileDropdown({ user, onLogout, onProfileClick, onSettingsClic
               <Settings className="w-4 h-4" />
               Paramètres
             </button>
-            <button
-              onClick={() => {
-                navigate("/help")
-                setShowProfile(false)
-              }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#1a1a2e] transition-colors"
-            >
-              <HelpCircle className="w-4 h-4" />
-              Aide & Support
-            </button>
+           
           </div>
           <div className="p-2 border-t border-[#e5e7eb]">
             <button

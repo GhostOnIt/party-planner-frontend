@@ -23,9 +23,11 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { PhotoUploader } from '@/components/features/photos';
 import { useTemplatesByType } from '@/hooks/useTemplates';
+import { useEventTypes } from '@/hooks/useSettings';
 import type { Event, CreateEventFormData, EventType } from '@/types';
 
-const eventTypes: { value: EventType; label: string }[] = [
+// Default event types (fallback if user types are not loaded)
+const defaultEventTypes: { value: EventType; label: string }[] = [
   { value: 'mariage', label: 'Mariage' },
   { value: 'anniversaire', label: 'Anniversaire' },
   { value: 'baby_shower', label: 'Baby Shower' },
@@ -36,10 +38,10 @@ const eventTypes: { value: EventType; label: string }[] = [
 
 const eventFormSchema = z.object({
   title: z.string().min(1, 'Le titre est requis').max(255),
-  type: z.enum(['mariage', 'anniversaire', 'baby_shower', 'soiree', 'brunch', 'autre']),
+  type: z.string().min(1, 'Le type est requis'), // Accept any string for custom types
   date: z.string().min(1, 'La date est requise'),
-  time: z.string().optional(),
-  location: z.string().optional(),
+  time: z.string().min(1, "L'heure est requise"),
+  location: z.string().min(1, 'Le lieu est requis'),
   description: z.string().optional(),
   expected_guests: z
     .union([z.string(), z.number()])
@@ -82,6 +84,17 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
   const [coverPhotoPreview, setCoverPhotoPreview] = useState<string | null>(null);
   const [showPhotoUploader, setShowPhotoUploader] = useState(false);
 
+  // Load user's custom event types
+  const { data: userEventTypes, isLoading: isLoadingEventTypes } = useEventTypes();
+  
+  // Use user's event types if available, otherwise fallback to default
+  const eventTypes = userEventTypes && userEventTypes.length > 0
+    ? userEventTypes.map((type) => ({
+        value: type.slug as EventType,
+        label: type.name,
+      }))
+    : defaultEventTypes;
+
   const {
     register,
     handleSubmit,
@@ -92,7 +105,7 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
       title: event?.title || '',
-      type: event?.type || 'autre',
+      type: event?.type || (eventTypes[0]?.value || 'autre'),
       date: event?.date || '',
       time: event?.time || '',
       location: event?.location || '',
@@ -148,8 +161,8 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
       title: transformed.title,
       type: transformed.type,
       date: transformed.date,
-      time: transformed.time || undefined,
-      location: transformed.location || undefined,
+      time: transformed.time,
+      location: transformed.location,
       description: transformed.description || undefined,
       expected_guests: transformed.expected_guests,
       budget: transformed.budget,
@@ -311,11 +324,18 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
                   : 'Selectionnez une date'}
               </Button>
             </PopoverTrigger>
-<PopoverContent className="w-auto p-0" align="start">              <Calendar
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
                 mode="single"
                 selected={selectedDate ? new Date(selectedDate) : undefined}
                 onSelect={(date) => setValue('date', date ? format(date, 'yyyy-MM-dd') : '')}
                 initialFocus
+                disabled={(date) => {
+                  // Désactiver les dates passées (avant aujourd'hui)
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  return date < today;
+                }}
               />
             </PopoverContent>
           </Popover>
@@ -323,15 +343,17 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="time">Heure</Label>
-          <Input id="time" type="time" {...register('time')} />
+          <Label htmlFor="time">Heure *</Label>
+          <Input id="time" type="time" {...register('time')} aria-invalid={!!errors.time} required />
+          {errors.time && <p className="text-sm text-destructive">{errors.time.message}</p>}
         </div>
       </div>
 
       {/* Location */}
       <div className="space-y-2">
-        <Label htmlFor="location">Lieu</Label>
-        <Input id="location" placeholder="Ex: Salle des fetes de Paris" {...register('location')} />
+        <Label htmlFor="location">Lieu *</Label>
+        <Input id="location" placeholder="Ex: Salle des fetes de Paris" {...register('location')} aria-invalid={!!errors.location} required />
+        {errors.location && <p className="text-sm text-destructive">{errors.location.message}</p>}
       </div>
 
       {/* Description */}

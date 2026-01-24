@@ -12,7 +12,6 @@ import {
   CalendarPlus,
   RefreshCw,
   Eye,
-  Mail,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -126,6 +125,7 @@ export function AdminSubscriptionsPage() {
   const [filters, setFilters] = useState<AdminSubscriptionFilters>({
     page: 1,
     per_page: 20,
+    payment_status: 'paid',
   });
   const [searchInput, setSearchInput] = useState('');
   const [cancelSub, setCancelSub] = useState<AdminSubscription | null>(null);
@@ -144,9 +144,9 @@ export function AdminSubscriptionsPage() {
 
   // Helper to get plan name from subscription
   const getPlanName = (subscription: AdminSubscription): string => {
-    // @ts-ignore - plan may be loaded via relation
+    // @ts-expect-error - plan may be loaded via relation
     if (subscription.plan?.name) {
-      // @ts-ignore
+      // @ts-expect-error - plan relation may have name property
       return subscription.plan.name;
     }
     return legacyPlanLabels[subscription.plan_type] || subscription.plan_type;
@@ -154,7 +154,7 @@ export function AdminSubscriptionsPage() {
 
   // Helper to get plan price from subscription
   const getPlanPrice = (subscription: AdminSubscription): number => {
-    // @ts-ignore - plan may be loaded via relation
+    // @ts-expect-error - plan may be loaded via relation
     return subscription.plan?.price || 0;
   };
 
@@ -170,21 +170,6 @@ export function AdminSubscriptionsPage() {
       });
     } else {
       setFilters((prev) => ({ ...prev, plan_type: plan as PlanType, page: 1 }));
-    }
-  };
-
-  const handlePaymentStatusFilter = (status: string) => {
-    if (status === 'all') {
-      setFilters((prev) => {
-        const { payment_status: _, ...rest } = prev;
-        return { ...rest, page: 1 };
-      });
-    } else {
-      setFilters((prev) => ({
-        ...prev,
-        payment_status: status as 'pending' | 'paid' | 'failed',
-        page: 1,
-      }));
     }
   };
 
@@ -260,18 +245,6 @@ export function AdminSubscriptionsPage() {
     );
   };
 
-  const handleContactUser = (subscription: AdminSubscription) => {
-    const email = subscription.event?.user?.email;
-    if (email) {
-      window.location.href = `mailto:${email}?subject=Concernant votre abonnement Party Planner`;
-    } else {
-      toast({
-        title: 'Email non disponible',
-        description: "L'adresse email de l'utilisateur n'est pas disponible.",
-        variant: 'destructive',
-      });
-    }
-  };
 
   const isExpired = (expiresAt: string | null) => {
     if (!expiresAt) return false;
@@ -305,22 +278,6 @@ export function AdminSubscriptionsPage() {
                 {plans.map((plan) => (
                   <SelectItem key={plan.slug} value={plan.slug}>
                     {plan.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={filters.payment_status || 'all'}
-              onValueChange={handlePaymentStatusFilter}
-            >
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Paiement" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                {Object.entries(paymentStatusLabels).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -361,7 +318,7 @@ export function AdminSubscriptionsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Utilisateur</TableHead>
-                    <TableHead>Evenement</TableHead>
+                    <TableHead>Nombre d'evenements</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Prix</TableHead>
                     <TableHead>Paiement</TableHead>
@@ -371,10 +328,9 @@ export function AdminSubscriptionsPage() {
                 </TableHeader>
                 <TableBody>
                   {data?.data?.map((subscription) => {
-                    // @ts-ignore - plan may have is_trial property
                     const isTrial =
-                      // @ts-ignore - plan may have is_trial property
-                      subscription.plan?.is_trial || subscription.plan_type === ('trial' as any);
+                      // @ts-expect-error - plan may have is_trial property
+                      subscription.plan?.is_trial || subscription.plan_type === 'trial';
                     const PlanIcon = getPlanIcon(subscription.plan_type, isTrial);
                     const expired = isExpired(subscription.expires_at);
                     const planName = getPlanName(subscription);
@@ -383,7 +339,14 @@ export function AdminSubscriptionsPage() {
                     return (
                       <TableRow key={subscription.id}>
                         <TableCell>
-                          {subscription.event?.user ? (
+                          {subscription.user ? (
+                            <div>
+                              <p className="text-sm font-medium">{subscription.user.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {subscription.user.email}
+                              </p>
+                            </div>
+                          ) : subscription.event?.user ? (
                             <div>
                               <p className="text-sm font-medium">{subscription.event.user.name}</p>
                               <p className="text-xs text-muted-foreground">
@@ -397,17 +360,12 @@ export function AdminSubscriptionsPage() {
                           )}
                         </TableCell>
                         <TableCell>
-                          {subscription.event ? (
-                            <p className="text-sm">{subscription.event.title}</p>
-                          ) : subscription.event_id ? (
-                            <span className="text-sm text-muted-foreground">
-                              Evenement #{subscription.event_id}
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium">
+                              {subscription.events_count !== undefined ? subscription.events_count : 0}
                             </span>
-                          ) : (
-                            <Badge variant="outline" className="text-xs">
-                              Compte
-                            </Badge>
-                          )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Badge
@@ -474,10 +432,6 @@ export function AdminSubscriptionsPage() {
                               <DropdownMenuItem onClick={() => setDetailsSub(subscription)}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 Voir les details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleContactUser(subscription)}>
-                                <Mail className="mr-2 h-4 w-4" />
-                                Contacter
                               </DropdownMenuItem>
                               {subscription.payment_status === 'paid' && !expired && (
                                 <>
@@ -556,8 +510,8 @@ export function AdminSubscriptionsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Annuler l'abonnement ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Vous allez annuler l'abonnement {cancelSub ? getPlanName(cancelSub) : ''} de{' '}
-              {cancelSub?.event?.user?.name || `l'utilisateur #${cancelSub?.user_id}`}.
+              Vous allez annuler l'abonnement               {cancelSub ? getPlanName(cancelSub) : ''} de{' '}
+              {cancelSub?.user?.name || cancelSub?.event?.user?.name || `l'utilisateur #${cancelSub?.user_id}`}.
               L'utilisateur perdra l'acces aux fonctionnalites premium.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -581,7 +535,7 @@ export function AdminSubscriptionsPage() {
             <DialogTitle>Prolonger l'abonnement</DialogTitle>
             <DialogDescription>
               Prolonger l'abonnement de{' '}
-              {extendSub?.event?.user?.name || `l'utilisateur #${extendSub?.user_id}`}. Expiration
+              {extendSub?.user?.name || extendSub?.event?.user?.name || `l'utilisateur #${extendSub?.user_id}`}. Expiration
               actuelle :{' '}
               {extendSub?.expires_at
                 ? format(parseISO(extendSub.expires_at), 'dd MMM yyyy', { locale: fr })
@@ -643,7 +597,7 @@ export function AdminSubscriptionsPage() {
             <DialogTitle>Changer de plan</DialogTitle>
             <DialogDescription>
               Changer le plan de{' '}
-              {changePlanSub?.event?.user?.name || `l'utilisateur #${changePlanSub?.user_id}`}. Plan
+              {changePlanSub?.user?.name || changePlanSub?.event?.user?.name || `l'utilisateur #${changePlanSub?.user_id}`}. Plan
               actuel : {changePlanSub ? getPlanName(changePlanSub) : ''}
             </DialogDescription>
           </DialogHeader>
@@ -709,8 +663,10 @@ export function AdminSubscriptionsPage() {
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Evenement</p>
-                  <p className="text-sm">{detailsSub.event?.title || `#${detailsSub.event_id}`}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Nombre d'evenements</p>
+                  <p className="text-sm">
+                    {detailsSub.events_count !== undefined ? detailsSub.events_count : 0}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Plan</p>
@@ -774,23 +730,23 @@ export function AdminSubscriptionsPage() {
               </div>
 
               {/* Quota Info (for dynamic plans) */}
-              {/* @ts-ignore */}
+              {/* @ts-expect-error - creations_used may be added by backend */}
               {detailsSub.creations_used !== undefined && (
                 <div className="rounded-lg border bg-blue-50 p-4">
-                  <p className="text-sm font-semibold mb-3">Quota d'evenements</p>
+                  <p className="text-sm font-semibold mb-3">Quota de nombre d'evenements</p>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Creations utilisees</span>
-                      {/* @ts-ignore */}
+                      {/* @ts-expect-error - creations_used may be added by backend */}
                       <span>{detailsSub.creations_used || 0}</span>
                     </div>
-                    {/* @ts-ignore */}
+                    {/* @ts-expect-error - plan may have limits property */}
                     {detailsSub.plan?.limits?.['events.creations_per_billing_period'] && (
                       <div className="flex justify-between text-sm">
                         <span>Limite du plan</span>
                         <span>
                           {formatLimitValue(
-                            // @ts-ignore - plan may have limits property
+                            // @ts-expect-error - plan may have limits property
                             detailsSub.plan?.limits?.['events.creations_per_billing_period'] || 0
                           )}
                         </span>

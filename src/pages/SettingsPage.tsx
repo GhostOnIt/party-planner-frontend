@@ -16,6 +16,8 @@ import {
   Users,
   Wallet,
   ClipboardList,
+  Tag,
+  UserCog,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { PageHeader } from '@/components/layout/page-header';
@@ -37,6 +39,8 @@ import {
 import { useNotificationSettings, useUpdateNotificationSettings } from '@/hooks/useSettings';
 import { NotificationPreferences } from '@/types';
 import { resolveUrl } from '@/lib/utils';
+import { EventTypesManager } from '@/components/settings/EventTypesManager';
+import { CollaboratorRolesManager } from '@/components/settings/CollaboratorRolesManager';
 
 // Validation schemas
 const profileSchema = z.object({
@@ -228,7 +232,7 @@ export function SettingsPage() {
       <PageHeader title={t('settings.title')} description={t('settings.description')} />
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
+        <TabsList className="grid w-full grid-cols-6 lg:w-[750px]">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.profile')}</span>
@@ -240,6 +244,14 @@ export function SettingsPage() {
           <TabsTrigger value="notifications" className="flex items-center gap-2">
             <Bell className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.notifications')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="event-types" className="flex items-center gap-2">
+            <Tag className="h-4 w-4" />
+            <span className="hidden sm:inline">Types d'événement</span>
+          </TabsTrigger>
+          <TabsTrigger value="collaborator-roles" className="flex items-center gap-2">
+            <UserCog className="h-4 w-4" />
+            <span className="hidden sm:inline">Rôles</span>
           </TabsTrigger>
           <TabsTrigger value="account" className="flex items-center gap-2">
             <Trash2 className="h-4 w-4" />
@@ -645,6 +657,36 @@ export function SettingsPage() {
             </CardContent>
           </Card>
 
+        </TabsContent>
+
+        {/* Event Types Tab */}
+        <TabsContent value="event-types" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Types d'événement</CardTitle>
+              <CardDescription>
+                Personnalisez les types d'événement disponibles pour votre compte
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <EventTypesManager />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Collaborator Roles Tab */}
+        <TabsContent value="collaborator-roles" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Rôles de collaborateurs</CardTitle>
+              <CardDescription>
+                Personnalisez les rôles disponibles pour inviter des collaborateurs à vos événements
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CollaboratorRolesManager />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 

@@ -382,8 +382,8 @@ export interface CreateEventFormData {
   title: string;
   type: EventType;
   date: string;
-  time?: string;
-  location?: string;
+  time: string;
+  location: string;
   description?: string;
   expected_guests?: number;
   budget?: number;

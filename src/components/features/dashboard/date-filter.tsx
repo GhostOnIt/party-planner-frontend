@@ -44,12 +44,12 @@ export function DateFilter({ onFilterChange, onEventTypeChange }: DateFilterProp
   const filters = [
     { id: "all" as FilterOption, label: "Tous" },
     { id: "7days" as FilterOption, label: "7 derniers jours" },
-    { id: "1month" as FilterOption, label: "Dernier mois" },
-    { id: "3months" as FilterOption, label: "3 derniers mois" },
+    { id: "1month" as FilterOption, label: "30 derniers jours" },
+    { id: "3months" as FilterOption, label: "Dernier trimestre" },
   ]
 
   const eventTypes: { id: EventTypeOption; label: string; color: string }[] = [
-    { id: "all", label: "Tous les types", color: "#6B7280" },
+    { id: "all", label: "Tous types d'événement", color: "#6B7280" },
     { id: "mariage", label: "Mariage", color: "#E91E8C" },
     { id: "anniversaire", label: "Anniversaire", color: "#4F46E5" },
     { id: "conférence", label: "Conférence", color: "#F59E0B" },
