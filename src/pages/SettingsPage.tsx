@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,7 +10,6 @@ import {
   Trash2,
   Loader2,
   Upload,
-  AlertTriangle,
   Mail,
   Smartphone,
   Calendar,
@@ -28,23 +27,12 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import {
   useUpdateProfile,
   useChangePassword,
   useUploadAvatar,
   useDeleteAvatar,
-  useDeleteAccount,
 } from '@/hooks/useProfile';
 import { useNotificationSettings, useUpdateNotificationSettings } from '@/hooks/useSettings';
 import { NotificationPreferences } from '@/types';
@@ -76,15 +64,12 @@ export function SettingsPage() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deletePassword, setDeletePassword] = useState('');
 
   // Profile mutations
   const { mutate: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile();
   const { mutate: changePassword, isPending: isChangingPassword } = useChangePassword();
   const { mutate: uploadAvatar, isPending: isUploadingAvatar } = useUploadAvatar();
   const { mutate: deleteAvatar, isPending: isDeletingAvatar } = useDeleteAvatar();
-  const { mutate: deleteAccount, isPending: isDeletingAccount } = useDeleteAccount();
 
   // Notification settings
   const { data: notificationSettings, isLoading: isLoadingSettings } = useNotificationSettings();
@@ -216,32 +201,6 @@ export function SettingsPage() {
     });
   };
 
-  const handleDeleteAccount = () => {
-    if (!deletePassword) {
-      toast({
-        title: 'Erreur',
-        description: 'Veuillez entrer votre mot de passe.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    deleteAccount(deletePassword, {
-      onSuccess: () => {
-        toast({
-          title: 'Compte supprime',
-          description: 'Votre compte a ete supprime avec succes.',
-        });
-      },
-      onError: () => {
-        toast({
-          title: 'Erreur',
-          description: 'Mot de passe incorrect ou erreur lors de la suppression.',
-          variant: 'destructive',
-        });
-      },
-    });
-  };
 
   const handleNotificationToggle = (key: keyof NotificationPreferences, value: boolean) => {
     updateNotificationSettings(
@@ -686,65 +645,9 @@ export function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-destructive/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <AlertTriangle className="h-5 w-5" />
-                Zone de danger
-              </CardTitle>
-              <CardDescription>Actions irreversibles sur votre compte</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-                <h4 className="font-medium text-destructive mb-2">Supprimer mon compte</h4>
-                <p className="text-sm text-muted-foreground mb-4">
-                  La suppression de votre compte est definitive. Toutes vos donnees, evenements,
-                  invites et configurations seront definitivement perdus. Cette action ne peut pas
-                  etre annulee.
-                </p>
-                <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Supprimer mon compte
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
 
-      {/* Delete Account Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer votre compte</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action est irreversible. Tous vos evenements, invites, et donnees seront
-              definitivement supprimes. Entrez votre mot de passe pour confirmer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="py-4">
-            <Label htmlFor="delete_password">Mot de passe</Label>
-            <Input
-              id="delete_password"
-              type="password"
-              value={deletePassword}
-              onChange={(e) => setDeletePassword(e.target.value)}
-              placeholder="Entrez votre mot de passe"
-              className="mt-2"
-            />
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeletePassword('')}>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteAccount}
-              disabled={isDeletingAccount || !deletePassword}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeletingAccount ? 'Suppression...' : 'Supprimer definitivement'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
