@@ -208,3 +208,92 @@ export function useReorderCollaboratorRoles() {
     },
   });
 }
+
+// Budget Categories
+export interface UserBudgetCategory {
+  id: number;
+  user_id: number;
+  name: string;
+  slug: string;
+  color: string | null;
+  is_default: boolean;
+  order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateBudgetCategoryData {
+  name: string;
+  slug?: string;
+  color?: string;
+}
+
+export interface UpdateBudgetCategoryData extends CreateBudgetCategoryData {
+  order?: number;
+}
+
+export function useBudgetCategories() {
+  return useQuery({
+    queryKey: ['budget-categories'],
+    queryFn: async () => {
+      const response = await api.get('/settings/budget-categories');
+      return response.data.data as UserBudgetCategory[];
+    },
+  });
+}
+
+export function useCreateBudgetCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CreateBudgetCategoryData) => {
+      const response = await api.post('/settings/budget-categories', data);
+      return response.data.data as UserBudgetCategory;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budget-categories'] });
+    },
+  });
+}
+
+export function useUpdateBudgetCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: UpdateBudgetCategoryData }) => {
+      const response = await api.put(`/settings/budget-categories/${id}`, data);
+      return response.data.data as UserBudgetCategory;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budget-categories'] });
+    },
+  });
+}
+
+export function useDeleteBudgetCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await api.delete(`/settings/budget-categories/${id}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budget-categories'] });
+    },
+  });
+}
+
+export function useReorderBudgetCategories() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (order: Array<{ id: number; order: number }>) => {
+      const response = await api.post('/settings/budget-categories/reorder', { order });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['budget-categories'] });
+    },
+  });
+}

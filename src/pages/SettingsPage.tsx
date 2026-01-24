@@ -18,6 +18,7 @@ import {
   ClipboardList,
   UserCog,
   Settings,
+  DollarSign,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { PageHeader } from '@/components/layout/page-header';
@@ -41,6 +42,7 @@ import { NotificationPreferences } from '@/types';
 import { resolveUrl } from '@/lib/utils';
 import { EventTypesManager } from '@/components/settings/EventTypesManager';
 import { CollaboratorRolesManager } from '@/components/settings/CollaboratorRolesManager';
+import { BudgetCategoriesManager } from '@/components/settings/BudgetCategoriesManager';
 import { strongPasswordSchema } from '@/lib/passwordValidation';
 
 // Validation schemas
@@ -233,7 +235,7 @@ export function SettingsPage() {
       <PageHeader title={t('settings.title')} description={t('settings.description')} />
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6 lg:w-[850px]">
+        <TabsList className="grid w-full grid-cols-7 lg:w-[1000px]">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.profile')}</span>
@@ -253,6 +255,10 @@ export function SettingsPage() {
           <TabsTrigger value="collaborator-roles" className="flex items-center gap-2">
             <UserCog className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.collaboratorRoles')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="budget-categories" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            <span className="hidden sm:inline">{t('settings.budgetCategories')}</span>
           </TabsTrigger>
           <TabsTrigger value="account" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -686,6 +692,21 @@ export function SettingsPage() {
             </CardHeader>
             <CardContent>
               <CollaboratorRolesManager />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Budget Categories Tab */}
+        <TabsContent value="budget-categories" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Catégories de budget</CardTitle>
+              <CardDescription>
+                Personnalisez les catégories de budget disponibles pour vos événements
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BudgetCategoriesManager />
             </CardContent>
           </Card>
         </TabsContent>

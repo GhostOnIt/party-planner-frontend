@@ -34,6 +34,17 @@ const paidStatuses = [
 export { categories as budgetCategories };
 
 export function BudgetFilters({ filters, onFiltersChange }: BudgetFiltersProps) {
+  // Load user's custom budget categories
+  const { data: userBudgetCategories } = useBudgetCategories();
+  
+  // Use user's categories if available, otherwise fallback to default
+  const categories = userBudgetCategories && userBudgetCategories.length > 0
+    ? userBudgetCategories.map((cat) => ({
+        value: cat.slug as BudgetCategory,
+        label: cat.name,
+      }))
+    : defaultCategories;
+  
   const hasFilters = filters.category || filters.paid !== undefined || filters.search;
 
   const handleSearchChange = (value: string) => {
