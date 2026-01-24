@@ -13,11 +13,12 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getApiErrorMessage } from '@/api/client';
+import { strongPasswordSchema } from '@/lib/passwordValidation';
 
 const resetPasswordSchema = z
   .object({
     email: z.string().email('Email invalide'),
-    password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caracteres'),
+    password: strongPasswordSchema,
     password_confirmation: z.string(),
   })
   .refine((data) => data.password === data.password_confirmation, {

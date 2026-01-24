@@ -16,8 +16,8 @@ import {
   Users,
   Wallet,
   ClipboardList,
-  Tag,
   UserCog,
+  Settings,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { PageHeader } from '@/components/layout/page-header';
@@ -41,6 +41,7 @@ import { NotificationPreferences } from '@/types';
 import { resolveUrl } from '@/lib/utils';
 import { EventTypesManager } from '@/components/settings/EventTypesManager';
 import { CollaboratorRolesManager } from '@/components/settings/CollaboratorRolesManager';
+import { strongPasswordSchema } from '@/lib/passwordValidation';
 
 // Validation schemas
 const profileSchema = z.object({
@@ -51,7 +52,7 @@ const profileSchema = z.object({
 const passwordSchema = z
   .object({
     current_password: z.string().min(1, 'Mot de passe actuel requis'),
-    password: z.string().min(8, 'Le nouveau mot de passe doit contenir au moins 8 caracteres'),
+    password: strongPasswordSchema,
     password_confirmation: z.string(),
   })
   .refine((data) => data.password === data.password_confirmation, {
@@ -232,7 +233,7 @@ export function SettingsPage() {
       <PageHeader title={t('settings.title')} description={t('settings.description')} />
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6 lg:w-[750px]">
+        <TabsList className="grid w-full grid-cols-6 lg:w-[850px]">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.profile')}</span>
@@ -245,16 +246,16 @@ export function SettingsPage() {
             <Bell className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.notifications')}</span>
           </TabsTrigger>
-          <TabsTrigger value="event-types" className="flex items-center gap-2">
-            <Tag className="h-4 w-4" />
-            <span className="hidden sm:inline">Types d'événement</span>
+          <TabsTrigger value="event-types" className="flex items-center gap-2 min-w-fit">
+            <Calendar className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline whitespace-nowrap">{t('settings.eventTypes')}</span>
           </TabsTrigger>
           <TabsTrigger value="collaborator-roles" className="flex items-center gap-2">
             <UserCog className="h-4 w-4" />
-            <span className="hidden sm:inline">Rôles</span>
+            <span className="hidden sm:inline">{t('settings.collaboratorRoles')}</span>
           </TabsTrigger>
           <TabsTrigger value="account" className="flex items-center gap-2">
-            <Trash2 className="h-4 w-4" />
+            <Settings className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.account')}</span>
           </TabsTrigger>
         </TabsList>

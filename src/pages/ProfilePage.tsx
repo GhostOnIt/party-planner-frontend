@@ -18,6 +18,7 @@ import {
   useDeleteAvatar,
 } from '@/hooks/useProfile';
  import { resolveUrl } from '@/lib/utils';
+ import { strongPasswordSchema } from '@/lib/passwordValidation';
 
  // Validation schemas
  const profileSchema = z.object({
@@ -28,7 +29,7 @@ import {
  const passwordSchema = z
    .object({
      current_password: z.string().min(1, 'Mot de passe actuel requis'),
-     password: z.string().min(8, 'Le nouveau mot de passe doit contenir au moins 8 caracteres'),
+     password: strongPasswordSchema,
      password_confirmation: z.string(),
    })
    .refine((data) => data.password === data.password_confirmation, {

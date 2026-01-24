@@ -12,12 +12,13 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getApiErrorMessage, getValidationErrors } from '@/api/client';
+import { strongPasswordSchema } from '@/lib/passwordValidation';
 
 const registerSchema = z
   .object({
     name: z.string().min(2, 'Le nom doit contenir au moins 2 caracteres'),
     email: z.string().email('Email invalide'),
-    password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caracteres'),
+    password: strongPasswordSchema,
     password_confirmation: z.string(),
   })
   .refine((data) => data.password === data.password_confirmation, {
