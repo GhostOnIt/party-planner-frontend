@@ -194,14 +194,14 @@ export function BannersCarousel({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Carrousel container - utilise grid pour superposer les slides */}
-      <div className="relative overflow-visible rounded-2xl">
-        {/* Slides container - grid avec tous les slides dans la même cellule */}
-        <div className="grid *:col-start-1 *:row-start-1">
+      {/* Carrousel container - hauteur fixe pour un centrage constant */}
+      <div className="relative overflow-hidden rounded-2xl min-h-[200px]">
+        {/* Slides container - grid avec tous les slides dans la même cellule, centrés verticalement */}
+        <div className="grid min-h-[200px] *:col-start-1 *:row-start-1">
           {/* Trial Banner */}
           {hasTrial && (
             <div
-              className={`transition-opacity duration-500 ease-in-out [&>div]:rounded-2xl ${
+              className={`flex items-center transition-opacity duration-500 ease-in-out [&>div]:rounded-2xl [&>div]:w-full ${
                 currentSlide === "trial"
                   ? "opacity-100 pointer-events-auto z-10"
                   : "opacity-0 pointer-events-none z-0"
@@ -215,7 +215,7 @@ export function BannersCarousel({
           {activeSpots.map(spot => (
             <div
               key={spot.id}
-              className={`transition-opacity duration-500 ease-in-out [&>div]:rounded-2xl ${
+              className={`flex items-center transition-opacity duration-500 ease-in-out [&>div]:rounded-2xl [&>div]:w-full ${
                 currentSlide === `spot-${spot.id}`
                   ? "opacity-100 pointer-events-auto z-10"
                   : "opacity-0 pointer-events-none z-0"
@@ -233,7 +233,7 @@ export function BannersCarousel({
           {/* Legacy Promo Card */}
           {hasLegacyPromo && activeSpots.length === 0 && (
             <div
-              className={`transition-opacity duration-500 ease-in-out [&>div]:rounded-2xl ${
+              className={`flex items-center transition-opacity duration-500 ease-in-out [&>div]:rounded-2xl [&>div]:w-full ${
                 currentSlide === "promo"
                   ? "opacity-100 pointer-events-auto z-10"
                   : "opacity-0 pointer-events-none z-0"
@@ -248,7 +248,7 @@ export function BannersCarousel({
           )}
         </div>
 
-        {/* Navigation buttons - seulement si plus d'un slide */}
+        {/* Navigation buttons - toujours centrés verticalement */}
         {totalSlides > 1 && (
           <>
             {/* Previous button */}
