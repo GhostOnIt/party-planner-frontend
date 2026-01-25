@@ -64,7 +64,6 @@ const statusColors: Record<
 interface EventCardGridProps {
   event: DisplayEvent;
   subscription?: Subscription | null;
-  currentUserId?: number;
   onView?: (event: DisplayEvent) => void;
   onEdit?: (event: DisplayEvent) => void;
   onDuplicate?: (event: DisplayEvent) => void;
@@ -74,7 +73,6 @@ interface EventCardGridProps {
 export function EventCardGrid({
   event,
   subscription,
-  currentUserId,
   onView,
   onEdit,
   onDuplicate,

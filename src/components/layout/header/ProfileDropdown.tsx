@@ -43,15 +43,15 @@ export function ProfileDropdown({ user, onLogout, onProfileClick, onSettingsClic
     .slice(0, 2)
 
   // Get plan name
-  const planName = subscription?.plan_type
-    ? subscription.plan_type === "essai-gratuit"
-      ? "Essai Gratuit"
-      : subscription.plan_type === "pro"
-        ? "Plan PRO"
-        : subscription.plan_type === "agence"
-          ? "Plan Agence"
-          : subscription.plan_type.toUpperCase()
-    : "Aucun plan"
+  const getPlanName = (planType: string | null | undefined) => {
+    if (!planType) return "Aucun plan"
+    if (planType === "essai-gratuit") return "Essai Gratuit"
+    if (planType === "pro") return "Plan PRO"
+    if (planType === "agence") return "Plan Agence"
+    if (planType === "starter") return "Plan Starter"
+    return planType.toUpperCase()
+  }
+  const planName = getPlanName(subscription?.plan_type)
 
   const eventsRemaining = quota?.remaining ?? 0
   const isUnlimited = quota?.is_unlimited ?? false

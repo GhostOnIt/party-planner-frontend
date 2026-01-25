@@ -1,6 +1,5 @@
 import { useRef, useEffect } from 'react';
 import { Eye, Edit, Copy, Trash2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import type { DisplayEvent } from '@/utils/eventUtils';
 
 interface EventActionsMenuProps {

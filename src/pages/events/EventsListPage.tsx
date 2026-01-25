@@ -202,7 +202,6 @@ export function EventsListPage() {
                   key={event.id}
                   event={event}
                   subscription={subscriptionsByEventId.get(parseInt(event.id))}
-                  currentUserId={user?.id}
                   onView={handleView}
                   onEdit={handleEdit}
                   onDuplicate={handleDuplicate}

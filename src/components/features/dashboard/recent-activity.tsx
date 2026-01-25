@@ -1,4 +1,4 @@
-import { Activity, UserPlus, Calendar, CheckCircle, MessageSquare, CreditCard, UserX } from "lucide-react"
+import { Activity, UserPlus, Calendar, CheckCircle, MessageSquare, CreditCard } from "lucide-react"
 import { useRecentActivity } from "@/hooks/useDashboard"
 import { Skeleton } from "@/components/ui/skeleton"
 

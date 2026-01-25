@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { Bell, Check, Trash2, X } from "lucide-react"
+import { Bell, Check, Trash2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useNotifications, useMarkAsRead, useMarkAllAsRead, useDeleteNotification } from "@/hooks/useNotifications"
@@ -42,7 +42,7 @@ export function NotificationsDropdown() {
   }
 
   const handleNotificationClick = (notification: any) => {
-    if (!notification.read) {
+    if (!notification.read_at) {
       markAsRead(notification.id)
     }
     // Navigate based on notification type
@@ -126,7 +126,7 @@ export function NotificationsDropdown() {
                   key={notif.id}
                   className={cn(
                     "p-4 border-b border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors group cursor-pointer",
-                    !notif.read && "bg-[#4F46E5]/5",
+                    !notif.read_at && "bg-[#4F46E5]/5",
                   )}
                   onClick={() => handleNotificationClick(notif)}
                 >
@@ -144,13 +144,13 @@ export function NotificationsDropdown() {
                         <p
                           className={cn(
                             "text-sm",
-                            !notif.read ? "font-semibold text-[#1a1a2e]" : "font-medium text-[#6b7280]",
+                            !notif.read_at ? "font-semibold text-[#1a1a2e]" : "font-medium text-[#6b7280]",
                           )}
                         >
                           {notif.title}
                         </p>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {!notif.read && (
+                          {!notif.read_at && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()

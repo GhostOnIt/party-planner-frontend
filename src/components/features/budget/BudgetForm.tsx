@@ -65,7 +65,7 @@ export function BudgetForm({
   const isEditing = !!item;
   
   // Load user's custom budget categories
-  const { data: userBudgetCategories, isLoading: isLoadingCategories } = useBudgetCategories();
+  const { data: userBudgetCategories } = useBudgetCategories();
   
   // Use user's categories if available, otherwise fallback to default
   const categories = userBudgetCategories && userBudgetCategories.length > 0
@@ -122,7 +122,7 @@ export function BudgetForm({
 
   const handleFormSubmit = (data: BudgetFormValues) => {
     onSubmit({
-      category: data.category,
+      category: data.category as BudgetCategory,
       name: data.name,
       estimated_cost: data.estimated_cost,
       actual_cost: data.actual_cost,

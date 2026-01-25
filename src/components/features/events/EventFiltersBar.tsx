@@ -1,5 +1,4 @@
 import { Search } from 'lucide-react';
-import { SearchInput } from '@/components/forms/search-input';
 import { EventTypeDropdown } from './EventTypeDropdown';
 import { EventStatusDropdown } from './EventStatusDropdown';
 import type { EventFilters as EventFiltersType, EventType, EventStatus } from '@/types';

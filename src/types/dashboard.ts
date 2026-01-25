@@ -60,6 +60,7 @@ export interface EventTypeData {
   name: string
   value: number
   color: string
+  [key: string]: string | number
 }
 
 export type EventsByTypeResponse = EventTypeData[]

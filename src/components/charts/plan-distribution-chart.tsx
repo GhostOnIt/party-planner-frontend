@@ -44,7 +44,7 @@ export function PlanDistributionChart() {
   }
 
   const chartData = data || []
-  const total = chartData.reduce((sum, item) => sum + item.value, 0)
+  const total = chartData.reduce((sum: number, item: { value: number }) => sum + item.value, 0)
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -84,7 +84,7 @@ export function PlanDistributionChart() {
                   dataKey="value"
                   stroke="none"
                 >
-                  {chartData.map((entry, index) => (
+                  {chartData.map((entry: { color: string }, index: number) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -95,7 +95,7 @@ export function PlanDistributionChart() {
 
           <div className="mt-3 max-h-[120px] overflow-y-auto pr-1">
             <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {chartData.map((item, index) => (
+              {chartData.map((item: { name: string; color: string }, index: number) => (
                 <div key={index} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
                   <span className="text-sm text-[#6b7280] whitespace-nowrap">{item.name}</span>

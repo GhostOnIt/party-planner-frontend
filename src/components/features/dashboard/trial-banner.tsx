@@ -3,7 +3,6 @@ import { X, Sparkles, CheckCircle2, ArrowRight, Gift } from "lucide-react"
 import { useAvailableTrial, formatLimitValue } from "@/hooks/useAdminPlans"
 import { useSubscribeToPlan } from "@/hooks/useSubscription"
 import { useToast } from "@/hooks/use-toast"
-import { Skeleton } from "@/components/ui/skeleton"
 
 interface TrialBannerProps {
   onDismiss?: () => void

@@ -154,20 +154,8 @@ export function BannersCarousel({
 
   const currentSlide = availableSlides[currentIndex]
 
-  // Helper to get spot from slide type
-  const getSpotFromSlide = (slide: SlideType): CommunicationSpot | undefined => {
-    if (slide.startsWith("spot-")) {
-      const spotId = slide.replace("spot-", "")
-      return activeSpots.find(s => s.id === spotId)
-    }
-    return undefined
-  }
-
   // Convert spot to PromoCard props
   const spotToPromoProps = (spot: CommunicationSpot) => {
-    const totalVotes = spot.stats.votes 
-      ? Object.values(spot.stats.votes).reduce((a, b) => a + b, 0)
-      : 0
 
     return {
       type: spot.type,

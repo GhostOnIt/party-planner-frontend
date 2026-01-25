@@ -126,7 +126,7 @@ export function AdminStatCards({ filter = "7days", customRange }: AdminStatCards
 
           {/* Breakdown */}
           <div className="space-y-1.5 pt-2 border-t border-[#f3f4f6]">
-            {stat.data?.breakdown.map((item) => (
+            {stat.data?.breakdown.map((item: { label: string; value: number; color: string }) => (
               <div key={item.label} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />

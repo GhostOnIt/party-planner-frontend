@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, GripVertical, Calendar } from 'lucide-react';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,7 +36,6 @@ import {
   useCreateEventType,
   useUpdateEventType,
   useDeleteEventType,
-  useReorderEventTypes,
   type UserEventType,
   type CreateEventTypeData,
 } from '@/hooks/useSettings';
@@ -48,8 +47,6 @@ export function EventTypesManager() {
   const createMutation = useCreateEventType();
   const updateMutation = useUpdateEventType();
   const deleteMutation = useDeleteEventType();
-  const reorderMutation = useReorderEventTypes();
-
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);

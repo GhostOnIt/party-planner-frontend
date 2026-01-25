@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Crown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import {
   Dialog,
@@ -23,7 +21,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { SubscriptionStatus } from '@/components/features/subscription';
 import { PaymentForm, PaymentStatus as PaymentStatusComponent } from '@/components/features/payment';
-import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -32,9 +29,7 @@ import {
   useCancelSubscription,
   useRenewSubscription,
 } from '@/hooks/useSubscription';
-import {
-  useInitiatePayment,
-} from '@/hooks/usePayment';
+import { useInitiatePayment } from '@/hooks/usePayment';
 import { getApiErrorMessage } from '@/api/client';
 import type { PlanType, PaymentMethod } from '@/types';
 
@@ -57,7 +52,6 @@ const currency = isSandbox ? 'EUR' : 'XAF';
 
 export function EventSubscriptionPage({ eventId }: EventSubscriptionPageProps) {
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
@@ -119,10 +113,6 @@ export function EventSubscriptionPage({ eventId }: EventSubscriptionPageProps) {
       setFlowStep('select-plan');
       setShowPaymentModal(true);
     }
-  };
-
-  const handleActivatePlan = () => {
-    navigate('/subscriptions?tab=activate');
   };
 
   const handlePaymentSubmit = (data: { phone_number: string; method: PaymentMethod }) => {

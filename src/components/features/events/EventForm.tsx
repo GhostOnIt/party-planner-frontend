@@ -85,7 +85,7 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
   const [showPhotoUploader, setShowPhotoUploader] = useState(false);
 
   // Load user's custom event types
-  const { data: userEventTypes, isLoading: isLoadingEventTypes } = useEventTypes();
+  const { data: userEventTypes } = useEventTypes();
   
   // Use user's event types if available, otherwise fallback to default
   const eventTypes = userEventTypes && userEventTypes.length > 0
@@ -121,7 +121,7 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
   const selectedTemplateId = watch('template_id');
   
   // Charger les templates selon le type d'événement sélectionné
-  const { data: templatesData } = useTemplatesByType(selectedType);
+  const { data: templatesData } = useTemplatesByType(selectedType as EventType | undefined);
   const templates = templatesData?.templates || [];
   
   // Charger le template sélectionné pour l'aperçu
@@ -159,7 +159,7 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
 
     onSubmit({
       title: transformed.title,
-      type: transformed.type,
+      type: transformed.type as EventType,
       date: transformed.date,
       time: transformed.time,
       location: transformed.location,

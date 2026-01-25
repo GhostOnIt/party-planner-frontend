@@ -1,15 +1,9 @@
 import { ArrowRight, Clock, AlertTriangle, Calendar } from "lucide-react"
 import { useUrgentTasks } from "@/hooks/useDashboard"
-import { format, isToday, isPast, isFuture } from "date-fns"
+import { format, isToday, isPast } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useNavigate } from "react-router-dom"
-
-const priorityColors = {
-  high: "bg-red-100 text-red-600",
-  medium: "bg-orange-100 text-orange-600",
-  low: "bg-green-100 text-green-600",
-}
 
 const statusLabels = {
   overdue: { label: "En retard", color: "text-red-500" },

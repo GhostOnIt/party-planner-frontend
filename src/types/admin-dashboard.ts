@@ -1,6 +1,6 @@
 // Admin Dashboard Statistics Types
 
-import { Trend, BreakdownItem, StatData } from './dashboard'
+import { StatData } from './dashboard'
 
 export interface AdminDashboardStatsResponse {
   users: StatData

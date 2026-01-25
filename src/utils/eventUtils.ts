@@ -109,7 +109,7 @@ export function transformEventToDisplayFormat(
       completed: event.tasks_completed_count || 0,
     },
     budget: {
-      total: event.budget || event.estimated_budget || 0,
+      total: event.budget || 0,
       spent: budgetSpent,
     },
     creator: {

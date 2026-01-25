@@ -1,9 +1,6 @@
-import { CalendarDays } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { SearchBar } from "./SearchBar"
 import { NotificationsDropdown } from "./NotificationsDropdown"
 import { ProfileDropdown } from "./ProfileDropdown"
-import { useNavigate } from "react-router-dom"
 
 interface HeaderProps {
   user: {
@@ -12,7 +9,6 @@ interface HeaderProps {
     avatar_url?: string | null
   }
   onMenuClick?: () => void
-  onNotificationsClick?: () => void
   onProfileClick?: () => void
   onSettingsClick?: () => void
   onLogout: () => void
@@ -20,13 +16,10 @@ interface HeaderProps {
 
 export function Header({
   user,
-  onMenuClick,
-  onNotificationsClick,
   onProfileClick,
   onSettingsClick,
   onLogout,
 }: HeaderProps) {
-  const navigate = useNavigate()
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-[#e5e7eb] flex items-center justify-between px-6 z-40 lg:left-[250px] lg:right-0">

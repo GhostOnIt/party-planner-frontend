@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Crown, CreditCard, Plus, Calendar, CheckCircle, Loader2 } from 'lucide-react';
+import { Crown, CreditCard } from 'lucide-react';
 import { format, parseISO, isPast } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { PageHeader } from '@/components/layout/page-header';
@@ -10,29 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { PaymentHistory, PaymentForm, PaymentStatus as PaymentStatusComponent } from '@/components/features/payment';
-import { PlanSelector } from '@/components/features/subscription';
+import { PaymentHistory } from '@/components/features/payment';
 import { useSubscriptions } from '@/hooks/useSubscription';
-import { usePayments, useRetryPayment, useInitiatePayment } from '@/hooks/usePayment';
-import { useEvents } from '@/hooks/useEvents';
+import { usePayments, useRetryPayment } from '@/hooks/usePayment';
 import { useToast } from '@/hooks/use-toast';
-import { getApiErrorMessage } from '@/api/client';
-import type { Subscription, Event as EventType, PlanType, PaymentMethod } from '@/types';
+import type { Subscription } from '@/types';
 
 const planNames = {
   starter: 'Starter',

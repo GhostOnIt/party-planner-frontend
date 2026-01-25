@@ -28,13 +28,11 @@ const priorityConfig = {
 interface UrgentTasksProps {
   tasks: Task[];
   isLoading?: boolean;
-  onToggleComplete?: (taskId: number, completed: boolean) => void;
 }
 
 export function UrgentTasks({
   tasks,
   isLoading = false,
-  onToggleComplete,
 }: UrgentTasksProps) {
   if (isLoading) {
     return (

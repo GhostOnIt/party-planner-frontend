@@ -5,7 +5,6 @@ import {
   Search,
   MoreHorizontal,
   Plus,
-  Image as ImageIcon,
   BarChart3,
   Megaphone,
   HelpCircle,

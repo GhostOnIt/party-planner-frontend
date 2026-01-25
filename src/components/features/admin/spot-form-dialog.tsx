@@ -96,7 +96,7 @@ export function SpotFormDialog({
         targetRoles: spot.targetRoles || [],
         targetLanguages: spot.targetLanguages || [],
       });
-      setImagePreview(spot.image ? resolveUrl(spot.image) : null);
+      setImagePreview(spot.image ? resolveUrl(spot.image) ?? null : null);
     } else {
       setFormData(defaultFormData);
       setImagePreview(null);
