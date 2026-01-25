@@ -43,6 +43,9 @@ const EditEventPage = lazy(() => import('@/pages/events').then(m => ({ default: 
 const InvitationResponsePage = lazy(() => import('@/pages/public').then(m => ({ default: m.InvitationResponsePage })));
 const PublicPhotoUploadPage = lazy(() => import('@/pages/public').then(m => ({ default: m.PublicPhotoUploadPage })));
 
+// Legal pages
+const LegalPage = lazy(() => import('@/pages/legal').then(m => ({ default: m.LegalPage })));
+
 // Admin pages
 const AdminDashboardPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminDashboardPage })));
 const AdminUsersPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminUsersPage })));
@@ -136,6 +139,9 @@ function App() {
                 <Route path="/admin/communication" element={<AdminCommunicationPage />} />
               </Route>
             </Route>
+
+            {/* Legal pages (public, no auth required) */}
+            <Route path="/legal/:slug" element={<LegalPage />} />
 
             {/* Public invitation page (no auth required) */}
             <Route path="/invitation/:token" element={<InvitationResponsePage />} />

@@ -278,11 +278,11 @@ export function RegisterPage() {
               />
               <Label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer leading-tight">
                 J'accepte les{" "}
-                <Link to="/terms" className="text-primary hover:underline">
+                <Link to="/legal/terms" target="_blank" className="text-primary hover:underline">
                   conditions d'utilisation
                 </Link>{" "}
                 et la{" "}
-                <Link to="/privacy" className="text-primary hover:underline">
+                <Link to="/legal/privacy" target="_blank" className="text-primary hover:underline">
                   politique de confidentialité
                 </Link>
               </Label>

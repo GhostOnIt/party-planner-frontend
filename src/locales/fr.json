@@ -53,7 +53,8 @@
     "adminPlans": "Plans",
     "adminTemplates": "Templates",
     "adminActivityLogs": "Journal d'activite",
-    "adminCommunication": "Communication"
+    "adminCommunication": "Communication",
+    "adminLegalPages": "Pages légales"
   },
   "auth": {
     "login": "Connexion",

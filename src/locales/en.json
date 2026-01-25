@@ -52,7 +52,9 @@
     "adminSubscriptions": "Subscriptions",
     "adminPlans": "Plans",
     "adminTemplates": "Templates",
-    "adminActivityLogs": "Activity Log"
+    "adminActivityLogs": "Activity Log",
+    "adminCommunication": "Communication",
+    "adminLegalPages": "Legal Pages"
   },
   "auth": {
     "login": "Login",
