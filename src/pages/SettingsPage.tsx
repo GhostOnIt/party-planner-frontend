@@ -1,8 +1,10 @@
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import {
   User,
   Shield,
@@ -10,13 +12,22 @@ import {
   Trash2,
   Loader2,
   Upload,
-  AlertTriangle,
   Mail,
   Smartphone,
   Calendar,
   Users,
   Wallet,
   ClipboardList,
+  UserCog,
+  Settings,
+  DollarSign,
+  FileText,
+  Pencil,
+  Eye,
+  EyeOff,
+  Save,
+  X,
+  ExternalLink,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { PageHeader } from '@/components/layout/page-header';
@@ -28,27 +39,43 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import {
   useUpdateProfile,
   useChangePassword,
   useUploadAvatar,
   useDeleteAvatar,
-  useDeleteAccount,
 } from '@/hooks/useProfile';
 import { useNotificationSettings, useUpdateNotificationSettings } from '@/hooks/useSettings';
 import { NotificationPreferences } from '@/types';
 import { resolveUrl } from '@/lib/utils';
+import { EventTypesManager } from '@/components/settings/EventTypesManager';
+import { CollaboratorRolesManager } from '@/components/settings/CollaboratorRolesManager';
+import { BudgetCategoriesManager } from '@/components/settings/BudgetCategoriesManager';
+import { strongPasswordSchema } from '@/lib/passwordValidation';
+import {
+  useAdminLegalPages,
+  useUpdateLegalPage,
+  LegalPage as LegalPageType,
+} from '@/hooks/useLegalPages';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 // Validation schemas
 const profileSchema = z.object({
@@ -59,7 +86,7 @@ const profileSchema = z.object({
 const passwordSchema = z
   .object({
     current_password: z.string().min(1, 'Mot de passe actuel requis'),
-    password: z.string().min(8, 'Le nouveau mot de passe doit contenir au moins 8 caracteres'),
+    password: strongPasswordSchema,
     password_confirmation: z.string(),
   })
   .refine((data) => data.password === data.password_confirmation, {
@@ -76,19 +103,27 @@ export function SettingsPage() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deletePassword, setDeletePassword] = useState('');
 
   // Profile mutations
   const { mutate: updateProfile, isPending: isUpdatingProfile } = useUpdateProfile();
   const { mutate: changePassword, isPending: isChangingPassword } = useChangePassword();
   const { mutate: uploadAvatar, isPending: isUploadingAvatar } = useUploadAvatar();
   const { mutate: deleteAvatar, isPending: isDeletingAvatar } = useDeleteAvatar();
-  const { mutate: deleteAccount, isPending: isDeletingAccount } = useDeleteAccount();
 
   // Notification settings
   const { data: notificationSettings, isLoading: isLoadingSettings } = useNotificationSettings();
   const { mutate: updateNotificationSettings } = useUpdateNotificationSettings();
+
+  // Legal pages (admin only)
+  const isAdmin = user?.role === 'admin';
+  const { data: legalPages, isLoading: isLoadingLegalPages } = useAdminLegalPages();
+  const updateLegalPageMutation = useUpdateLegalPage();
+  const [editingLegalPage, setEditingLegalPage] = useState<LegalPageType | null>(null);
+  const [legalEditForm, setLegalEditForm] = useState({
+    title: '',
+    content: '',
+    is_published: true,
+  });
 
   // Profile form
   const profileForm = useForm<ProfileFormData>({
@@ -216,32 +251,6 @@ export function SettingsPage() {
     });
   };
 
-  const handleDeleteAccount = () => {
-    if (!deletePassword) {
-      toast({
-        title: 'Erreur',
-        description: 'Veuillez entrer votre mot de passe.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    deleteAccount(deletePassword, {
-      onSuccess: () => {
-        toast({
-          title: 'Compte supprime',
-          description: 'Votre compte a ete supprime avec succes.',
-        });
-      },
-      onError: () => {
-        toast({
-          title: 'Erreur',
-          description: 'Mot de passe incorrect ou erreur lors de la suppression.',
-          variant: 'destructive',
-        });
-      },
-    });
-  };
 
   const handleNotificationToggle = (key: keyof NotificationPreferences, value: boolean) => {
     updateNotificationSettings(
@@ -264,12 +273,75 @@ export function SettingsPage() {
     );
   };
 
+  // Legal pages handlers (admin only)
+  const handleEditLegalPage = (page: LegalPageType) => {
+    setEditingLegalPage(page);
+    setLegalEditForm({
+      title: page.title,
+      content: page.content,
+      is_published: page.is_published,
+    });
+  };
+
+  const handleSaveLegalPage = async () => {
+    if (!editingLegalPage) return;
+    try {
+      await updateLegalPageMutation.mutateAsync({
+        id: editingLegalPage.id,
+        data: legalEditForm,
+      });
+      toast({
+        title: 'Page mise à jour',
+        description: 'Les modifications ont été enregistrées avec succès.',
+      });
+      setEditingLegalPage(null);
+    } catch {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de mettre à jour la page.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleToggleLegalPagePublished = async (page: LegalPageType) => {
+    try {
+      await updateLegalPageMutation.mutateAsync({
+        id: page.id,
+        data: { is_published: !page.is_published },
+      });
+      toast({
+        title: page.is_published ? 'Page dépubliée' : 'Page publiée',
+        description: page.is_published
+          ? 'La page n\'est plus visible publiquement.'
+          : 'La page est maintenant visible publiquement.',
+      });
+    } catch {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de modifier le statut de la page.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const getLegalSlugLabel = (slug: string) => {
+    switch (slug) {
+      case 'terms':
+        return 'Conditions d\'utilisation';
+      case 'privacy':
+        return 'Politique de confidentialité';
+      default:
+        return slug;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader title={t('settings.title')} description={t('settings.description')} />
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-8 lg:w-[1150px]' : 'grid-cols-7 lg:w-[1000px]'}`}>
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.profile')}</span>
@@ -282,10 +354,28 @@ export function SettingsPage() {
             <Bell className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.notifications')}</span>
           </TabsTrigger>
+          <TabsTrigger value="event-types" className="flex items-center gap-2 min-w-fit">
+            <Calendar className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline whitespace-nowrap">{t('settings.eventTypes')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="collaborator-roles" className="flex items-center gap-2">
+            <UserCog className="h-4 w-4" />
+            <span className="hidden sm:inline">{t('settings.collaboratorRoles')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="budget-categories" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            <span className="hidden sm:inline">{t('settings.budgetCategories')}</span>
+          </TabsTrigger>
           <TabsTrigger value="account" className="flex items-center gap-2">
-            <Trash2 className="h-4 w-4" />
+            <Settings className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.account')}</span>
           </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="legal-pages" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Pages légales</span>
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Profile Tab */}
@@ -686,65 +776,246 @@ export function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-destructive/50">
+        </TabsContent>
+
+        {/* Event Types Tab */}
+        <TabsContent value="event-types" className="space-y-6">
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <AlertTriangle className="h-5 w-5" />
-                Zone de danger
-              </CardTitle>
-              <CardDescription>Actions irreversibles sur votre compte</CardDescription>
+              <CardTitle>Types d'événement</CardTitle>
+              <CardDescription>
+                Personnalisez les types d'événement disponibles pour votre compte
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-                <h4 className="font-medium text-destructive mb-2">Supprimer mon compte</h4>
-                <p className="text-sm text-muted-foreground mb-4">
-                  La suppression de votre compte est definitive. Toutes vos donnees, evenements,
-                  invites et configurations seront definitivement perdus. Cette action ne peut pas
-                  etre annulee.
-                </p>
-                <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Supprimer mon compte
-                </Button>
-              </div>
+            <CardContent>
+              <EventTypesManager />
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Collaborator Roles Tab */}
+        <TabsContent value="collaborator-roles" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Rôles de collaborateurs</CardTitle>
+              <CardDescription>
+                Personnalisez les rôles disponibles pour inviter des collaborateurs à vos événements
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CollaboratorRolesManager />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Budget Categories Tab */}
+        <TabsContent value="budget-categories" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Catégories de budget</CardTitle>
+              <CardDescription>
+                Personnalisez les catégories de budget disponibles pour vos événements
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BudgetCategoriesManager />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Legal Pages Tab (Admin only) */}
+        {isAdmin && (
+          <TabsContent value="legal-pages" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Pages légales
+                </CardTitle>
+                <CardDescription>
+                  Gérez les conditions d'utilisation et la politique de confidentialité affichées sur le site.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingLegalPages ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Page</TableHead>
+                        <TableHead>Titre</TableHead>
+                        <TableHead>Statut</TableHead>
+                        <TableHead>Dernière mise à jour</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {legalPages?.map((page) => (
+                        <TableRow key={page.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">{getLegalSlugLabel(page.slug)}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{page.title}</TableCell>
+                          <TableCell>
+                            {page.is_published ? (
+                              <Badge variant="default" className="bg-emerald-500">
+                                <Eye className="h-3 w-3 mr-1" />
+                                Publiée
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary">
+                                <EyeOff className="h-3 w-3 mr-1" />
+                                Brouillon
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {format(new Date(page.updated_at), 'dd MMM yyyy HH:mm', { locale: fr })}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => window.open(`/legal/${page.slug}`, '_blank')}
+                                title="Voir la page"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleToggleLegalPagePublished(page)}
+                                title={page.is_published ? 'Dépublier' : 'Publier'}
+                              >
+                                {page.is_published ? (
+                                  <EyeOff className="h-4 w-4" />
+                                ) : (
+                                  <Eye className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEditLegalPage(page)}
+                                title="Modifier"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {(!legalPages || legalPages.length === 0) && (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                            Aucune page légale configurée. Exécutez le seeder pour créer les pages par défaut.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Edit Legal Page Dialog */}
+            <Dialog open={!!editingLegalPage} onOpenChange={(open) => !open && setEditingLegalPage(null)}>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    Modifier : {editingLegalPage && getLegalSlugLabel(editingLegalPage.slug)}
+                  </DialogTitle>
+                  <DialogDescription>
+                    Modifiez le contenu de la page. Le contenu supporte le HTML.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4 py-4">
+                  {/* Title */}
+                  <div className="space-y-2">
+                    <Label htmlFor="legal-title">Titre de la page</Label>
+                    <Input
+                      id="legal-title"
+                      value={legalEditForm.title}
+                      onChange={(e) => setLegalEditForm((prev) => ({ ...prev, title: e.target.value }))}
+                      placeholder="Titre affiché en haut de la page"
+                    />
+                  </div>
+
+                  {/* Published Switch */}
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <Label>Publier la page</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Si désactivé, la page ne sera pas accessible au public.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={legalEditForm.is_published}
+                      onCheckedChange={(checked) =>
+                        setLegalEditForm((prev) => ({ ...prev, is_published: checked }))
+                      }
+                    />
+                  </div>
+
+                  {/* Content */}
+                  <div className="space-y-2">
+                    <Label htmlFor="legal-content">Contenu (HTML)</Label>
+                    <Textarea
+                      id="legal-content"
+                      value={legalEditForm.content}
+                      onChange={(e) => setLegalEditForm((prev) => ({ ...prev, content: e.target.value }))}
+                      placeholder="<h2>Section</h2><p>Contenu...</p>"
+                      className="min-h-[300px] font-mono text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Utilisez les balises HTML comme &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;strong&gt; pour formater le contenu.
+                    </p>
+                  </div>
+
+                  {/* Preview */}
+                  <div className="space-y-2">
+                    <Label>Aperçu</Label>
+                    <div
+                      className="rounded-lg border p-4 bg-muted/30 prose prose-sm dark:prose-invert max-w-none
+                        prose-headings:font-semibold prose-headings:text-foreground
+                        prose-h2:text-lg prose-h2:mt-4 prose-h2:mb-2
+                        prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:my-2
+                        prose-li:text-muted-foreground prose-li:my-0.5
+                        prose-strong:text-foreground
+                        prose-ul:my-2"
+                      dangerouslySetInnerHTML={{ __html: legalEditForm.content }}
+                    />
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setEditingLegalPage(null)}>
+                    <X className="h-4 w-4 mr-2" />
+                    Annuler
+                  </Button>
+                  <Button onClick={handleSaveLegalPage} disabled={updateLegalPageMutation.isPending}>
+                    {updateLegalPageMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    Enregistrer
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </TabsContent>
+        )}
       </Tabs>
 
-      {/* Delete Account Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer votre compte</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action est irreversible. Tous vos evenements, invites, et donnees seront
-              definitivement supprimes. Entrez votre mot de passe pour confirmer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="py-4">
-            <Label htmlFor="delete_password">Mot de passe</Label>
-            <Input
-              id="delete_password"
-              type="password"
-              value={deletePassword}
-              onChange={(e) => setDeletePassword(e.target.value)}
-              placeholder="Entrez votre mot de passe"
-              className="mt-2"
-            />
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeletePassword('')}>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteAccount}
-              disabled={isDeletingAccount || !deletePassword}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeletingAccount ? 'Suppression...' : 'Supprimer definitivement'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

@@ -43,6 +43,9 @@ const EditEventPage = lazy(() => import('@/pages/events').then(m => ({ default: 
 const InvitationResponsePage = lazy(() => import('@/pages/public').then(m => ({ default: m.InvitationResponsePage })));
 const PublicPhotoUploadPage = lazy(() => import('@/pages/public').then(m => ({ default: m.PublicPhotoUploadPage })));
 
+// Legal pages
+const LegalPage = lazy(() => import('@/pages/legal').then(m => ({ default: m.LegalPage })));
+
 // Admin pages
 const AdminDashboardPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminDashboardPage })));
 const AdminUsersPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminUsersPage })));
@@ -52,6 +55,7 @@ const AdminSubscriptionsPage = lazy(() => import('@/pages/admin').then(m => ({ d
 const AdminPlansPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminPlansPage })));
 const AdminTemplatesPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminTemplatesPage })));
 const AdminActivityLogsPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminActivityLogsPage })));
+const AdminCommunicationPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminCommunicationPage })));
 
 // Composant de chargement
 function PageLoader() {
@@ -102,6 +106,11 @@ function App() {
 
             {/* Protected routes */}
             <Route element={<PrivateRoute />}>
+              {/* Plans page - sans MainLayout (pas de sidebar ni header) */}
+              <Route path="/plans" element={<PlansPage />} />
+              <Route path="/subscribe/:slug" element={<SubscribePage />} />
+              
+              {/* Routes avec MainLayout */}
               <Route element={<MainLayout />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/events" element={<EventsListPage />} />
@@ -111,8 +120,6 @@ function App() {
                 <Route path="/invitations" element={<InvitationsPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/subscriptions" element={<SubscriptionsPage />} />
-                <Route path="/plans" element={<PlansPage />} />
-                <Route path="/subscribe/:slug" element={<SubscribePage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
@@ -129,8 +136,12 @@ function App() {
                 <Route path="/admin/plans" element={<AdminPlansPage />} />
                 <Route path="/admin/templates" element={<AdminTemplatesPage />} />
                 <Route path="/admin/activity-logs" element={<AdminActivityLogsPage />} />
+                <Route path="/admin/communication" element={<AdminCommunicationPage />} />
               </Route>
             </Route>
+
+            {/* Legal pages (public, no auth required) */}
+            <Route path="/legal/:slug" element={<LegalPage />} />
 
             {/* Public invitation page (no auth required) */}
             <Route path="/invitation/:token" element={<InvitationResponsePage />} />

@@ -12,6 +12,8 @@ interface DatePickerProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  disableFuture?: boolean; // Nouvelle prop pour désactiver les dates futures
+  disablePast?: boolean; // Nouvelle prop pour désactiver les dates passées
 }
 
 export function DatePicker({
@@ -20,6 +22,8 @@ export function DatePicker({
   placeholder = 'Selectionner une date',
   disabled = false,
   className,
+  disableFuture = false,
+  disablePast = false,
 }: DatePickerProps) {
   return (
     <Popover>
@@ -44,6 +48,20 @@ export function DatePicker({
           onSelect={onChange}
           initialFocus
           locale={fr}
+          disabled={(date) => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (disableFuture && date > today) {
+              return true;
+            }
+            
+            if (disablePast && date < today) {
+              return true;
+            }
+            
+            return false;
+          }}
         />
       </PopoverContent>
     </Popover>

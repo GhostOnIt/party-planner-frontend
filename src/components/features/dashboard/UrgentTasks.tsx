@@ -5,8 +5,7 @@ import { fr } from 'date-fns/locale';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Skeleton } from '@/components/ui/skeleton';
+ import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import type { Task } from '@/types';
 import { cn } from '@/lib/utils';
@@ -29,13 +28,11 @@ const priorityConfig = {
 interface UrgentTasksProps {
   tasks: Task[];
   isLoading?: boolean;
-  onToggleComplete?: (taskId: number, completed: boolean) => void;
 }
 
 export function UrgentTasks({
   tasks,
   isLoading = false,
-  onToggleComplete,
 }: UrgentTasksProps) {
   if (isLoading) {
     return (
@@ -109,13 +106,7 @@ export function UrgentTasks({
                   key={taskId}
                   className="flex items-start gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50"
                 >
-                  <Checkbox
-                    checked={task.status === 'completed'}
-                    onCheckedChange={(checked) =>
-                      onToggleComplete?.(task.id, checked as boolean)
-                    }
-                    className="mt-0.5"
-                  />
+                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span

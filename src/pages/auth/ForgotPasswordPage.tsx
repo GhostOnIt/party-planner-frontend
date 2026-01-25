@@ -4,15 +4,15 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
-import { ArrowLeft, Mail } from 'lucide-react';
-import logo from '@/assets/logo.png';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Mail, ArrowRight, CheckCircle } from 'lucide-react';
 import api from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getApiErrorMessage } from '@/api/client';
+import { AuthPromoPanel } from '@/components/auth/AuthPromoPanel';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Email invalide'),
@@ -46,103 +46,186 @@ export function ForgotPasswordPage() {
     mutate(data);
   };
 
+  // Success state
   if (emailSent) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
-              <Mail className="h-6 w-6 text-success" />
+      <div className="flex min-h-screen">
+        {/* Left Panel - Promo */}
+        <div className="hidden lg:block lg:w-1/2 xl:w-[55%]">
+          <AuthPromoPanel />
+        </div>
+
+        {/* Right Panel - Success Message */}
+        <div className="flex w-full lg:w-1/2 xl:w-[45%] flex-col items-center justify-center bg-background px-6 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full max-w-md space-y-8 text-center"
+          >
+            {/* Success Icon */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100"
+            >
+              <CheckCircle className="h-8 w-8 text-emerald-600" />
+            </motion.div>
+
+            {/* Header */}
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold text-foreground">
+                Email envoyé !
+              </h1>
+              <p className="text-muted-foreground">
+                Un email de réinitialisation a été envoyé à{' '}
+                <strong className="text-foreground">{getValues('email')}</strong>
+              </p>
             </div>
-            <CardTitle>Email envoye !</CardTitle>
-            <CardDescription>
-              Un email de reinitialisation a ete envoye a{' '}
-              <strong>{getValues('email')}</strong>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="mb-4 text-sm text-muted-foreground">
-              Verifiez votre boite de reception et suivez les instructions pour
-              reinitialiser votre mot de passe.
-            </p>
+
+            {/* Instructions */}
+            <div className="rounded-lg bg-secondary/50 p-4">
+              <p className="text-sm text-muted-foreground">
+                Vérifiez votre boîte de réception et suivez les instructions pour
+                réinitialiser votre mot de passe.
+              </p>
+            </div>
+
+            {/* Back to Login */}
             <Link to="/login">
               <Button variant="outline" className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
-                Retour a la connexion
+                Retour à la connexion
               </Button>
             </Link>
-          </CardContent>
-        </Card>
+          </motion.div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <img src={logo} alt="Party Planner" className="mx-auto mb-4 h-12 w-12 object-contain" />
-          <CardTitle>Mot de passe oublie ?</CardTitle>
-          <CardDescription>
-            Entrez votre email pour recevoir un lien de reinitialisation
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <div className="flex min-h-screen">
+      {/* Left Panel - Promo */}
+      <div className="hidden lg:block lg:w-1/2 xl:w-[55%]">
+        <AuthPromoPanel />
+      </div>
+
+      {/* Right Panel - Form */}
+      <div className="flex w-full lg:w-1/2 xl:w-[45%] flex-col items-center justify-center bg-background px-6 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md space-y-8"
+        >
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex justify-center mb-8">
+            <div className="flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80">
+                <span className="text-xl">🎉</span>
+              </div>
+              <span className="text-xl font-bold text-foreground">Party Planner</span>
+            </div>
+          </div>
+
+          {/* Header */}
+          <div className="text-center space-y-2">
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-3xl font-bold text-foreground"
+            >
+              Mot de passe oublié ?
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-muted-foreground"
+            >
+              Entrez votre email pour recevoir un lien de réinitialisation
+            </motion.p>
+          </div>
+
+          {/* Form */}
+          <motion.form
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-5"
+          >
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
               </Alert>
             )}
 
+            {/* Email Field */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="votre@email.com"
-                {...register('email')}
-                aria-invalid={!!errors.email}
-              />
+              <Label htmlFor="email" className="text-sm font-medium">
+                Email
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="votre@email.com"
+                  {...register('email')}
+                  aria-invalid={!!errors.email}
+                  className="pl-10 h-12 bg-secondary/50 border-0 focus-visible:ring-2 focus-visible:ring-primary"
+                />
+              </div>
               {errors.email && (
                 <p className="text-sm text-destructive">{errors.email.message}</p>
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? 'Envoi...' : 'Envoyer le lien'}
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="w-full h-12 bg-gradient-to-r from-primary to-primary/80 hover:opacity-90 transition-opacity text-base font-medium group"
+            >
+              {isPending ? (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full"
+                />
+              ) : (
+                <>
+                  Envoyer le lien
+                  <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </Button>
+          </motion.form>
+ 
 
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">ou</span>
-              </div>
-            </div>
+           
 
-            <div className="text-center">
-              <Link
-                to="/send-otp?type=password_reset"
-                className="text-sm text-primary hover:underline"
-              >
-                Recevoir un code OTP par SMS ou WhatsApp
-              </Link>
-            </div>
-
-            <div className="text-center">
-              <Link
-                to="/login"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Retour a la connexion
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+          {/* Back to Login */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="text-center"
+          >
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Retour à la connexion
+            </Link>
+          </motion.p>
+        </motion.div>
+      </div>
     </div>
   );
 }

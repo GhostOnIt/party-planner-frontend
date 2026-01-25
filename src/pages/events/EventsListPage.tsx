@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, LayoutGrid, List, Calendar } from 'lucide-react';
+import { Plus, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/layout/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -23,10 +23,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { EventCard, EventFilters } from '@/components/features/events';
+import {
+  EventCardGrid,
+  EventListItem,
+  EventStatsCards,
+  EventFiltersBar,
+  ViewToggle,
+} from '@/components/features/events';
 import { useEvents, useDeleteEvent, useDuplicateEvent } from '@/hooks/useEvents';
 import { useSubscriptions } from '@/hooks/useSubscription';
 import { useAuthStore } from '@/stores/authStore';
+import {
+  transformEventToDisplayFormat,
+  type DisplayEvent,
+} from '@/utils/eventUtils';
 import type { Event, EventFilters as EventFiltersType, Subscription } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -40,10 +50,15 @@ export function EventsListPage() {
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
 
   const { data, isLoading } = useEvents(filters);
+  // Charger tous les événements pour les stats (sans filtres) - se met à jour automatiquement via React Query
+  const { data: allEventsData } = useEvents({ per_page: 1000 });
   const { data: subscriptions = [] } = useSubscriptions();
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
   const { mutate: duplicateEvent } = useDuplicateEvent();
-  const events = data?.data || [];
+  const events = useMemo(() => data?.data || [], [data?.data]);
+  
+  // Utiliser directement les données de la requête pour les stats (se met à jour automatiquement)
+  const allEventsForStats = useMemo(() => allEventsData?.data || [], [allEventsData?.data]);
 
   // Synchroniser currentPage avec la réponse API ou les filtres
   const currentPage = data?.current_page ?? filters.page ?? 1;
@@ -64,18 +79,36 @@ export function EventsListPage() {
     return map;
   }, [subscriptions]);
 
+  // Transform events to display format
+  const displayEvents: DisplayEvent[] = useMemo(() => {
+    return events.map((event) =>
+      transformEventToDisplayFormat(event, user?.id)
+    );
+  }, [events, user?.id]);
+
   const handlePageChange = (page: number) => {
     setFilters((prev) => ({ ...prev, page }));
     // Remonter en haut de la page lors du changement de page
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleEdit = (event: Event) => {
+  const handleView = (event: DisplayEvent) => {
+    navigate(`/events/${event.id}`);
+  };
+
+  const handleEdit = (event: DisplayEvent) => {
     navigate(`/events/${event.id}/edit`);
   };
 
-  const handleDuplicate = (event: Event) => {
-    duplicateEvent(event.id);
+  const handleDuplicate = (event: DisplayEvent) => {
+    duplicateEvent(parseInt(event.id));
+  };
+
+  const handleDelete = (event: DisplayEvent) => {
+    const originalEvent = events.find((e) => e.id.toString() === event.id);
+    if (originalEvent) {
+      setEventToDelete(originalEvent);
+    }
   };
 
   const handleDeleteConfirm = () => {
@@ -88,39 +121,38 @@ export function EventsListPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Mes evenements"
-        description="Gerez tous vos evenements"
+        title="Mes événements"
+        description="Gérez tous vos événements en un seul endroit"
         actions={
           <Link to="/events/create">
-            <Button className="gap-2">
+            <Button className="gap-2 bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] hover:shadow-lg hover:shadow-[#4F46E5]/25">
               <Plus className="h-4 w-4" />
-              Nouvel evenement
+              Nouvel événement
             </Button>
           </Link>
         }
       />
 
+      {/* Stats Cards - Toujours affichées avec les stats de tous les événements */}
+      {allEventsForStats.length > 0 ? (
+        <EventStatsCards events={allEventsForStats} />
+      ) : !isLoading ? (
+        // Afficher un skeleton pendant le chargement initial des stats
+        <div className="grid grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white rounded-xl p-4 border border-[#e5e7eb]">
+              <Skeleton className="h-16 w-full" />
+            </div>
+          ))}
+        </div>
+      ) : null}
+
       {/* Filters and View Toggle */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex-1">
-          <EventFilters filters={filters} onFiltersChange={setFilters} />
+          <EventFiltersBar filters={filters} onFiltersChange={setFilters} />
         </div>
-        <div className="flex items-center gap-1 rounded-lg border p-1">
-          <Button
-            variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('grid')}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('list')}
-          >
-            <List className="h-4 w-4" />
-          </Button>
-        </div>
+        <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
       </div>
 
       {/* Loading State */}
@@ -128,7 +160,9 @@ export function EventsListPage() {
         <div
           className={cn(
             'grid gap-4',
-            viewMode === 'grid' ? 'sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'
+            viewMode === 'grid'
+              ? 'sm:grid-cols-2 lg:grid-cols-3'
+              : 'grid-cols-1'
           )}
         >
           {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -141,16 +175,16 @@ export function EventsListPage() {
       {!isLoading && events.length === 0 && (
         <EmptyState
           icon={Calendar}
-          title="Aucun evenement"
+          title="Aucun événement"
           description={
             filters.search || filters.status || filters.type
-              ? 'Aucun evenement ne correspond a vos criteres de recherche'
-              : "Vous n'avez pas encore cree d'evenement. Commencez par en creer un !"
+              ? "Aucun événement ne correspond à vos critères de recherche"
+              : "Vous n'avez pas encore créé d'événement. Commencez par en créer un !"
           }
           action={
             !filters.search && !filters.status && !filters.type
               ? {
-                  label: 'Creer un evenement',
+                  label: 'Créer un événement',
                   onClick: () => navigate('/events/create'),
                 }
               : undefined
@@ -159,26 +193,64 @@ export function EventsListPage() {
       )}
 
       {/* Events Grid/List */}
-      {!isLoading && events.length > 0 && (
+      {!isLoading && displayEvents.length > 0 && (
         <>
-          <div
-            className={cn(
-              'grid gap-4',
-              viewMode === 'grid' ? 'sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'
-            )}
-          >
-            {events.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                subscription={subscriptionsByEventId.get(event.id)}
-                currentUserId={user?.id}
-                onEdit={handleEdit}
-                onDuplicate={handleDuplicate}
-                onDelete={setEventToDelete}
-              />
-            ))}
-          </div>
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {displayEvents.map((event) => (
+                <EventCardGrid
+                  key={event.id}
+                  event={event}
+                  subscription={subscriptionsByEventId.get(parseInt(event.id))}
+                  onView={handleView}
+                  onEdit={handleEdit}
+                  onDuplicate={handleDuplicate}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-[#f9fafb] border-b border-[#e5e7eb]">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-[#6b7280] uppercase tracking-wider">
+                      Événement
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-[#6b7280] uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-[#6b7280] uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-[#6b7280] uppercase tracking-wider">
+                      Invités
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-[#6b7280] uppercase tracking-wider">
+                      Statut
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-[#6b7280] uppercase tracking-wider">
+                      Budget
+                    </th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-[#6b7280] uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#f3f4f6]">
+                  {displayEvents.map((event) => (
+                    <EventListItem
+                      key={event.id}
+                      event={event}
+                      onView={handleView}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {/* Pagination */}
           {meta && meta.last_page && meta.last_page > 1 && (
@@ -187,7 +259,9 @@ export function EventsListPage() {
                 <PaginationItem>
                   <PaginationPrevious
                     onClick={() => handlePageChange(currentPage - 1)}
-                    className={cn(currentPage === 1 && 'pointer-events-none opacity-50')}
+                    className={cn(
+                      currentPage === 1 && 'pointer-events-none opacity-50'
+                    )}
                   />
                 </PaginationItem>
 
@@ -218,7 +292,8 @@ export function EventsListPage() {
                   <PaginationNext
                     onClick={() => handlePageChange(currentPage + 1)}
                     className={cn(
-                      currentPage === meta.last_page && 'pointer-events-none opacity-50'
+                      currentPage === meta.last_page &&
+                        'pointer-events-none opacity-50'
                     )}
                   />
                 </PaginationItem>
@@ -229,14 +304,17 @@ export function EventsListPage() {
       )}
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!eventToDelete} onOpenChange={() => setEventToDelete(null)}>
+      <AlertDialog
+        open={!!eventToDelete}
+        onOpenChange={() => setEventToDelete(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer l'evenement</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer l'événement</AlertDialogTitle>
             <AlertDialogDescription>
-              Etes-vous sur de vouloir supprimer "{eventToDelete?.title}" ? Cette action est
-              irreversible et supprimera egalement tous les invites, taches et autres donnees
-              associees.
+              Êtes-vous sûr de vouloir supprimer "{eventToDelete?.title}" ? Cette
+              action est irréversible et supprimera également tous les invités,
+              tâches et autres données associées.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

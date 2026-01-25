@@ -1,6 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '@/api/client';
+import type {
+  DashboardStatsResponse,
+  ConfirmationsChartResponse,
+  EventsByTypeResponse,
+  RecentActivityResponse,
+  UpcomingEventsResponse,
+} from '@/types/dashboard';
 
+// Legacy interface (kept for backward compatibility)
 export interface UserStats {
   events_count: number;
   guests_confirmed: number;
@@ -8,53 +16,48 @@ export interface UserStats {
   total_budget: number;
 }
 
-export function useDashboardStats() {
+/**
+ * Get dashboard statistics with filters (period + event type).
+ */
+export function useDashboardStats(
+  period: string = 'all',
+  eventType: string = 'all',
+  customRange?: { start: Date; end: Date }
+) {
   return useQuery({
-    queryKey: ['dashboard', 'user-stats'],
-    queryFn: async (): Promise<UserStats> => {
-      const response = await api.get('/dashboard/user-stats');
-      const responseData = response.data;
+    queryKey: ['dashboard', 'stats', period, eventType, customRange],
+    queryFn: async (): Promise<DashboardStatsResponse> => {
+      const params: Record<string, string> = {
+        type: eventType,
+      };
 
-      // API returns: { stats: { active_events, total_guests, total_tasks, completed_tasks, ... } }
-      if (responseData && 'stats' in responseData) {
-        const stats = responseData.stats;
-        return {
-          events_count: stats.active_events || 0,
-          guests_confirmed: stats.total_guests || 0,
-          tasks_pending: (stats.total_tasks || 0) - (stats.completed_tasks || 0),
-          total_budget: stats.total_budget || 0,
-        };
+      // Only add period if it's not "all"
+      if (period !== 'all') {
+        params.period = period;
       }
 
-      // Fallback: direct response
-      return responseData;
+      if (period === 'custom' && customRange) {
+        params.start_date = customRange.start.toISOString().split('T')[0];
+        params.end_date = customRange.end.toISOString().split('T')[0];
+      }
+
+      const response = await api.get<DashboardStatsResponse>('/dashboard/stats', { params });
+      return response.data;
     },
   });
 }
 
-export function useUpcomingEvents(limit: number = 5) {
+/**
+ * Get upcoming events.
+ */
+export function useUpcomingEvents(limit: number = 4) {
   return useQuery({
     queryKey: ['events', 'upcoming', limit],
-    queryFn: async () => {
-      const response = await api.get('/events', {
-        params: {
-          per_page: limit,
-          sort_by: 'date',
-          sort_dir: 'asc',
-          upcoming: true, // Filter to only show future events
-        },
+    queryFn: async (): Promise<UpcomingEventsResponse> => {
+      const response = await api.get<UpcomingEventsResponse>('/events/upcoming', {
+        params: { limit },
       });
-      const responseData = response.data;
-
-      // Handle nested response: { events: { data: [...] } } or { data: [...] }
-      if (responseData && 'events' in responseData) {
-        return responseData.events.data || responseData.events || [];
-      }
-      if (responseData && 'data' in responseData) {
-        return responseData.data;
-      }
-
-      return responseData;
+      return response.data;
     },
   });
 }
@@ -97,7 +100,86 @@ export function useUrgentTasks(limit: number = 5) {
   });
 }
 
-// Combined hook for dashboard data
+/**
+ * Get confirmations chart data with filters.
+ */
+export function useConfirmationsChart(
+  period: string = 'all',
+  eventType: string = 'all',
+  filters: {
+    page?: number;
+    per_page?: number;
+    search?: string;
+    sort_by?: string;
+    sort_order?: 'asc' | 'desc';
+  } = {}
+) {
+  return useQuery({
+    queryKey: ['dashboard', 'confirmations', period, eventType, filters],
+    queryFn: async (): Promise<ConfirmationsChartResponse> => {
+      const params: Record<string, string | number> = {
+        type: eventType,
+        page: filters.page ?? 1,
+        per_page: filters.per_page ?? 5,
+        sort_by: filters.sort_by ?? 'confirmRate',
+        sort_order: filters.sort_order ?? 'desc',
+      };
+
+      // Only add period if it's not "all"
+      if (period !== 'all') {
+        params.period = period;
+      }
+
+      if (filters.search) {
+        params.search = filters.search;
+      }
+
+      const response = await api.get<ConfirmationsChartResponse>('/dashboard/confirmations', { params });
+      return response.data;
+    },
+  });
+}
+
+/**
+ * Get events by type chart data.
+ */
+export function useEventsByType(period: string = 'all', eventType: string = 'all') {
+  return useQuery({
+    queryKey: ['dashboard', 'events-by-type', period, eventType],
+    queryFn: async (): Promise<EventsByTypeResponse> => {
+      const params: Record<string, string> = {
+        type: eventType,
+      };
+
+      // Only add period if it's not "all"
+      if (period !== 'all') {
+        params.period = period;
+      }
+
+      const response = await api.get<EventsByTypeResponse>('/dashboard/events-by-type', {
+        params,
+      });
+      return response.data;
+    },
+  });
+}
+
+/**
+ * Get recent activity.
+ */
+export function useRecentActivity(limit: number = 6) {
+  return useQuery({
+    queryKey: ['activities', 'recent', limit],
+    queryFn: async (): Promise<RecentActivityResponse> => {
+      const response = await api.get<RecentActivityResponse>('/activities/recent', {
+        params: { limit },
+      });
+      return response.data;
+    },
+  });
+}
+
+// Combined hook for dashboard data (legacy - kept for backward compatibility)
 export function useDashboard() {
   const statsQuery = useDashboardStats();
   const eventsQuery = useUpcomingEvents(5);

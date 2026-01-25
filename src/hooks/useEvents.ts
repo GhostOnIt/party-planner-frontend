@@ -61,11 +61,18 @@ export function useCreateEvent() {
               formData.append('estimated_budget', value.toString());
             } else if (key === 'expected_guests' && typeof value === 'number') {
               formData.append('expected_guests_count', value.toString());
-            } else {
+            } else if (key === 'template_id' && typeof value === 'number') {
+              formData.append('template_id', value.toString());
+            } else if (key !== 'template_id') {
               formData.append(key, value.toString());
             }
           }
         });
+        
+        // Si template_id est null (utilisateur a choisi "Aucun template"), l'envoyer explicitement comme chaîne vide
+        if ('template_id' in eventData && eventData.template_id === null) {
+          formData.append('template_id', '');
+        }
 
         // Ajouter la photo de couverture
         formData.append('cover_photo', cover_photo);
@@ -88,6 +95,9 @@ export function useCreateEvent() {
           jsonData.expected_guests_count = jsonData.expected_guests;
           delete jsonData.expected_guests;
         }
+        // template_id est déjà dans le bon format
+        // Si template_id est null, on l'envoie explicitement pour indiquer "Aucun template"
+        // Si template_id est undefined, on ne l'envoie pas (auto-application)
 
         const response = await api.post<CreateEventResponse>('/events', jsonData);
         return response.data.event;
@@ -237,6 +247,35 @@ export function useDuplicateEvent() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       navigate(`/events/${data.id}`);
+    },
+  });
+}
+
+// Cancel event
+export function useCancelEvent() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (eventId: number | string) => {
+      const response = await api.put<Event>(`/events/${eventId}`, { status: 'cancelled' });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['events', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      toast({
+        title: 'Événement annulé',
+        description: 'L\'événement a été annulé avec succès.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Erreur',
+        description: 'Une erreur est survenue lors de l\'annulation de l\'événement.',
+        variant: 'destructive',
+      });
     },
   });
 }

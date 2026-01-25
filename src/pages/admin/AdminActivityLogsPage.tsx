@@ -293,6 +293,7 @@ export function AdminActivityLogsPage() {
               value={filters.date_from ? parseISO(filters.date_from) : undefined}
               onChange={handleDateFromChange}
               placeholder="Date debut"
+              disableFuture={true}
             />
 
             {/* Date To */}
@@ -300,6 +301,7 @@ export function AdminActivityLogsPage() {
               value={filters.date_to ? parseISO(filters.date_to) : undefined}
               onChange={handleDateToChange}
               placeholder="Date fin"
+              disableFuture={true}
             />
           </div>
 

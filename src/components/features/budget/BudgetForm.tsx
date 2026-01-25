@@ -22,18 +22,22 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { categoryConfig } from './CategoryBadge';
+import { useBudgetCategories } from '@/hooks/useSettings';
 import type { BudgetItem, CreateBudgetItemFormData, BudgetCategory } from '@/types';
 
+// Default categories (fallback if user categories are not loaded)
+const defaultCategories: { value: BudgetCategory; label: string }[] = [
+  { value: 'location', label: categoryConfig.location.label },
+  { value: 'catering', label: categoryConfig.catering.label },
+  { value: 'decoration', label: categoryConfig.decoration.label },
+  { value: 'entertainment', label: categoryConfig.entertainment.label },
+  { value: 'photography', label: categoryConfig.photography.label },
+  { value: 'transportation', label: categoryConfig.transportation.label },
+  { value: 'other', label: categoryConfig.other.label },
+];
+
 const budgetItemSchema = z.object({
-  category: z.enum([
-    'location',
-    'catering',
-    'decoration',
-    'entertainment',
-    'photography',
-    'transportation',
-    'other',
-  ] as const),
+  category: z.string().min(1, 'La catégorie est requise'), // Accept any string for custom categories
   name: z.string().min(1, 'Le nom est requis').max(255),
   estimated_cost: z.number().min(0, 'Le cout doit etre positif'),
   actual_cost: z.number().min(0, 'Le cout doit etre positif').optional(),
@@ -51,16 +55,6 @@ interface BudgetFormProps {
   isSubmitting?: boolean;
 }
 
-const categories: { value: BudgetCategory; label: string }[] = [
-  { value: 'location', label: categoryConfig.location.label },
-  { value: 'catering', label: categoryConfig.catering.label },
-  { value: 'decoration', label: categoryConfig.decoration.label },
-  { value: 'entertainment', label: categoryConfig.entertainment.label },
-  { value: 'photography', label: categoryConfig.photography.label },
-  { value: 'transportation', label: categoryConfig.transportation.label },
-  { value: 'other', label: categoryConfig.other.label },
-];
-
 export function BudgetForm({
   open,
   onOpenChange,
@@ -69,6 +63,17 @@ export function BudgetForm({
   isSubmitting = false,
 }: BudgetFormProps) {
   const isEditing = !!item;
+  
+  // Load user's custom budget categories
+  const { data: userBudgetCategories } = useBudgetCategories();
+  
+  // Use user's categories if available, otherwise fallback to default
+  const categories = userBudgetCategories && userBudgetCategories.length > 0
+    ? userBudgetCategories.map((cat) => ({
+        value: cat.slug as BudgetCategory,
+        label: cat.name,
+      }))
+    : defaultCategories;
 
   const {
     register,
@@ -80,7 +85,7 @@ export function BudgetForm({
   } = useForm<BudgetFormValues>({
     resolver: zodResolver(budgetItemSchema),
     defaultValues: {
-      category: 'other',
+      category: (categories[0]?.value || 'other') as string,
       name: '',
       estimated_cost: 0,
       actual_cost: undefined,
@@ -104,7 +109,7 @@ export function BudgetForm({
         });
       } else {
         reset({
-          category: 'other',
+          category: (categories[0]?.value || 'other') as string,
           name: '',
           estimated_cost: 0,
           actual_cost: undefined,
@@ -113,11 +118,11 @@ export function BudgetForm({
         });
       }
     }
-  }, [open, item, reset]);
+  }, [open, item, reset, categories]);
 
   const handleFormSubmit = (data: BudgetFormValues) => {
     onSubmit({
-      category: data.category,
+      category: data.category as BudgetCategory,
       name: data.name,
       estimated_cost: data.estimated_cost,
       actual_cost: data.actual_cost,

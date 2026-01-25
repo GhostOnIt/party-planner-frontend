@@ -47,6 +47,7 @@ interface TaskFormProps {
   isSubmitting?: boolean;
   collaborators?: { id: number; name: string }[];
   canAssign?: boolean;
+  currentUserId?: number;
 }
 
 export function TaskForm({
@@ -57,6 +58,7 @@ export function TaskForm({
   isSubmitting = false,
   collaborators = [],
   canAssign = false,
+  currentUserId,
 }: TaskFormProps) {
   const {
     register,
@@ -193,11 +195,14 @@ export function TaskForm({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unassigned">Non assigne</SelectItem>
-                  {collaborators.map((c) => (
-                    <SelectItem key={c.id} value={c.id.toString()}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
+                  {collaborators.map((c) => {
+                    const isCurrentUser = currentUserId && c.id === currentUserId;
+                    return (
+                      <SelectItem key={c.id} value={c.id.toString()}>
+                        {isCurrentUser ? `Moi (${c.name})` : c.name}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>

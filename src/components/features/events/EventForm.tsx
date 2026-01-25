@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useState, useEffect } from 'react';
-import { CalendarIcon, Image, X } from 'lucide-react';
+import { CalendarIcon, Image, X, Sparkles, ListTodo, Wallet, Palette } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
@@ -18,11 +18,16 @@ import {
 } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { PhotoUploader } from '@/components/features/photos';
+import { useTemplatesByType } from '@/hooks/useTemplates';
+import { useEventTypes } from '@/hooks/useSettings';
 import type { Event, CreateEventFormData, EventType } from '@/types';
 
-const eventTypes: { value: EventType; label: string }[] = [
+// Default event types (fallback if user types are not loaded)
+const defaultEventTypes: { value: EventType; label: string }[] = [
   { value: 'mariage', label: 'Mariage' },
   { value: 'anniversaire', label: 'Anniversaire' },
   { value: 'baby_shower', label: 'Baby Shower' },
@@ -33,10 +38,10 @@ const eventTypes: { value: EventType; label: string }[] = [
 
 const eventFormSchema = z.object({
   title: z.string().min(1, 'Le titre est requis').max(255),
-  type: z.enum(['mariage', 'anniversaire', 'baby_shower', 'soiree', 'brunch', 'autre']),
+  type: z.string().min(1, 'Le type est requis'), // Accept any string for custom types
   date: z.string().min(1, 'La date est requise'),
-  time: z.string().optional(),
-  location: z.string().optional(),
+  time: z.string().min(1, "L'heure est requise"),
+  location: z.string().min(1, 'Le lieu est requis'),
   description: z.string().optional(),
   expected_guests: z
     .union([z.string(), z.number()])
@@ -79,6 +84,17 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
   const [coverPhotoPreview, setCoverPhotoPreview] = useState<string | null>(null);
   const [showPhotoUploader, setShowPhotoUploader] = useState(false);
 
+  // Load user's custom event types
+  const { data: userEventTypes } = useEventTypes();
+  
+  // Use user's event types if available, otherwise fallback to default
+  const eventTypes = userEventTypes && userEventTypes.length > 0
+    ? userEventTypes.map((type) => ({
+        value: type.slug as EventType,
+        label: type.name,
+      }))
+    : defaultEventTypes;
+
   const {
     register,
     handleSubmit,
@@ -89,7 +105,7 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
       title: event?.title || '',
-      type: event?.type || 'autre',
+      type: event?.type || (eventTypes[0]?.value || 'autre'),
       date: event?.date || '',
       time: event?.time || '',
       location: event?.location || '',
@@ -102,6 +118,14 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
 
   const selectedDate = watch('date');
   const selectedType = watch('type');
+  const selectedTemplateId = watch('template_id');
+  
+  // Charger les templates selon le type d'événement sélectionné
+  const { data: templatesData } = useTemplatesByType(selectedType as EventType | undefined);
+  const templates = templatesData?.templates || [];
+  
+  // Charger le template sélectionné pour l'aperçu
+  const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
 
   // Nettoyer les URLs de preview lors du démontage
   useEffect(() => {
@@ -135,17 +159,26 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
 
     onSubmit({
       title: transformed.title,
-      type: transformed.type,
+      type: transformed.type as EventType,
       date: transformed.date,
-      time: transformed.time || undefined,
-      location: transformed.location || undefined,
+      time: transformed.time,
+      location: transformed.location,
       description: transformed.description || undefined,
       expected_guests: transformed.expected_guests,
       budget: transformed.budget,
       theme: transformed.theme || undefined,
+      template_id: transformed.template_id,
       cover_photo: coverPhoto || undefined,
     });
   };
+
+  // Réinitialiser le template si le type change
+  useEffect(() => {
+    if (selectedType) {
+      // Réinitialiser template_id si le type change
+      setValue('template_id', undefined);
+    }
+  }, [selectedType, setValue]);
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
@@ -182,6 +215,96 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
         {errors.type && <p className="text-sm text-destructive">{errors.type.message}</p>}
       </div>
 
+      {/* Template Selection */}
+      {selectedType && templates.length > 0 && (
+        <div className="space-y-2">
+          <Label htmlFor="template">Template (optionnel)</Label>
+          <Select
+            value={selectedTemplateId?.toString() || 'none'}
+            onValueChange={(value) => {
+              if (value === 'none') {
+                setValue('template_id', undefined);
+              } else {
+                setValue('template_id', parseInt(value));
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Aucun template (création manuelle)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Aucun template</SelectItem>
+              {templates.map((template) => (
+                <SelectItem key={template.id} value={template.id.toString()}>
+                  {template.name}
+                  {template.description && (
+                    <span className="text-xs text-muted-foreground ml-2">
+                      - {template.description}
+                    </span>
+                  )}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedTemplate && (
+            <Card className="mt-2 border-[#4F46E5]/20 bg-gradient-to-br from-[#4F46E5]/5 to-transparent">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-[#4F46E5]" />
+                  <span className="text-sm font-semibold text-[#1a1a2e]">
+                    Aperçu du template: {selectedTemplate.name}
+                  </span>
+                </div>
+                {selectedTemplate.description && (
+                  <p className="text-sm text-[#6b7280]">{selectedTemplate.description}</p>
+                )}
+                <div className="grid grid-cols-3 gap-3 pt-2 border-t border-[#e5e7eb]">
+                  <div className="flex items-center gap-2">
+                    <ListTodo className="h-4 w-4 text-[#6b7280]" />
+                    <div>
+                      <p className="text-xs text-[#6b7280]">Tâches</p>
+                      <p className="text-sm font-semibold text-[#1a1a2e]">
+                        {selectedTemplate.default_tasks?.length || 0}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Wallet className="h-4 w-4 text-[#6b7280]" />
+                    <div>
+                      <p className="text-xs text-[#6b7280]">Budget</p>
+                      <p className="text-sm font-semibold text-[#1a1a2e]">
+                        {selectedTemplate.default_budget_categories?.length || 0}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Palette className="h-4 w-4 text-[#6b7280]" />
+                    <div>
+                      <p className="text-xs text-[#6b7280]">Thèmes</p>
+                      <p className="text-sm font-semibold text-[#1a1a2e]">
+                        {selectedTemplate.suggested_themes?.length || 0}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                {selectedTemplate.suggested_themes && selectedTemplate.suggested_themes.length > 0 && (
+                  <div className="pt-2 border-t border-[#e5e7eb]">
+                    <p className="text-xs text-[#6b7280] mb-2">Thèmes suggérés:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedTemplate.suggested_themes.map((theme, idx) => (
+                        <Badge key={idx} variant="secondary" className="text-xs">
+                          {theme}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
       {/* Date and Time */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
@@ -207,6 +330,12 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
                 selected={selectedDate ? new Date(selectedDate) : undefined}
                 onSelect={(date) => setValue('date', date ? format(date, 'yyyy-MM-dd') : '')}
                 initialFocus
+                disabled={(date) => {
+                  // Désactiver les dates passées (avant aujourd'hui)
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  return date < today;
+                }}
               />
             </PopoverContent>
           </Popover>
@@ -214,15 +343,17 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="time">Heure</Label>
-          <Input id="time" type="time" {...register('time')} />
+          <Label htmlFor="time">Heure *</Label>
+          <Input id="time" type="time" {...register('time')} aria-invalid={!!errors.time} required />
+          {errors.time && <p className="text-sm text-destructive">{errors.time.message}</p>}
         </div>
       </div>
 
       {/* Location */}
       <div className="space-y-2">
-        <Label htmlFor="location">Lieu</Label>
-        <Input id="location" placeholder="Ex: Salle des fetes de Paris" {...register('location')} />
+        <Label htmlFor="location">Lieu *</Label>
+        <Input id="location" placeholder="Ex: Salle des fetes de Paris" {...register('location')} aria-invalid={!!errors.location} required />
+        {errors.location && <p className="text-sm text-destructive">{errors.location.message}</p>}
       </div>
 
       {/* Description */}

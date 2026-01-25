@@ -52,7 +52,9 @@
     "adminSubscriptions": "Abonnements",
     "adminPlans": "Plans",
     "adminTemplates": "Templates",
-    "adminActivityLogs": "Journal d'activite"
+    "adminActivityLogs": "Journal d'activite",
+    "adminCommunication": "Communication",
+    "adminLegalPages": "Pages légales"
   },
   "auth": {
     "login": "Connexion",
@@ -212,6 +214,9 @@
     "profile": "Profil",
     "security": "Securite",
     "notifications": "Notifications",
+    "eventTypes": "Types d'événement",
+    "collaboratorRoles": "Rôles",
+    "budgetCategories": "Catégories",
     "account": "Compte",
     "language": "Langue",
     "theme": "Theme",
@@ -255,6 +260,67 @@
       "guests": "Invites confirmes",
       "tasks": "Taches en attente",
       "budget": "Budget total"
+    }
+  },
+  "communication": {
+    "title": "Communication",
+    "description": "Gerez les bannieres et sondages de la plateforme",
+    "createSpot": "Nouveau spot",
+    "editSpot": "Modifier le spot",
+    "deleteSpot": "Supprimer le spot",
+    "noSpots": "Aucun spot",
+    "types": {
+      "banner": "Banniere",
+      "poll": "Sondage"
+    },
+    "status": {
+      "active": "Actif",
+      "inactive": "Inactif",
+      "scheduled": "Programme",
+      "expired": "Expire"
+    },
+    "locations": {
+      "dashboard": "Dashboard",
+      "login": "Page de connexion"
+    },
+    "form": {
+      "type": "Type de spot",
+      "title": "Titre",
+      "description": "Description",
+      "image": "Image",
+      "badge": "Badge",
+      "badgeType": "Type de badge",
+      "primaryButton": "Bouton principal",
+      "secondaryButton": "Bouton secondaire",
+      "pollQuestion": "Question",
+      "pollOptions": "Options de reponse",
+      "addOption": "Ajouter une option",
+      "displayLocations": "Emplacements d'affichage",
+      "isActive": "Activer immediatement",
+      "priority": "Priorite",
+      "startDate": "Date de debut",
+      "endDate": "Date de fin",
+      "targetRoles": "Roles cibles",
+      "targetLanguages": "Langues cibles"
+    },
+    "results": {
+      "title": "Resultats du sondage",
+      "totalVotes": "votes au total",
+      "noVotes": "Aucun vote pour le moment",
+      "export": "Exporter CSV",
+      "reset": "Reinitialiser",
+      "closePoll": "Fermer le sondage"
+    },
+    "actions": {
+      "viewResults": "Voir les resultats",
+      "duplicate": "Dupliquer",
+      "activate": "Activer",
+      "deactivate": "Desactiver"
+    },
+    "stats": {
+      "views": "vues",
+      "clicks": "clics",
+      "votes": "votes"
     }
   }
 }
