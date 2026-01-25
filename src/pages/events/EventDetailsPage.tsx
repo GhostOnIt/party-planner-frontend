@@ -20,6 +20,7 @@ import {
   ListTodo,
   PiggyBank,
   Sparkles,
+  Ban,
 } from 'lucide-react';
 import { format, parseISO, differenceInDays, isPast, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -40,7 +41,7 @@ import {
 import { EmptyState } from '@/components/ui/empty-state';
 import { EventStatusBadge, EventTypeBadge } from '@/components/features/events';
 import { DietaryRestrictionsCard } from '@/components/features/guests';
-import { useEvent, useDeleteEvent, useDuplicateEvent } from '@/hooks/useEvents';
+import { useEvent, useDeleteEvent, useDuplicateEvent, useCancelEvent } from '@/hooks/useEvents';
 import { useAuthStore } from '@/stores/authStore';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { PermissionGuard } from '@/components/ui/permission-guard';
@@ -95,6 +96,7 @@ export function EventDetailsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
   const { user } = useAuthStore();
 
   const validTabs = ['overview', 'guests', 'tasks', 'budget', 'photos', 'collaborators'];
@@ -108,6 +110,7 @@ export function EventDetailsPage() {
   const { data: event, isLoading, error } = useEvent(id);
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
   const { mutate: duplicateEvent } = useDuplicateEvent();
+  const { mutate: cancelEvent, isPending: isCancelling } = useCancelEvent();
   const featureAccess = useFeatureAccess(id!);
 
   if (isLoading) {
@@ -150,6 +153,11 @@ export function EventDetailsPage() {
 
   const handleDuplicate = () => {
     duplicateEvent(event.id);
+  };
+
+  const handleCancel = () => {
+    cancelEvent(event.id);
+    setShowCancelDialog(false);
   };
 
   // Calculate statistics
@@ -246,6 +254,18 @@ export function EventDetailsPage() {
                 Modifier
               </Button>
             </Link>
+            {/* Cancel button - only show if event is not completed or cancelled */}
+            {event.status !== 'completed' && event.status !== 'cancelled' && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowCancelDialog(true)} 
+                className="gap-2 text-orange-600 border-orange-300 hover:bg-orange-50 hover:text-orange-700"
+              >
+                <Ban className="h-4 w-4" />
+                Annuler
+              </Button>
+            )}
             <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)} className="gap-2">
               <Trash2 className="h-4 w-4" />
               Supprimer
@@ -736,6 +756,37 @@ export function EventDetailsPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isDeleting ? 'Suppression...' : 'Supprimer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel Event Confirmation Dialog */}
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-orange-600">
+              <Ban className="h-5 w-5" />
+              Annuler l'événement
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Êtes-vous sûr de vouloir annuler "{event.title}" ?
+              </p>
+              <p className="font-medium text-orange-600">
+                Attention : Cette action marquera l'événement comme annulé. Les invités, tâches et 
+                autres données seront conservées mais l'événement ne sera plus actif.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Retour</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancel}
+              disabled={isCancelling}
+              className="bg-orange-600 text-white hover:bg-orange-700"
+            >
+              {isCancelling ? 'Annulation...' : 'Confirmer l\'annulation'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -33,15 +33,7 @@ export function Header({
       <SearchBar />
 
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate("/events")}
-          className="h-9 w-9 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-          aria-label="Calendrier"
-        >
-          <CalendarDays className="h-6 w-6" />
-        </Button>
+        
 
         <NotificationsDropdown />
 

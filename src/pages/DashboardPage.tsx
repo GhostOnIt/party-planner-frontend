@@ -11,6 +11,7 @@ import { EventsByTypeChart } from "@/components/charts/events-by-type-chart"
 import { BannersCarousel } from "@/components/features/dashboard/banners-carousel"
 import { Plus } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
+import { useActiveSpots, useTrackClick, useVote } from "@/hooks/useCommunication"
 
 export function DashboardPage() {
   const navigate = useNavigate()
@@ -19,9 +20,21 @@ export function DashboardPage() {
   const [filter, setFilter] = useState("all")
   const [eventTypeFilter, setEventTypeFilter] = useState("all")
   const [customRange, setCustomRange] = useState<{ start: Date; end: Date } | undefined>(undefined)
-  const [showPromo, setShowPromo] = useState(true)
+
+  // Fetch active spots for dashboard
+  const { data: activeSpots = [] } = useActiveSpots("dashboard")
+  const { mutate: trackClick } = useTrackClick()
+  const { mutate: vote } = useVote()
 
   const userName = user?.name || "Utilisateur"
+
+  const handleSpotClick = (spotId: string, buttonType: "primary" | "secondary") => {
+    trackClick({ spotId, buttonType })
+  }
+
+  const handleSpotVote = (spotId: string, optionId: string) => {
+    vote({ spotId, optionId })
+  }
 
   const handleFilterChange = (newFilter: string, customRangeParam?: { start: Date; end: Date }) => {
     setFilter(newFilter)
@@ -35,17 +48,9 @@ export function DashboardPage() {
   return (
     <div>
       <BannersCarousel
-        showPromo={showPromo}
-        onPromoDismiss={() => setShowPromo(false)}
-        promoCardProps={{
-          type: "banner",
-          badge: "En direct",
-          badgeType: "live",
-          title: "Party Planner Summit 2026",
-          description: "Rejoignez plus de 2 000 organisateurs d'événements pour notre conférence annuelle. En direct depuis Paris.",
-          primaryButton: { label: "Rejoindre", href: "https://example.com/stream" },
-          secondaryButton: { label: "Voir les détails", href: "https://example.com/details" },
-        }}
+        spots={activeSpots}
+        onSpotClick={handleSpotClick}
+        onSpotVote={handleSpotVote}
       />
       <div className="flex items-start justify-between mb-6">
         <div>

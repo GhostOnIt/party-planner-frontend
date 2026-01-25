@@ -250,3 +250,32 @@ export function useDuplicateEvent() {
     },
   });
 }
+
+// Cancel event
+export function useCancelEvent() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (eventId: number | string) => {
+      const response = await api.put<Event>(`/events/${eventId}`, { status: 'cancelled' });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['events', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      toast({
+        title: 'Événement annulé',
+        description: 'L\'événement a été annulé avec succès.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Erreur',
+        description: 'Une erreur est survenue lors de l\'annulation de l\'événement.',
+        variant: 'destructive',
+      });
+    },
+  });
+}

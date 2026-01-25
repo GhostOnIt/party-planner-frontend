@@ -1,13 +1,23 @@
-import { UserPlus, ArrowRight } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { useAdminUsers } from "@/hooks/useAdmin"
-import { format, parseISO } from "date-fns"
+import { format, parseISO, subHours, isAfter } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useNavigate } from "react-router-dom"
+import { useMemo } from "react"
 
 export function RecentUsersCard() {
-  const { data: usersData, isLoading, error } = useAdminUsers({ per_page: 4 })
+  const { data: usersData, isLoading, error } = useAdminUsers({ per_page: 50 })
   const navigate = useNavigate()
+
+  // Filter users registered in the last 48 hours
+  const users = useMemo(() => {
+    if (!usersData?.data) return []
+    const threshold = subHours(new Date(), 48)
+    return usersData.data.filter((user) => 
+      isAfter(parseISO(user.created_at), threshold)
+    )
+  }, [usersData?.data])
 
   if (isLoading) {
     return (
@@ -41,12 +51,10 @@ export function RecentUsersCard() {
     )
   }
 
-  const users = usersData?.data || []
-
   return (
     <div className="bg-white rounded-xl p-5 border border-[#e5e7eb]">
       <div className="flex items-center justify-between mb-1">
-        <h3 className="font-semibold text-[#1a1a2e]">Inscriptions récentes</h3>
+        <h3 className="font-semibold text-[#1a1a2e]">Nouvelles inscriptions</h3>
         <button
           onClick={() => navigate("/admin/users")}
           className="flex items-center gap-1 text-sm text-[#6b7280] hover:text-[#1a1a2e] transition-colors"
@@ -55,7 +63,7 @@ export function RecentUsersCard() {
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
-      <p className="text-sm text-[#6b7280] mb-4">Derniers utilisateurs inscrits</p>
+      <p className="text-sm text-[#6b7280] mb-4">Utilisateurs inscrits dans les dernières 48h</p>
 
       <div className="space-y-3 max-h-[320px] overflow-y-auto">
         {users.length > 0 ? (
@@ -92,7 +100,7 @@ export function RecentUsersCard() {
             )
           })
         ) : (
-          <p className="text-center text-[#6b7280] py-4">Aucun utilisateur récent.</p>
+          <p className="text-center text-[#6b7280] py-4">Aucune inscription dans les dernières 48h.</p>
         )}
       </div>
     </div>

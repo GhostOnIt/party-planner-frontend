@@ -14,6 +14,7 @@ import {
   FileCheck,
   Layers,
   LogOut,
+  Megaphone,
   LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -47,6 +48,7 @@ const adminNavItems: NavItem[] = [
   { to: '/admin/subscriptions', icon: FileText, labelKey: 'nav.adminSubscriptions' },
   { to: '/admin/plans', icon: Layers, labelKey: 'nav.adminPlans' },
   { to: '/admin/templates', icon: FileCheck, labelKey: 'nav.adminTemplates' },
+  { to: '/admin/communication', icon: Megaphone, labelKey: 'nav.adminCommunication' },
   { to: '/admin/activity-logs', icon: Activity, labelKey: 'nav.adminActivityLogs' },
 ];
 

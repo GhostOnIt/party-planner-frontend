@@ -3,8 +3,15 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { TrialBanner } from "./trial-banner"
 import { PromoCard } from "./promo-card"
 import { useAvailableTrial } from "@/hooks/useAdminPlans"
+import type { CommunicationSpot } from "@/types/communication"
 
 interface BannersCarouselProps {
+  // Dynamic spots from API
+  spots?: CommunicationSpot[]
+  onSpotDismiss?: (spotId: string) => void
+  onSpotClick?: (spotId: string, buttonType: "primary" | "secondary") => void
+  onSpotVote?: (spotId: string, optionId: string) => void
+  // Legacy props for backwards compatibility
   showPromo?: boolean
   onPromoDismiss?: () => void
   promoCardProps?: {
@@ -29,8 +36,14 @@ interface BannersCarouselProps {
 
 const AUTO_PLAY_INTERVAL = 5000 // 5 secondes
 
+type SlideType = "trial" | "promo" | `spot-${string}`
+
 export function BannersCarousel({
-  showPromo = true,
+  spots = [],
+  onSpotDismiss,
+  onSpotClick,
+  onSpotVote,
+  showPromo = false,
   onPromoDismiss,
   promoCardProps,
 }: BannersCarouselProps) {
@@ -38,6 +51,7 @@ export function BannersCarousel({
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isHovered, setIsHovered] = useState(false)
   const [trialVisible, setTrialVisible] = useState(true)
+  const [dismissedSpots, setDismissedSpots] = useState<Set<string>>(new Set())
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Vérifier si le trial est disponible
@@ -46,16 +60,28 @@ export function BannersCarousel({
     return trialData?.available && trialData?.data && trialVisible
   }, [trialData, isLoadingTrial, trialVisible])
 
-  // Vérifier si la promo est disponible
-  const hasPromo = showPromo
+  // Vérifier si la promo legacy est disponible
+  const hasLegacyPromo = showPromo && promoCardProps
+
+  // Filtrer les spots non dismissés
+  const activeSpots = useMemo(() => {
+    return spots.filter(spot => !dismissedSpots.has(spot.id))
+  }, [spots, dismissedSpots])
 
   // Créer un tableau des slides disponibles
   const availableSlides = useMemo(() => {
-    const slides: Array<"trial" | "promo"> = []
+    const slides: SlideType[] = []
     if (hasTrial) slides.push("trial")
-    if (hasPromo) slides.push("promo")
+    // Add dynamic spots
+    activeSpots.forEach(spot => {
+      slides.push(`spot-${spot.id}` as SlideType)
+    })
+    // Add legacy promo if no dynamic spots and showPromo is true
+    if (hasLegacyPromo && activeSpots.length === 0) {
+      slides.push("promo")
+    }
     return slides
-  }, [hasTrial, hasPromo])
+  }, [hasTrial, activeSpots, hasLegacyPromo])
 
   const totalSlides = availableSlides.length
 
@@ -116,12 +142,51 @@ export function BannersCarousel({
     onPromoDismiss?.()
   }
 
+  const handleSpotDismiss = (spotId: string) => {
+    setDismissedSpots(prev => new Set(prev).add(spotId))
+    onSpotDismiss?.(spotId)
+  }
+
   // Si aucun slide disponible, ne rien afficher
   if (totalSlides === 0) {
     return null
   }
 
   const currentSlide = availableSlides[currentIndex]
+
+  // Helper to get spot from slide type
+  const getSpotFromSlide = (slide: SlideType): CommunicationSpot | undefined => {
+    if (slide.startsWith("spot-")) {
+      const spotId = slide.replace("spot-", "")
+      return activeSpots.find(s => s.id === spotId)
+    }
+    return undefined
+  }
+
+  // Convert spot to PromoCard props
+  const spotToPromoProps = (spot: CommunicationSpot) => {
+    const totalVotes = spot.stats.votes 
+      ? Object.values(spot.stats.votes).reduce((a, b) => a + b, 0)
+      : 0
+
+    return {
+      type: spot.type,
+      badge: spot.badge,
+      badgeType: spot.badgeType,
+      title: spot.title,
+      description: spot.description,
+      primaryButton: spot.primaryButton,
+      secondaryButton: spot.secondaryButton,
+      pollQuestion: spot.pollQuestion,
+      pollOptions: spot.pollOptions?.map(opt => ({
+        id: opt.id,
+        label: opt.label,
+        votes: spot.stats.votes?.[opt.id] || 0,
+      })),
+      onVote: (optionId: string) => onSpotVote?.(spot.id, optionId),
+      onButtonClick: (buttonType: "primary" | "secondary") => onSpotClick?.(spot.id, buttonType),
+    }
+  }
 
   return (
     <div
@@ -146,8 +211,27 @@ export function BannersCarousel({
             </div>
           )}
 
-          {/* Promo Card */}
-          {hasPromo && (
+          {/* Dynamic Spots */}
+          {activeSpots.map(spot => (
+            <div
+              key={spot.id}
+              className={`transition-opacity duration-500 ease-in-out [&>div]:rounded-2xl ${
+                currentSlide === `spot-${spot.id}`
+                  ? "opacity-100 pointer-events-auto z-10"
+                  : "opacity-0 pointer-events-none z-0"
+              }`}
+            >
+              <PromoCard
+                {...spotToPromoProps(spot)}
+                dismissible={true}
+                onDismiss={() => handleSpotDismiss(spot.id)}
+                spotId={spot.id}
+              />
+            </div>
+          ))}
+
+          {/* Legacy Promo Card */}
+          {hasLegacyPromo && activeSpots.length === 0 && (
             <div
               className={`transition-opacity duration-500 ease-in-out [&>div]:rounded-2xl ${
                 currentSlide === "promo"

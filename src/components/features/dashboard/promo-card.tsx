@@ -26,16 +26,19 @@ interface PromoCardProps {
   onVote?: (optionId: string) => void
   onDismiss?: () => void
   dismissible?: boolean
+  // Tracking props
+  spotId?: string
+  onButtonClick?: (buttonType: "primary" | "secondary") => void
 }
 
 export function PromoCard({
   type = "banner",
-  badge = "Live Now",
+  badge,
   badgeType = "live",
-  title = "Tech Summit 2024",
-  description = "Join over 2,000 attendees in our biggest annual technology conference.",
-  primaryButton = { label: "Join Stream", href: "#" },
-  secondaryButton = { label: "View Details", href: "#" },
+  title,
+  description,
+  primaryButton,
+  secondaryButton,
   pollQuestion = "Quel type d'événement préférez-vous organiser ?",
   pollOptions = [
     { id: "1", label: "Mariage", votes: 45 },
@@ -46,6 +49,8 @@ export function PromoCard({
   onVote,
   onDismiss,
   dismissible = true,
+  spotId,
+  onButtonClick,
 }: PromoCardProps) {
   const [hasVoted, setHasVoted] = useState(false)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
@@ -61,9 +66,15 @@ export function PromoCard({
     onVote?.(optionId)
   }
 
-  const handleButtonClick = (href: string, label: string) => {
-    console.log(`[PromoCard] Button clicked: ${label}, href: ${href}`)
-    window.open(href, "_blank", "noopener,noreferrer")
+  const handleButtonClick = (href: string, buttonType: "primary" | "secondary") => {
+    // Track click if spotId is provided
+    if (spotId && onButtonClick) {
+      onButtonClick(buttonType)
+    }
+    // Open the link
+    if (href && href !== "#") {
+      window.open(href, "_blank", "noopener,noreferrer")
+    }
   }
 
   const totalVotes = pollOptions.reduce((sum, opt) => sum + opt.votes, 0)
@@ -94,30 +105,36 @@ export function PromoCard({
 
       {type === "banner" ? (
         <div className="max-w-2xl">
-          <div
-            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium mb-4 ${getBadgeStyles()}`}
-          >
-            {badgeType === "live" && <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />}
-            {badge}
-          </div>
+          {badge && (
+            <div
+              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium mb-4 ${getBadgeStyles()}`}
+            >
+              {badgeType === "live" && <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />}
+              {badge}
+            </div>
+          )}
 
           <h3 className="text-2xl font-bold text-white mb-2">{title}</h3>
           <p className="text-white/80 mb-6 leading-relaxed">{description}</p>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => handleButtonClick(primaryButton.href, primaryButton.label)}
-              className="px-5 py-2.5 bg-white text-[#4F46E5] font-semibold rounded-lg hover:bg-white/90 transition-colors flex items-center gap-2"
-            >
-              {primaryButton.label}
-            </button>
-            <button
-              onClick={() => handleButtonClick(secondaryButton.href, secondaryButton.label)}
-              className="px-5 py-2.5 bg-white/20 text-white font-semibold rounded-lg hover:bg-white/30 transition-colors flex items-center gap-2"
-            >
-              {secondaryButton.label}
-              <ExternalLink className="w-4 h-4" />
-            </button>
+            {primaryButton?.label && (
+              <button
+                onClick={() => handleButtonClick(primaryButton.href, "primary")}
+                className="px-5 py-2.5 bg-white text-[#4F46E5] font-semibold rounded-lg hover:bg-white/90 transition-colors flex items-center gap-2"
+              >
+                {primaryButton.label}
+              </button>
+            )}
+            {secondaryButton?.label && (
+              <button
+                onClick={() => handleButtonClick(secondaryButton.href, "secondary")}
+                className="px-5 py-2.5 bg-white/20 text-white font-semibold rounded-lg hover:bg-white/30 transition-colors flex items-center gap-2"
+              >
+                {secondaryButton.label}
+                <ExternalLink className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       ) : (

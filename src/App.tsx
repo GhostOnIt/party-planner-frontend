@@ -52,6 +52,7 @@ const AdminSubscriptionsPage = lazy(() => import('@/pages/admin').then(m => ({ d
 const AdminPlansPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminPlansPage })));
 const AdminTemplatesPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminTemplatesPage })));
 const AdminActivityLogsPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminActivityLogsPage })));
+const AdminCommunicationPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminCommunicationPage })));
 
 // Composant de chargement
 function PageLoader() {
@@ -132,6 +133,7 @@ function App() {
                 <Route path="/admin/plans" element={<AdminPlansPage />} />
                 <Route path="/admin/templates" element={<AdminTemplatesPage />} />
                 <Route path="/admin/activity-logs" element={<AdminActivityLogsPage />} />
+                <Route path="/admin/communication" element={<AdminCommunicationPage />} />
               </Route>
             </Route>
 

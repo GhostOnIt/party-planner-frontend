@@ -287,6 +287,7 @@ export interface PaginatedResponse<T> {  data: T[];  current_page: number;  last
 // Export dashboard types
 export * from './dashboard';
 export * from './admin-dashboard';
+export * from './communication';
 
 // Guest Statistics
 export interface GuestStats {
