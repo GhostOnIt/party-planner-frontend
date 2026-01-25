@@ -272,7 +272,7 @@ export function useLoginSpots(enabled = true) {
 export function useTrackClick() {
   return useMutation({
     mutationFn: async ({ spotId, buttonType }: { spotId: string; buttonType: 'primary' | 'secondary' }): Promise<void> => {
-      await api.post(`/communication/${spotId}/track`, { buttonType });
+      await api.post(`/communication/${spotId}/click`, { buttonType });
     },
   });
 }

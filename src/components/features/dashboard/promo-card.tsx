@@ -1,5 +1,6 @@
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { ExternalLink, X, Check } from "lucide-react"
+import { useTrackView, useTrackClick } from "@/hooks/useCommunication"
 
 interface PollOption {
   id: string
@@ -54,6 +55,20 @@ export function PromoCard({
 }: PromoCardProps) {
   const [hasVoted, setHasVoted] = useState(false)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
+  const viewTracked = useRef(false)
+
+  // Tracking hooks
+  const { mutate: trackView } = useTrackView()
+  const { mutate: trackClick } = useTrackClick()
+
+  // Track view on mount (only once per spotId)
+  useEffect(() => {
+    if (spotId && !viewTracked.current) {
+      viewTracked.current = true
+      trackView(spotId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spotId])
 
   const handleDismiss = () => {
     onDismiss?.()
@@ -68,8 +83,9 @@ export function PromoCard({
 
   const handleButtonClick = (href: string, buttonType: "primary" | "secondary") => {
     // Track click if spotId is provided
-    if (spotId && onButtonClick) {
-      onButtonClick(buttonType)
+    if (spotId) {
+      trackClick({ spotId, buttonType })
+      onButtonClick?.(buttonType)
     }
     // Open the link
     if (href && href !== "#") {

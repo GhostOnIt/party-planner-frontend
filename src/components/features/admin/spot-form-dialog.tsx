@@ -5,6 +5,7 @@ import {
   Upload,
   X,
 } from 'lucide-react';
+import { resolveUrl } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -95,7 +96,7 @@ export function SpotFormDialog({
         targetRoles: spot.targetRoles || [],
         targetLanguages: spot.targetLanguages || [],
       });
-      setImagePreview(spot.image || null);
+      setImagePreview(spot.image ? resolveUrl(spot.image) : null);
     } else {
       setFormData(defaultFormData);
       setImagePreview(null);
@@ -407,25 +408,27 @@ export function SpotFormDialog({
                   <div className="space-y-2">
                     <Label>Image (optionnelle)</Label>
                     {imagePreview ? (
-                      <div className="relative inline-block">
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="h-32 w-auto rounded object-cover"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute -top-2 -right-2 h-6 w-6"
-                          onClick={removeImage}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
+                      <div className="flex flex-col items-start gap-2">
+                        <div className="relative">
+                          <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="max-h-48 max-w-full rounded object-contain"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute -top-2 -right-2 h-6 w-6"
+                            onClick={removeImage}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed px-4 py-3 hover:bg-muted">
+                      <div className="flex flex-col items-start gap-2">
+                        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed px-4 py-3 hover:bg-muted w-full justify-center">
                           <Upload className="h-5 w-5 text-muted-foreground" />
                           <span className="text-sm text-muted-foreground">
                             Choisir une image

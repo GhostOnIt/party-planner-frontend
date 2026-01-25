@@ -4,16 +4,16 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
-import { Eye, EyeOff, CheckCircle } from 'lucide-react';
-import logo from '@/assets/logo.png';
+import { motion } from 'framer-motion';
+import { Eye, EyeOff, CheckCircle, Mail, Lock, ArrowRight, AlertCircle, Check } from 'lucide-react';
 import api from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getApiErrorMessage } from '@/api/client';
 import { strongPasswordSchema } from '@/lib/passwordValidation';
+import { AuthPromoPanel } from '@/components/auth/AuthPromoPanel';
 
 const resetPasswordSchema = z
   .object({
@@ -28,6 +28,12 @@ const resetPasswordSchema = z
 
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
+const passwordRequirements = [
+  { id: 1, label: "Au moins 8 caractères", check: (p: string) => p.length >= 8 },
+  { id: 2, label: "Une lettre majuscule", check: (p: string) => /[A-Z]/.test(p) },
+  { id: 3, label: "Un chiffre", check: (p: string) => /[0-9]/.test(p) },
+];
+
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
@@ -40,6 +46,7 @@ export function ResetPasswordPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -47,6 +54,10 @@ export function ResetPasswordPage() {
       email: emailFromUrl || '',
     },
   });
+
+  const password = watch('password', '');
+  const confirmPassword = watch('password_confirmation', '');
+  const passwordsMatch = password && confirmPassword && password === confirmPassword;
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: async (data: ResetPasswordFormValues) => {
@@ -65,134 +76,268 @@ export function ResetPasswordPage() {
     mutate(data);
   };
 
+  // Invalid token state
   if (!token) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-destructive">Lien invalide</CardTitle>
-            <CardDescription>
-              Le lien de reinitialisation est invalide ou a expire.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
+      <div className="flex min-h-screen">
+        {/* Left Panel - Promo */}
+        <div className="hidden lg:block lg:w-1/2 xl:w-[55%]">
+          <AuthPromoPanel />
+        </div>
+
+        {/* Right Panel - Error */}
+        <div className="flex w-full lg:w-1/2 xl:w-[45%] flex-col items-center justify-center bg-background px-6 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full max-w-md space-y-8 text-center"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10"
+            >
+              <AlertCircle className="h-8 w-8 text-destructive" />
+            </motion.div>
+
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold text-foreground">
+                Lien invalide
+              </h1>
+              <p className="text-muted-foreground">
+                Le lien de réinitialisation est invalide ou a expiré.
+              </p>
+            </div>
+
             <Link to="/forgot-password">
-              <Button>Demander un nouveau lien</Button>
+              <Button className="w-full h-12">
+                Demander un nouveau lien
+              </Button>
             </Link>
-          </CardContent>
-        </Card>
+          </motion.div>
+        </div>
       </div>
     );
   }
 
+  // Success state
   if (resetSuccess) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
-              <CheckCircle className="h-6 w-6 text-success" />
+      <div className="flex min-h-screen">
+        {/* Left Panel - Promo */}
+        <div className="hidden lg:block lg:w-1/2 xl:w-[55%]">
+          <AuthPromoPanel />
+        </div>
+
+        {/* Right Panel - Success */}
+        <div className="flex w-full lg:w-1/2 xl:w-[45%] flex-col items-center justify-center bg-background px-6 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full max-w-md space-y-8 text-center"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100"
+            >
+              <CheckCircle className="h-8 w-8 text-emerald-600" />
+            </motion.div>
+
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold text-foreground">
+                Mot de passe réinitialisé !
+              </h1>
+              <p className="text-muted-foreground">
+                Votre mot de passe a été modifié avec succès.
+              </p>
             </div>
-            <CardTitle>Mot de passe reinitialise !</CardTitle>
-            <CardDescription>
-              Votre mot de passe a ete modifie avec succes.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
+
             <Link to="/login">
-              <Button className="w-full">Se connecter</Button>
+              <Button className="w-full h-12 bg-gradient-to-r from-primary to-primary/80">
+                Se connecter
+              </Button>
             </Link>
-          </CardContent>
-        </Card>
+          </motion.div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <img src={logo} alt="Party Planner" className="mx-auto mb-4 h-12 w-12 object-contain" />
-          <CardTitle>Nouveau mot de passe</CardTitle>
-          <CardDescription>
-            Choisissez un nouveau mot de passe pour votre compte
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <div className="flex min-h-screen">
+      {/* Left Panel - Promo */}
+      <div className="hidden lg:block lg:w-1/2 xl:w-[55%]">
+        <AuthPromoPanel />
+      </div>
+
+      {/* Right Panel - Form */}
+      <div className="flex w-full lg:w-1/2 xl:w-[45%] flex-col items-center justify-center bg-background px-6 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md space-y-6"
+        >
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex justify-center mb-6">
+            <div className="flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80">
+                <span className="text-xl">🎉</span>
+              </div>
+              <span className="text-xl font-bold text-foreground">Party Planner</span>
+            </div>
+          </div>
+
+          {/* Header */}
+          <div className="text-center space-y-2">
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-3xl font-bold text-foreground"
+            >
+              Nouveau mot de passe
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-muted-foreground"
+            >
+              Choisissez un nouveau mot de passe pour votre compte
+            </motion.p>
+          </div>
+
+          {/* Form */}
+          <motion.form
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-4"
+          >
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
               </Alert>
             )}
 
+            {/* Email Field */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="votre@email.com"
-                {...register('email')}
-                aria-invalid={!!errors.email}
-              />
+              <Label htmlFor="email" className="text-sm font-medium">
+                Email
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="votre@email.com"
+                  {...register('email')}
+                  aria-invalid={!!errors.email}
+                  className="pl-10 h-12 bg-secondary/50 border-0 focus-visible:ring-2 focus-visible:ring-primary"
+                />
+              </div>
               {errors.email && (
                 <p className="text-sm text-destructive">{errors.email.message}</p>
               )}
             </div>
 
+            {/* Password Field */}
             <div className="space-y-2">
-              <Label htmlFor="password">Nouveau mot de passe</Label>
+              <Label htmlFor="password" className="text-sm font-medium">
+                Nouveau mot de passe
+              </Label>
               <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Minimum 8 caracteres"
+                  placeholder="Minimum 8 caractères"
                   {...register('password')}
                   aria-invalid={!!errors.password}
+                  className="pl-10 pr-10 h-12 bg-secondary/50 border-0 focus-visible:ring-2 focus-visible:ring-primary"
                 />
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </Button>
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
+              
+              {/* Password Requirements */}
+              {password && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="flex flex-wrap gap-2 pt-2"
+                >
+                  {passwordRequirements.map((req) => (
+                    <div
+                      key={req.id}
+                      className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full transition-colors ${
+                        req.check(password)
+                          ? "bg-emerald-500/10 text-emerald-600"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      <Check className="h-3 w-3" />
+                      {req.label}
+                    </div>
+                  ))}
+                </motion.div>
+              )}
               {errors.password && (
                 <p className="text-sm text-destructive">{errors.password.message}</p>
               )}
             </div>
 
+            {/* Confirm Password Field */}
             <div className="space-y-2">
-              <Label htmlFor="password_confirmation">Confirmer le mot de passe</Label>
+              <Label htmlFor="password_confirmation" className="text-sm font-medium">
+                Confirmer le mot de passe
+              </Label>
               <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   id="password_confirmation"
                   type={showConfirmPassword ? 'text' : 'password'}
                   placeholder="Confirmez votre mot de passe"
                   {...register('password_confirmation')}
                   aria-invalid={!!errors.password_confirmation}
+                  className={`pl-10 pr-10 h-12 bg-secondary/50 border-0 focus-visible:ring-2 ${
+                    confirmPassword && !passwordsMatch
+                      ? "focus-visible:ring-destructive ring-2 ring-destructive"
+                      : "focus-visible:ring-primary"
+                  }`}
                 />
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </Button>
+                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+                {passwordsMatch && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute right-10 top-1/2 -translate-y-1/2"
+                  >
+                    <Check className="h-5 w-5 text-emerald-600" />
+                  </motion.div>
+                )}
               </div>
+              {confirmPassword && !passwordsMatch && (
+                <p className="text-xs text-destructive">Les mots de passe ne correspondent pas</p>
+              )}
               {errors.password_confirmation && (
                 <p className="text-sm text-destructive">
                   {errors.password_confirmation.message}
@@ -200,18 +345,43 @@ export function ResetPasswordPage() {
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? 'Reinitialisation...' : 'Reinitialiser le mot de passe'}
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="w-full h-12 bg-gradient-to-r from-primary to-primary/80 hover:opacity-90 transition-opacity text-base font-medium group"
+            >
+              {isPending ? (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full"
+                />
+              ) : (
+                <>
+                  Réinitialiser le mot de passe
+                  <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </Button>
+          </motion.form>
 
-            <div className="text-center text-sm text-muted-foreground">
-              <Link to="/login" className="text-primary hover:underline">
-                Retour a la connexion
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+          {/* Back to Login */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="text-center text-sm text-muted-foreground"
+          >
+            <Link
+              to="/login"
+              className="text-primary hover:text-primary/80 font-semibold transition-colors"
+            >
+              Retour à la connexion
+            </Link>
+          </motion.p>
+        </motion.div>
+      </div>
     </div>
   );
 }
