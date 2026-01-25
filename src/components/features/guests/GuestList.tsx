@@ -27,7 +27,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RsvpBadge } from './RsvpBadge';
 import type { Guest } from '@/types';
@@ -150,8 +149,7 @@ export function GuestList({
               <TableCell>
                 {guest.plus_one ? (
                   <div>
-                    <Badge variant="outline">+1</Badge>
-                    {guest.plus_one_name && (
+                     {guest.plus_one_name && (
                       <p className="text-xs text-muted-foreground mt-1">{guest.plus_one_name}</p>
                     )}
                   </div>
@@ -183,12 +181,12 @@ export function GuestList({
                       <Pencil className="mr-2 h-4 w-4" />
                       Modifier
                     </DropdownMenuItem>
-                    {guest.invitation_sent_at && (
+                     
                       <DropdownMenuItem onClick={() => onViewInvitationDetails(guest)}>
                         <Eye className="mr-2 h-4 w-4" />
                         Voir les détails
                       </DropdownMenuItem>
-                    )}
+                    
                     {guest.email && !['accepted', 'declined'].includes(guest.rsvp_status) && (
                       <DropdownMenuItem onClick={() => onSendInvitation(guest)}>
                         <Mail className="mr-2 h-4 w-4" />

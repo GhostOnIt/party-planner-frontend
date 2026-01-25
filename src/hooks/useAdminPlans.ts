@@ -6,6 +6,7 @@ import api from '@/api/client';
 export interface Plan {
   id: number;
   name: string;
+  title: string | null;
   slug: string;
   description: string | null;
   price: number;

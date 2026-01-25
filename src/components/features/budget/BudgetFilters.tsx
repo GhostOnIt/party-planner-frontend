@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/select';
 import { SearchInput } from '@/components/forms/search-input';
 import { categoryConfig } from './CategoryBadge';
+import { useBudgetCategories } from '@/hooks/useSettings';
 import type { BudgetFilters as BudgetFiltersType, BudgetCategory } from '@/types';
 
 interface BudgetFiltersProps {
@@ -16,7 +17,7 @@ interface BudgetFiltersProps {
   onFiltersChange: (filters: BudgetFiltersType) => void;
 }
 
-const categories: { value: BudgetCategory; label: string }[] = [
+const defaultCategories: { value: BudgetCategory; label: string }[] = [
   { value: 'location', label: categoryConfig.location.label },
   { value: 'catering', label: categoryConfig.catering.label },
   { value: 'decoration', label: categoryConfig.decoration.label },
@@ -31,9 +32,20 @@ const paidStatuses = [
   { value: 'false', label: 'Non paye' },
 ];
 
-export { categories as budgetCategories };
+export { defaultCategories as budgetCategories };
 
 export function BudgetFilters({ filters, onFiltersChange }: BudgetFiltersProps) {
+  // Load user's custom budget categories
+  const { data: userBudgetCategories } = useBudgetCategories();
+  
+  // Use user's categories if available, otherwise fallback to default
+  const categories = userBudgetCategories && userBudgetCategories.length > 0
+    ? userBudgetCategories.map((cat: { slug: string; name: string }) => ({
+        value: cat.slug as BudgetCategory,
+        label: cat.name,
+      }))
+    : defaultCategories;
+  
   const hasFilters = filters.category || filters.paid !== undefined || filters.search;
 
   const handleSearchChange = (value: string) => {
@@ -76,7 +88,7 @@ export function BudgetFilters({ filters, onFiltersChange }: BudgetFiltersProps) 
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Toutes</SelectItem>
-          {categories.map((cat) => (
+          {categories.map((cat: { value: BudgetCategory; label: string }) => (
             <SelectItem key={cat.value} value={cat.value}>
               {cat.label}
             </SelectItem>

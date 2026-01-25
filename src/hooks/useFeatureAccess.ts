@@ -5,13 +5,19 @@ import {
   useBudgetPermissions,
   useCollaboratorsPermissions,
 } from './usePermissions';
+import { useAuthStore } from '@/stores/authStore';
 
 /**
  * Hook combinant entitlements (abonnement) et permissions (rôles)
  * Vérifie d'abord si la fonctionnalité est disponible via l'abonnement du propriétaire,
  * puis vérifie les permissions de rôle de l'utilisateur connecté
+ * 
+ * Les administrateurs ont accès à toutes les fonctionnalités, indépendamment des abonnements et permissions
  */
 export function useFeatureAccess(eventId: string) {
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'admin';
+
   // Récupérer les entitlements du propriétaire de l'événement (pas de l'utilisateur connecté)
   // Cela permet aux collaborateurs d'accéder aux fonctionnalités si le propriétaire a un abonnement actif
   const { data: entitlements, isLoading: isLoadingEntitlements } = useEventEntitlements(eventId);
@@ -24,6 +30,8 @@ export function useFeatureAccess(eventId: string) {
 
   // Helper pour vérifier une fonctionnalité
   const canUseFeature = (featureKey: string): boolean => {
+    // Les admins ont accès à toutes les fonctionnalités
+    if (isAdmin) return true;
     if (!entitlements) return false;
     return (
       entitlements.features[featureKey as keyof typeof entitlements.features] ?? false
@@ -32,25 +40,88 @@ export function useFeatureAccess(eventId: string) {
 
   // Helper pour obtenir une limite
   const getLimit = (limitKey: string): number => {
+    // Les admins ont des limites illimitées
+    if (isAdmin) return -1;
     if (!entitlements) return 0;
     return entitlements.limits[limitKey as keyof typeof entitlements.limits] ?? 0;
   };
 
   // Helper pour vérifier si une limite est illimitée
   const isUnlimited = (limitKey: string): boolean => {
+    // Les admins ont toujours des limites illimitées
+    if (isAdmin) return true;
     return getLimit(limitKey) === -1;
   };
 
   // Accès combiné : fonctionnalité + permission
-  const canAccessGuests =
-    canUseFeature('guests.manage') && guestPermissions.hasAnyPermission;
-  const canAccessTasks =
-    canUseFeature('tasks.enabled') && tasksPermissions.hasAnyPermission;
-  const canAccessBudget =
-    canUseFeature('budget.enabled') && budgetPermissions.hasAnyPermission;
-  const canAccessCollaborators =
-    canUseFeature('collaborators.manage') && collaboratorsPermissions.hasAnyPermission;
+  // Pour les admins, on bypass toutes les vérifications
+  const canAccessGuests = isAdmin
+    ? true
+    : canUseFeature('guests.manage') && guestPermissions.hasAnyPermission;
+  const canAccessTasks = isAdmin
+    ? true
+    : canUseFeature('tasks.enabled') && tasksPermissions.hasAnyPermission;
+  const canAccessBudget = isAdmin
+    ? true
+    : canUseFeature('budget.enabled') && budgetPermissions.hasAnyPermission;
+  const canAccessCollaborators = isAdmin
+    ? true
+    : canUseFeature('collaborators.manage') && collaboratorsPermissions.hasAnyPermission;
 
+  // Si admin, retourner tous les accès à true
+  if (isAdmin) {
+    return {
+      entitlements,
+      isLoading,
+      // Helpers généraux
+      canUseFeature: () => true,
+      getLimit: () => -1,
+      isUnlimited: () => true,
+      // Accès combinés par fonctionnalité - tous à true pour les admins
+      guests: {
+        canAccess: true,
+        canView: true,
+        canCreate: true,
+        canEdit: true,
+        canDelete: true,
+        canImport: true,
+        canExport: true,
+        maxPerEvent: -1,
+        isUnlimited: true,
+        permissions: guestPermissions,
+      },
+      tasks: {
+        canAccess: true,
+        canView: true,
+        canCreate: true,
+        canEdit: true,
+        canDelete: true,
+        permissions: tasksPermissions,
+      },
+      budget: {
+        canAccess: true,
+        canView: true,
+        canCreate: true,
+        canEdit: true,
+        canDelete: true,
+        canExport: true,
+        permissions: budgetPermissions,
+      },
+      collaborators: {
+        canAccess: true,
+        canView: true,
+        canInvite: true,
+        canEditRoles: true,
+        canRemove: true,
+        isOwner: collaboratorsPermissions.isOwner,
+        maxPerEvent: -1,
+        isUnlimited: true,
+        permissions: collaboratorsPermissions,
+      },
+    };
+  }
+
+  // Logique normale pour les utilisateurs non-admin
   return {
     entitlements,
     isLoading,

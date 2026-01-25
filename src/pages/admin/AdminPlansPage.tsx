@@ -73,6 +73,7 @@ import type { Plan, PlanFeatures, PlanLimits } from '@/hooks/useAdminPlans';
 
 const planFormSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
+  title: z.string().optional(),
   slug: z.string().optional(),
   description: z.string().optional(),
   price: z.number().min(0, 'Le prix doit etre positif'),
@@ -140,6 +141,7 @@ export function AdminPlansPage() {
     resolver: zodResolver(planFormSchema),
     defaultValues: {
       name: '',
+      title: '',
       slug: '',
       description: '',
       price: 0,
@@ -156,6 +158,7 @@ export function AdminPlansPage() {
   const openCreateForm = () => {
     form.reset({
       name: '',
+      title: '',
       slug: '',
       description: '',
       price: 0,
@@ -185,6 +188,7 @@ export function AdminPlansPage() {
 
     form.reset({
       name: plan.name,
+      title: plan.title || '',
       slug: plan.slug,
       description: plan.description || '',
       price: plan.price,
@@ -231,6 +235,7 @@ export function AdminPlansPage() {
 
     const formData: any = {
       name: data.name,
+      title: data.title || undefined,
       slug: data.slug || undefined,
       description: data.description || undefined,
       price: data.price,
@@ -527,6 +532,18 @@ export function AdminPlansPage() {
                     <Label htmlFor="slug">Slug (auto-genere si vide)</Label>
                     <Input id="slug" {...form.register('slug')} placeholder="pro" />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="title">Titre</Label>
+                  <Input
+                    id="title"
+                    {...form.register('title')}
+                    placeholder="Ex: Essayez Party Planner Pro gratuitement pendant 14 jours"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Titre affiché dans les bannières et promotions (optionnel)
+                  </p>
                 </div>
 
                 <div className="space-y-2">

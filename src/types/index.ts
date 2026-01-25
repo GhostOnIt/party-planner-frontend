@@ -64,6 +64,14 @@ export interface Event {
   } | null;
   created_at: string;
   updated_at: string;
+  // Statistics from backend
+  guests_count?: number;
+  guests_confirmed_count?: number;
+  guests_declined_count?: number;
+  guests_pending_count?: number;
+  tasks_count?: number;
+  tasks_completed_count?: number;
+  budget_spent?: string | number;
 }
 
 // Guest
@@ -216,6 +224,11 @@ export interface Subscription {
   expires_at: string;
   created_at: string;
   updated_at: string;
+  // Relations
+  user?: User;
+  event?: Event & {
+    user?: User;
+  };
   // Computed/legacy fields for compatibility
   plan?: PlanType;
   status?: string;
@@ -226,7 +239,24 @@ export interface Subscription {
 }
 
 // Payment
-export interface Payment {  id: number;  subscription_id: number;  amount: number;  currency: string;  payment_method: PaymentMethod | null;  transaction_reference: string | null;  status: PaymentStatus;  metadata: Record<string, unknown> | null;  created_at: string;  updated_at: string;}
+export interface Payment {
+  id: number;
+  subscription_id: number;
+  amount: number;
+  currency: string;
+  payment_method: PaymentMethod | null;
+  transaction_reference: string | null;
+  status: PaymentStatus;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+  subscription?: Subscription & {
+    user?: User;
+    event?: Event & {
+      user?: User;
+    };
+  };
+}
 
 // Event Template (Admin)
 export interface EventTemplate {
@@ -245,6 +275,7 @@ export interface EventTemplate {
     estimated_cost?: number;
   }>;
   suggested_themes: string[];
+  cover_photo_url: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -252,6 +283,11 @@ export interface EventTemplate {
 
 // API Response Types
 export interface PaginatedResponse<T> {  data: T[];  current_page: number;  last_page: number;  per_page: number;  total: number;  from: number | null;  to: number | null;}
+
+// Export dashboard types
+export * from './dashboard';
+export * from './admin-dashboard';
+export * from './communication';
 
 // Guest Statistics
 export interface GuestStats {
@@ -347,8 +383,8 @@ export interface CreateEventFormData {
   title: string;
   type: EventType;
   date: string;
-  time?: string;
-  location?: string;
+  time: string;
+  location: string;
   description?: string;
   expected_guests?: number;
   budget?: number;
@@ -533,6 +569,8 @@ export interface AdminUser extends User {
 export interface AdminEvent extends Event {
   owner?: User;
   guests_count?: number;
+  tasks_count?: number;
+  budget_items_count?: number;
   subscription?: Subscription;
 }
 
@@ -551,6 +589,8 @@ export interface AdminEventFilters {
   search?: string;
   page?: number;
   per_page?: number;
+  sort_by?: string;
+  sort_dir?: 'asc' | 'desc';
 }
 
 export interface AdminSubscriptionFilters {

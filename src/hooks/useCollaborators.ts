@@ -287,6 +287,8 @@ export function useAvailableRoles() {
         description: string;
         color: string;
         icon: string;
+        is_system?: boolean;
+        id?: number;
       }> }>('/roles/available');
 
       return response.data;

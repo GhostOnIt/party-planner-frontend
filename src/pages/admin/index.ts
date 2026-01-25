@@ -6,3 +6,4 @@ export { AdminSubscriptionsPage } from './AdminSubscriptionsPage';
 export { AdminPlansPage } from './AdminPlansPage';
 export { AdminTemplatesPage } from './AdminTemplatesPage';
 export { AdminActivityLogsPage } from './AdminActivityLogsPage';
+export { AdminCommunicationPage } from './AdminCommunicationPage';
