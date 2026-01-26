@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getApiErrorMessage, getValidationErrors } from '@/api/client';
 import { strongPasswordSchema } from '@/lib/passwordValidation';
 import { AuthPromoPanel } from '@/components/auth/AuthPromoPanel';
+import logo from '@/assets/logo.png';
 
 const registerSchema = z
   .object({
@@ -88,9 +89,7 @@ export function RegisterPage() {
           {/* Mobile Logo */}
           <div className="lg:hidden flex justify-center mb-6">
             <div className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80">
-                <span className="text-xl">🎉</span>
-              </div>
+              <img src={logo} alt="Party Planner" className="h-10 w-10 object-contain" />
               <span className="text-xl font-bold text-foreground">Party Planner</span>
             </div>
           </div>
