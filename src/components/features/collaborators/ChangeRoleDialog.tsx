@@ -136,7 +136,35 @@ export function ChangeRoleDialog({
             <Label>Nouveaux rôles</Label>
             <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
               {/* Custom roles (if any) */}
-              {customRoles.length > 0 && (
+            
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Rôles système
+              </p>
+              {filteredRoles.map((role) => (
+                <div key={role.value} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`role-${role.value}`}
+                    checked={selectedRoles.includes(role.value as CollaboratorRole)}
+                    onChange={(e) =>
+                      handleRoleToggle(role.value as CollaboratorRole, e.target.checked)
+                    }
+                    className="rounded border-gray-300"
+                    disabled={role.value === 'owner'} // Owner role cannot be assigned
+                  />
+                  <label
+                    htmlFor={`role-${role.value}`}
+                    className="text-sm font-medium cursor-pointer flex-1"
+                  >
+                    <div>
+                      <p className="font-medium">{role.label}</p>
+                      <p className="text-xs text-muted-foreground">{role.description}</p>
+                    </div>
+                  </label>
+                </div>
+              ))}
+
+                {customRoles.length > 0 && (
                 <>
                   <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Rôles personnalisés
@@ -172,32 +200,6 @@ export function ChangeRoleDialog({
                 </>
               )}
 
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Rôles système
-              </p>
-              {filteredRoles.map((role) => (
-                <div key={role.value} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id={`role-${role.value}`}
-                    checked={selectedRoles.includes(role.value as CollaboratorRole)}
-                    onChange={(e) =>
-                      handleRoleToggle(role.value as CollaboratorRole, e.target.checked)
-                    }
-                    className="rounded border-gray-300"
-                    disabled={role.value === 'owner'} // Owner role cannot be assigned
-                  />
-                  <label
-                    htmlFor={`role-${role.value}`}
-                    className="text-sm font-medium cursor-pointer flex-1"
-                  >
-                    <div>
-                      <p className="font-medium">{role.label}</p>
-                      <p className="text-xs text-muted-foreground">{role.description}</p>
-                    </div>
-                  </label>
-                </div>
-              ))}
             </div>
             {selectedRoles.length === 0 && selectedCustomRoleIds.length === 0 && (
               <p className="text-sm text-destructive">
