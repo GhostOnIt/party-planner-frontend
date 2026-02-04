@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard,
+  BarChart2,
   Calendar,
   Mail,
   CreditCard,
@@ -41,7 +42,7 @@ const mainNavItems: NavItem[] = [
 ];
 
 const adminNavItems: NavItem[] = [
-  { to: '/admin', icon: LayoutDashboard, labelKey: 'nav.adminDashboard', end: true },
+  { to: '/admin', icon: BarChart2, labelKey: 'nav.stats', end: true },
   { to: '/admin/users', icon: Users, labelKey: 'nav.adminUsers' },
   { to: '/admin/events', icon: Calendar, labelKey: 'nav.adminEvents' },
   { to: '/admin/payments', icon: CreditCard, labelKey: 'nav.adminPayments' },
