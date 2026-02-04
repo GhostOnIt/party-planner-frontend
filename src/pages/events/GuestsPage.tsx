@@ -43,6 +43,7 @@ import {
   type ExportFilters,
 } from '@/components/features/guests';
 import { LimitStatus } from '@/components/features/subscription';
+import { useEvent } from '@/hooks/useEvents';
 import {
   useGuests,
   useGuestStats,
@@ -105,7 +106,18 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
 
   const { data: guestsData, isLoading: isLoadingGuests } = useGuests(eventId!, apiFilters);
   const { data: separateStats, isLoading: isLoadingStats } = useGuestStats(eventId!);
+  const { data: event } = useEvent(eventId!);
   const featureAccess = useFeatureAccess(eventId!);
+
+  // Check-in autorisé à partir de 24 h avant le début de l'événement
+  const canCheckIn =
+    !!event?.date &&
+    (() => {
+      const t = event.time || '00:00';
+      const eventStart = new Date(`${event.date}T${t.length === 5 ? `${t}:00` : t}`);
+      const checkInOpensAt = new Date(eventStart.getTime() - 24 * 60 * 60 * 1000);
+      return Date.now() >= checkInOpensAt.getTime();
+    })();
 
   const { mutate: createGuest, isPending: isCreating } = useCreateGuest(eventId!);
   const { mutate: updateGuest, isPending: isUpdating } = useUpdateGuest(eventId!);
@@ -807,6 +819,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
             onUndoCheckIn={featureAccess.guests.canCreate ? handleBulkUndoCheckIn : undefined}
             onExport={featureAccess.guests.canExport ? handleExportSelected : undefined}
             onDelete={featureAccess.guests.canDelete ? handleBulkDelete : undefined}
+            canCheckIn={canCheckIn}
           />
         </PermissionGuard>
       )}
@@ -859,6 +872,8 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
               onCheckIn={handleCheckIn}
               onUndoCheckIn={handleUndoCheckIn}
               onViewInvitationDetails={(guest) => setGuestForInvitationDetails(guest)}
+              companionsCount={guestsData?.companions_count ?? stats?.companions ?? 0}
+              canCheckIn={canCheckIn}
             />
 
             {/* Pagination */}

@@ -297,6 +297,7 @@ export interface GuestStats {
   pending: number;
   maybe: number;
   checked_in: number;
+  companions?: number;
 }
 
 // Paginated response with optional stats (for guests)

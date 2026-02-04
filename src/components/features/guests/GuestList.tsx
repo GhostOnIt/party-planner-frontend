@@ -42,6 +42,10 @@ interface GuestListProps {
   onCheckIn: (guest: Guest) => void;
   onUndoCheckIn: (guest: Guest) => void;
   onViewInvitationDetails: (guest: Guest) => void;
+  /** Nombre total d'accompagnateurs (+1) pour l'en-tête du tableau */
+  companionsCount?: number;
+  /** Check-in autorisé (à partir de 24 h avant l'événement) */
+  canCheckIn?: boolean;
 }
 
 export function GuestList({
@@ -55,6 +59,8 @@ export function GuestList({
   onCheckIn,
   onUndoCheckIn,
   onViewInvitationDetails,
+  companionsCount,
+  canCheckIn = true,
 }: GuestListProps) {
   const allSelected = guests.length > 0 && selectedIds.length === guests.length;
   const someSelected = selectedIds.length > 0 && selectedIds.length < guests.length;
@@ -108,7 +114,9 @@ export function GuestList({
             <TableHead>Invite</TableHead>
             <TableHead>Contact</TableHead>
             <TableHead>Statut RSVP</TableHead>
-            <TableHead>+1</TableHead>
+            <TableHead>
+              +{companionsCount !== undefined && companionsCount >= 0 ? `${companionsCount}` : ''}
+            </TableHead>
             <TableHead>Check-in</TableHead>
             <TableHead className="w-12"></TableHead>
           </TableRow>
@@ -199,7 +207,11 @@ export function GuestList({
                         Annuler check-in
                       </DropdownMenuItem>
                     ) : ['pending', 'accepted', 'maybe'].includes(guest.rsvp_status) ? (
-                      <DropdownMenuItem onClick={() => onCheckIn(guest)}>
+                      <DropdownMenuItem
+                        onClick={() => canCheckIn && onCheckIn(guest)}
+                        disabled={!canCheckIn}
+                        title={!canCheckIn ? 'Le check-in est possible à partir de 24 h avant l\'événement.' : undefined}
+                      >
                         <UserCheck className="mr-2 h-4 w-4" />
                         Check-in
                       </DropdownMenuItem>

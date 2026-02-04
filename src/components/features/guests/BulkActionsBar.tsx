@@ -41,6 +41,8 @@ interface BulkActionsBarProps {
   onUndoCheckIn?: () => void;
   onExport?: () => void;
   onDelete?: () => void;
+  /** Check-in autorisé (à partir de 24 h avant l'événement) */
+  canCheckIn?: boolean;
   className?: string;
 }
 
@@ -65,6 +67,7 @@ export function BulkActionsBar({
   onUndoCheckIn,
   onExport,
   onDelete,
+  canCheckIn = true,
   className,
 }: BulkActionsBarProps) {
   // Optimisation : Calculer les stats uniquement quand la sélection change
@@ -185,16 +188,23 @@ export function BulkActionsBar({
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={onCheckIn}
-                        className="h-9 w-9 text-slate-500 hover:text-green-600 hover:bg-green-50 rounded-full transition-all"
-                      >
-                        <UserCheck className="h-4 w-4" />
-                      </Button>
+                      <span className="inline-flex">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={canCheckIn ? onCheckIn : undefined}
+                          disabled={!canCheckIn}
+                          className="h-9 w-9 text-slate-500 hover:text-green-600 hover:bg-green-50 rounded-full transition-all disabled:opacity-50"
+                        >
+                          <UserCheck className="h-4 w-4" />
+                        </Button>
+                      </span>
                     </TooltipTrigger>
-                    <TooltipContent>Check-in</TooltipContent>
+                    <TooltipContent>
+                      {canCheckIn
+                        ? 'Check-in'
+                        : 'Le check-in est possible à partir de 24 h avant l\'événement.'}
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               )}
