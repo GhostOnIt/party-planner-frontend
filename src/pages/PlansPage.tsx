@@ -385,7 +385,7 @@ export function PlansPage() {
           {/* Main Heading */}
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-5 text-balance tracking-tight">
-              <span className="bg-gradient-to-r from-[#4F46E5] via-[#7C3AED] to-[#E91E8C] bg-clip-text text-transparent">
+              <span className=" bg-clip-text">
                 Plans tarifaires
               </span>
             </h1>

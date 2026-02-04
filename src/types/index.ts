@@ -64,6 +64,8 @@ export interface Event {
   } | null;
   created_at: string;
   updated_at: string;
+  /** Check-in autorisé à partir de 24 h avant le début (calculé par le backend) */
+  can_check_in?: boolean;
   // Statistics from backend
   guests_count?: number;
   guests_confirmed_count?: number;

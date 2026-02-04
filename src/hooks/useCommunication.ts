@@ -70,10 +70,9 @@ export function useCreateSpot() {
         if (data.startDate) formData.append('startDate', data.startDate);
         if (data.endDate) formData.append('endDate', data.endDate);
         
-        // Arrays and objects as JSON
+        // Arrays and objects as JSON (always send targetRoles so empty = "all roles")
         formData.append('displayLocations', JSON.stringify(data.displayLocations));
-        if (data.targetRoles?.length) formData.append('targetRoles', JSON.stringify(data.targetRoles));
-        if (data.targetLanguages?.length) formData.append('targetLanguages', JSON.stringify(data.targetLanguages));
+        formData.append('targetRoles', JSON.stringify(data.targetRoles ?? []));
         
         // Banner specific
         if (data.primaryButton) formData.append('primaryButton', JSON.stringify(data.primaryButton));
@@ -120,9 +119,9 @@ export function useUpdateSpot() {
         if (data.startDate) formData.append('startDate', data.startDate);
         if (data.endDate) formData.append('endDate', data.endDate);
         
-        if (data.displayLocations) formData.append('displayLocations', JSON.stringify(data.displayLocations));
-        if (data.targetRoles) formData.append('targetRoles', JSON.stringify(data.targetRoles));
-        if (data.targetLanguages) formData.append('targetLanguages', JSON.stringify(data.targetLanguages));
+        // Use !== undefined so empty arrays (clear all roles/locations) are sent and saved
+        if (data.displayLocations !== undefined) formData.append('displayLocations', JSON.stringify(data.displayLocations));
+        if (data.targetRoles !== undefined) formData.append('targetRoles', JSON.stringify(data.targetRoles));
         
         if (data.primaryButton) formData.append('primaryButton', JSON.stringify(data.primaryButton));
         if (data.secondaryButton) formData.append('secondaryButton', JSON.stringify(data.secondaryButton));
