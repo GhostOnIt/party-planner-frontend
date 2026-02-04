@@ -1,13 +1,4 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, } from '@/components/ui/alert-dialog';
 import { RsvpBadge, rsvpConfig } from './RsvpBadge';
 import type { Guest, RsvpStatus } from '@/types';
 import { getStatusBreakdown } from '@/utils/bulkActionUtils';
@@ -20,9 +11,9 @@ interface BulkActionDialogProps {
   action: BulkActionType;
   eligible: Guest[];
   ineligible: Guest[];
-  ineligibleReasons: Record<number, string>;
+  ineligibleReasons: Record<string, string>;
   newRsvpStatus?: RsvpStatus;
-  currentStatusBreakdown?: Record<string, number>;
+  currentStatusBreakdown?: Record<RsvpStatus, number>;
 }
 
 const actionLabels: Record<BulkActionType, string> = {
@@ -32,6 +23,15 @@ const actionLabels: Record<BulkActionType, string> = {
   undo_check_in: 'Annuler le check-in',
   update_rsvp: 'Modifier le statut RSVP',
   delete: 'Supprimer les invités',
+};
+
+const actionDescriptions: Record<BulkActionType, string> = {
+  send_invitations: "Les invités recevront une invitation s'ils n'en ont pas encore, ou un rappel s'ils en ont déjà une.",
+  send_reminders: 'Un rappel sera envoyé à ces invités.',
+  check_in: 'Ces invités seront marqués comme présents à l\'événement.',
+  undo_check_in: 'Le check-in de ces invités sera annulé.',
+  update_rsvp: 'Le statut RSVP sera modifié pour ces invités.',
+  delete: 'Ces invités seront définitivement supprimés. Cette action est irréversible.',
 };
 
 export function BulkActionDialog({
@@ -46,114 +46,103 @@ export function BulkActionDialog({
   currentStatusBreakdown,
 }: BulkActionDialogProps) {
   const actionLabel = actionLabels[action];
+  const actionDescription = actionDescriptions[action];
+  const isDestructive = action === 'delete';
 
   // For update_rsvp, use provided breakdown or calculate from eligible guests
-  const statusBreakdown =
-    action === 'update_rsvp' ? currentStatusBreakdown || getStatusBreakdown(eligible) : null;
+  const statusBreakdown = action === 'update_rsvp'
+    ? currentStatusBreakdown || getStatusBreakdown(eligible)
+    : null;
 
-  const isDestructive = action === 'delete';
+  const hasEligible = eligible.length > 0;
+  const hasIneligible = ineligible.length > 0;
 
   return (
     <AlertDialog open={open} onOpenChange={onClose}>
-      <AlertDialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+      <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
-          <AlertDialogTitle>{actionLabel}</AlertDialogTitle>
-          <AlertDialogDescription className="space-y-4 mt-4">
-            {/* Eligible guests section */}
-            {eligible.length > 0 && (
-              <div
-                className={`rounded-m p-4 ${isDestructive ? 'bg-destructive/5 border-destructive/20' : 'bg-muted/50'}`}
-              >
-                <p className="font-medium flex items-center gap-2 mb-2">
-                  <span
-                    className={
-                      isDestructive ? 'text-destructive' : 'text-green-600 dark:text-green-400'
-                    }
-                  >
-                    {isDestructive ? '⚠' : '✓'}
-                  </span>
-                  {eligible.length} invité{eligible.length > 1 ? 's' : ''} éligible
-                  {eligible.length > 1 ? 's' : ''}
-                </p>
-                <p
-                  className={`text-sm ${isDestructive ? 'text-destructive/90' : 'text-muted-foreground'}`}
-                >
-                  {action === 'update_rsvp' && newRsvpStatus
-                    ? `Cette action modifiera le statut RSVP de ces invités en "${rsvpConfig[newRsvpStatus].label}".`
-                    : action === 'send_invitations'
-                      ? "Les invités recevront une invitation s'ils n'en ont pas encore, ou un rappel s'ils en ont déjà une."
-                      : action === 'delete'
-                        ? 'Ces invités seront définitivement supprimés. Cette action est irréversible.'
-                        : 'Cette action sera appliquée à ces invités.'}
-                </p>
-              </div>
-            )}
-
-            {/* Status breakdown for RSVP update */}
-            {action === 'update_rsvp' && statusBreakdown && (
-              <div className="rounded-md bg-muted/30 p-4 border">
-                <p className="font-medium mb-3">Répartition actuelle par statut :</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(statusBreakdown).map(([status, count]) => (
-                    <div
-                      key={status}
-                      className="flex items-center justify-between p-2 rounded bg-background border"
-                    >
-                      <RsvpBadge status={status as RsvpStatus} />
-                      <span className="text-sm font-medium">{count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Ineligible guests section */}
-            {ineligible.length > 0 && (
-              <div className="rounded-md bg-muted/50 p-4 border">
-                <p className="font-medium flex items-center gap-2 mb-3">
-                  <span className="text-amber-600 dark:text-amber-400">⚠</span>
-                  {ineligible.length} invité{ineligible.length > 1 ? 's' : ''} ignoré
-                  {ineligible.length > 1 ? 's' : ''}
-                </p>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {ineligible.map((guest) => (
-                    <div key={guest.id} className="text-sm bg-background rounded p-2 border">
-                      <div className="flex items-center gap-2 mb-1">
-                        <strong>{guest.name}</strong>
-                        <RsvpBadge status={guest.rsvp_status} />
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {ineligibleReasons[guest.id] || 'Non éligible'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* No eligible guests warning */}
-            {eligible.length === 0 && (
-              <div className="rounded-md bg-muted/50 p-4 border border-destructive/20">
-                <p className="font-medium text-destructive">Aucun invité éligible</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Aucun des invités sélectionnés ne peut recevoir cette action.
-                </p>
-              </div>
-            )}
+          <AlertDialogTitle className="text-lg">
+            {actionLabel}
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-sm text-gray-600">
+            {action === 'update_rsvp' && newRsvpStatus
+              ? `Ces invités passeront au statut "${rsvpConfig[newRsvpStatus].label}".`
+              : actionDescription}
           </AlertDialogDescription>
         </AlertDialogHeader>
+
+        <div className="space-y-4 py-4">
+          {/* Eligible guests */}
+          {hasEligible && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-medium">
+                  {eligible.length} invité{eligible.length > 1 ? 's' : ''}
+                </span>
+                <span className="text-gray-500">
+                  · Action appliquée
+                </span>
+              </div>
+
+              {/* Status breakdown for RSVP update */}
+              {action === 'update_rsvp' && statusBreakdown && (
+                <div className="pl-3 border-l-2 border-gray-200 space-y-1.5">
+                  <p className="text-xs text-gray-500 mb-2">Statuts actuels</p>
+                  {Object.entries(statusBreakdown).map(([status, count]) => (
+                    <div key={status} className="flex items-center gap-2">
+                      <RsvpBadge status={status as RsvpStatus} size="sm" />
+                      <span className="text-xs text-gray-600">× {count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Ineligible guests */}
+          {hasIneligible && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-medium text-gray-600">
+                  {ineligible.length} invité{ineligible.length > 1 ? 's' : ''}
+                </span>
+                <span className="text-gray-500">
+                  · Ignoré{ineligible.length > 1 ? 's' : ''}
+                </span>
+              </div>
+
+              <div className="pl-3 border-l-2 border-gray-200 space-y-1.5 max-h-32 overflow-y-auto">
+                {ineligible.map((guest) => (
+                  <div key={guest.id} className="text-xs">
+                    <div className="font-medium text-gray-700">{guest.name}</div>
+                    <div className="text-gray-500">
+                      {ineligibleReasons[guest.id] || 'Non éligible'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* No eligible guests */}
+          {!hasEligible && (
+            <div className="text-center py-6 text-sm text-gray-500">
+              <p className="font-medium text-gray-700 mb-1">Aucun invité éligible</p>
+              <p>Aucun des invités sélectionnés ne peut recevoir cette action.</p>
+            </div>
+          )}
+        </div>
+
         <AlertDialogFooter>
-          <AlertDialogCancel>Annuler</AlertDialogCancel>
-          {eligible.length > 0 && (
+          <AlertDialogCancel onClick={onClose}>
+            Annuler
+          </AlertDialogCancel>
+          {hasEligible && (
             <AlertDialogAction
               onClick={onConfirm}
-              className={
-                isDestructive
-                  ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
-                  : ''
-              }
+              className={isDestructive ? 'bg-red-600 hover:bg-red-700' : ''}
             >
-              Confirmer ({eligible.length} invité{eligible.length > 1 ? 's' : ''})
+              Confirmer · {eligible.length}
             </AlertDialogAction>
           )}
         </AlertDialogFooter>

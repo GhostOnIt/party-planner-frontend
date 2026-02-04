@@ -981,6 +981,8 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
         }}
         eventId={eventId!}
         guestId={guestForInvitationDetails?.id || null}
+        onEdit={handleEditGuest}
+        onDelete={setGuestToDelete}
       />
 
       {/* Export Guests Modal */}
