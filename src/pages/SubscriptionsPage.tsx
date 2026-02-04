@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Crown, CreditCard } from 'lucide-react';
+import { Crown, CreditCard, Plus } from 'lucide-react';
 import { format, parseISO, isPast } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { PageHeader } from '@/components/layout/page-header';
@@ -115,6 +115,7 @@ function SubscriptionListSkeleton() {
  
 
 export function SubscriptionsPage() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const defaultTab = searchParams.get('tab') || 'subscriptions';
@@ -151,6 +152,12 @@ export function SubscriptionsPage() {
       <PageHeader
         title="Abonnements"
         description="Gerez vos abonnements et paiements"
+        actions={
+          <Button onClick={() => navigate('/plans')}>
+            <Plus className="mr-2 h-4 w-4" />
+            Choisir un plan
+          </Button>
+        }
       />
 
       <Tabs defaultValue={defaultTab}>

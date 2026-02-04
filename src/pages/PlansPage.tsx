@@ -87,9 +87,9 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
   const { toast } = useToast();
   const { mutate: subscribeToPlan, isPending: isSubscribing } = useSubscribeToPlan();
 
-  // Get enabled features
+  // Get enabled features (only those that have a label, to hide deprecated ones like planning.enabled, support.dedicated, assistance.human)
   const enabledFeatures = Object.entries(plan.features || {})
-    .filter(([_, enabled]) => enabled)
+    .filter(([key, enabled]) => enabled && PLAN_FEATURE_LABELS[key])
     .map(([key]) => key);
 
   // Get key limits

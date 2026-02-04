@@ -268,7 +268,6 @@ export interface EntitlementsResponse {
   };
   features: {
     'budget.enabled': boolean;
-    'planning.enabled': boolean;
     'tasks.enabled': boolean;
     'guests.manage': boolean;
     'guests.import': boolean;
@@ -284,9 +283,8 @@ export interface EntitlementsResponse {
     'reporting.enabled': boolean;
     'branding.custom': boolean;
     'support.whatsapp_priority': boolean;
-    'support.dedicated': boolean;
     'multi_client.enabled': boolean;
-    'assistance.human': boolean;
+    [key: string]: boolean;
   };
   is_active: boolean;
   is_trial: boolean;

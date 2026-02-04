@@ -278,16 +278,20 @@ export function AdminPaymentsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {payment.subscription?.event?.user ? (
-                          <div>
-                            <p className="text-sm font-medium">{payment.subscription.event.user.name}</p>
-                            <p className="text-xs text-muted-foreground">{payment.subscription.event.user.email}</p>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            Utilisateur inconnu
-                          </span>
-                        )}
+                        {(() => {
+                          const user =
+                            payment.subscription?.event?.user ?? payment.subscription?.user;
+                          return user ? (
+                            <div>
+                              <p className="text-sm font-medium">{user.name}</p>
+                              <p className="text-xs text-muted-foreground">{user.email}</p>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">
+                              Utilisateur inconnu
+                            </span>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell>
                         {payment.payment_method ? (
