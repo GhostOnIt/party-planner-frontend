@@ -35,6 +35,7 @@
     "name": "Party Planner"
   },
   "nav": {
+    "stats": "Statistiques",
     "dashboard": "Tableau de bord",
     "events": "Mes evenements",
     "invitations": "Invitations",

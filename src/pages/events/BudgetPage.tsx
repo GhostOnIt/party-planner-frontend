@@ -267,7 +267,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
 
           {/* Category Summary */}
           {stats?.by_category && stats.by_category.length > 0 && (
-            <Card>
+            <Card className='mt-4'>
               <CardHeader>
                 <CardTitle>Repartition par categorie</CardTitle>
               </CardHeader>
@@ -287,7 +287,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
                             {CATEGORY_LABELS[cat.category] || cat.category}
                           </span>
                           <span className="text-sm text-muted-foreground">
-                            ({cat.count} postes)
+                            ({cat.count} élément{cat.count !== 1 ? 's' : ''})
                           </span>
                         </div>
                         <div className="text-right">

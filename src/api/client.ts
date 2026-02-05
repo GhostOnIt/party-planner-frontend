@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/stores/authStore';
+import type { AuthResponse } from '@/types';
 
 // Custom event for server errors
 export const SERVER_ERROR_EVENT = 'server-connection-error';
@@ -69,12 +70,12 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle errors
+// Response interceptor to handle errors (including token refresh on 401)
 api.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
     // Handle network errors (server is down, no connection, timeout)
     if (!error.response) {
       if (
@@ -91,7 +92,40 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Handle 401 Unauthorized
+    const originalRequest = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+
+    // Handle 401 Unauthorized: try to refresh token once
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const refreshResponse = await publicApi.post<AuthResponse>(
+          '/auth/refresh',
+          null,
+          { withCredentials: true }
+        );
+
+        const newToken = refreshResponse.data.token;
+        const user = refreshResponse.data.user;
+
+        // Persist new access token
+        localStorage.setItem('auth_token', newToken);
+
+        // Update auth store (user + token)
+        const setAuth = useAuthStore.getState().setAuth;
+        setAuth(user, newToken);
+
+        // Update Authorization header for the original request and retry it
+        originalRequest.headers = originalRequest.headers ?? {};
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+        return api(originalRequest);
+      } catch (refreshError) {
+        // If refresh fails, fall through to global 401 handler below
+      }
+    }
+
+    // If still 401 (or refresh failed), perform full logout
     if (error.response?.status === 401) {
       const logout = useAuthStore.getState().logout;
       logout();

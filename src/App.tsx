@@ -131,6 +131,7 @@ function App() {
                 <Route path="/admin" element={<AdminDashboardPage />} />
                 <Route path="/admin/users" element={<AdminUsersPage />} />
                 <Route path="/admin/events" element={<AdminEventsPage />} />
+                <Route path="/admin/events/:id" element={<EventDetailsPage />} />
                 <Route path="/admin/payments" element={<AdminPaymentsPage />} />
                 <Route path="/admin/subscriptions" element={<AdminSubscriptionsPage />} />
                 <Route path="/admin/plans" element={<AdminPlansPage />} />

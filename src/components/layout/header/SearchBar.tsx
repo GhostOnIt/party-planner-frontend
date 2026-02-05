@@ -46,7 +46,7 @@ export function SearchBar() {
   const hasResults = events.length > 0 || guests.length > 0
 
   return (
-    <div className="flex-1 max-w-md relative" ref={searchRef}>
+    <div className="w-full min-w-[200px] max-w-md relative" ref={searchRef}>
       <div
         className={cn(
           "flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-200",

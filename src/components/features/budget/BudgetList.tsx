@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { CategoryBadge } from './CategoryBadge';
+import { useBudgetCategories } from '@/hooks/useSettings';
 import type { BudgetItem } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -41,6 +42,10 @@ function formatCurrency(value: number | null): string {
   }).format(value);
 }
 
+const DEFAULT_CATEGORY_SLUGS = [
+  'location', 'catering', 'decoration', 'entertainment', 'photography', 'transportation', 'other',
+];
+
 export function BudgetList({
   items,
   isLoading = false,
@@ -51,6 +56,11 @@ export function BudgetList({
   onMarkPaid,
   onMarkUnpaid,
 }: BudgetListProps) {
+  const { data: userCategories = [] } = useBudgetCategories();
+  const categoryBySlug = Object.fromEntries(
+    userCategories.map((c) => [c.slug, { name: c.name, color: c.color }])
+  );
+
   const allSelected = items.length > 0 && selectedIds.length === items.length;
   const someSelected = selectedIds.length > 0 && selectedIds.length < items.length;
 
@@ -154,7 +164,11 @@ export function BudgetList({
                   />
                 </TableCell>
                 <TableCell>
-                  <CategoryBadge category={item.category} />
+                  <CategoryBadge
+                    category={item.category}
+                    label={DEFAULT_CATEGORY_SLUGS.includes(item.category) ? undefined : categoryBySlug[item.category]?.name}
+                    color={DEFAULT_CATEGORY_SLUGS.includes(item.category) ? undefined : categoryBySlug[item.category]?.color}
+                  />
                 </TableCell>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell className="text-muted-foreground">

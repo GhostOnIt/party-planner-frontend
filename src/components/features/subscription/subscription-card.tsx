@@ -128,7 +128,7 @@ export function SubscriptionCard() {
 
       <button
         onClick={() => navigate("/subscriptions")}
-        className="w-full text-center text-sm text-[#E91E8C] font-medium hover:underline"
+        className="w-full text-center text-sm font-medium hover:underline"
       >
         Gérer mon abonnement
       </button>

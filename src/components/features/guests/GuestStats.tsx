@@ -1,4 +1,4 @@
-import { Users, UserCheck, UserX, HelpCircle, Clock } from 'lucide-react';
+import { Users, UserCheck, UserX, HelpCircle, Clock, UserPlus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -10,6 +10,7 @@ interface GuestStatsProps {
     pending: number;
     maybe: number;
     checked_in: number;
+    companions?: number;
   } | undefined;
   isLoading?: boolean;
 }
@@ -17,8 +18,8 @@ interface GuestStatsProps {
 export function GuestStats({ stats, isLoading = false }: GuestStatsProps) {
   if (isLoading) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {[1, 2, 3, 4, 5].map((i) => (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
           <Skeleton key={i} className="h-20 w-full" />
         ))}
       </div>
@@ -34,21 +35,21 @@ export function GuestStats({ stats, isLoading = false }: GuestStatsProps) {
       bgColor: 'bg-primary/10',
     },
     {
-      label: 'Confirmes',
+      label: 'Confirmés',
       value: stats?.accepted ?? 0,
       icon: UserCheck,
       color: 'text-success',
       bgColor: 'bg-success/10',
     },
     {
-      label: 'Declines',
+      label: 'Déclinés',
       value: stats?.declined ?? 0,
       icon: UserX,
       color: 'text-destructive',
       bgColor: 'bg-destructive/10',
     },
     {
-      label: 'Peut-etre',
+      label: 'Peut-être',
       value: stats?.maybe ?? 0,
       icon: HelpCircle,
       color: 'text-warning',
@@ -61,10 +62,17 @@ export function GuestStats({ stats, isLoading = false }: GuestStatsProps) {
       color: 'text-muted-foreground',
       bgColor: 'bg-muted',
     },
+    {
+      label: 'Accompagnateurs',
+      value: stats?.companions ?? 0,
+      icon: UserPlus,
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
+    },
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
       {items.map((item) => (
         <Card key={item.label}>
           <CardContent className="flex items-center gap-3 p-4">

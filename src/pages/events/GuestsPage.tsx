@@ -43,6 +43,7 @@ import {
   type ExportFilters,
 } from '@/components/features/guests';
 import { LimitStatus } from '@/components/features/subscription';
+import { useEvent } from '@/hooks/useEvents';
 import {
   useGuests,
   useGuestStats,
@@ -105,7 +106,43 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
 
   const { data: guestsData, isLoading: isLoadingGuests } = useGuests(eventId!, apiFilters);
   const { data: separateStats, isLoading: isLoadingStats } = useGuestStats(eventId!);
+  const { data: event } = useEvent(eventId!);
   const featureAccess = useFeatureAccess(eventId!);
+
+  // Check-in autorisé à partir de 24h avant le début de l'événement (utilise can_check_in du backend si présent)
+  const canCheckIn = (() => {
+    if (event?.can_check_in === true) return true;
+    if (event?.can_check_in === false) return false;
+    if (!event?.date) return false;
+
+    try {
+      // Normaliser la date : garder uniquement YYYY-MM-DD (l'API peut renvoyer une chaîne ISO)
+      const dateOnly =
+        typeof event.date === 'string' && (event.date.includes('T') || event.date.length > 10)
+          ? event.date.slice(0, 10)
+          : event.date;
+
+      let timeStr = event.time || '00:00';
+      if (typeof timeStr === 'string' && timeStr.includes('T')) {
+        const d = new Date(timeStr);
+        if (!Number.isNaN(d.getTime())) {
+          timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        } else {
+          timeStr = '00:00';
+        }
+      } else if (typeof timeStr === 'string' && timeStr.length > 5) {
+        timeStr = timeStr.slice(0, 5);
+      }
+
+      const eventDateTime = new Date(`${dateOnly}T${timeStr.length === 5 ? `${timeStr}:00` : timeStr}`);
+      if (Number.isNaN(eventDateTime.getTime())) return false;
+
+      const checkInStartTime = new Date(eventDateTime.getTime() - 24 * 60 * 60 * 1000);
+      return Date.now() >= checkInStartTime.getTime();
+    } catch {
+      return false;
+    }
+  })();
 
   const { mutate: createGuest, isPending: isCreating } = useCreateGuest(eventId!);
   const { mutate: updateGuest, isPending: isUpdating } = useUpdateGuest(eventId!);
@@ -807,6 +844,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
             onUndoCheckIn={featureAccess.guests.canCreate ? handleBulkUndoCheckIn : undefined}
             onExport={featureAccess.guests.canExport ? handleExportSelected : undefined}
             onDelete={featureAccess.guests.canDelete ? handleBulkDelete : undefined}
+            canCheckIn={canCheckIn}
           />
         </PermissionGuard>
       )}
@@ -859,6 +897,8 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
               onCheckIn={handleCheckIn}
               onUndoCheckIn={handleUndoCheckIn}
               onViewInvitationDetails={(guest) => setGuestForInvitationDetails(guest)}
+              companionsCount={guestsData?.companions_count ?? stats?.companions ?? 0}
+              canCheckIn={canCheckIn}
             />
 
             {/* Pagination */}
@@ -981,6 +1021,8 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
         }}
         eventId={eventId!}
         guestId={guestForInvitationDetails?.id || null}
+        onEdit={handleEditGuest}
+        onDelete={setGuestToDelete}
       />
 
       {/* Export Guests Modal */}

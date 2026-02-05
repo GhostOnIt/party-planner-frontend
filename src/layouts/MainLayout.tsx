@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { useAuthStore } from '@/stores/authStore';
@@ -7,12 +7,14 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 export function MainLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    // After logout, redirect to login and remember where the user was coming from.
+    navigate('/login', { state: { from: location } });
   };
 
   const handleProfileClick = () => {

@@ -72,44 +72,74 @@ export const categoryConfig: Record<BudgetCategory, CategoryConfig> = {
   },
 };
 
+const DEFAULT_CATEGORIES: BudgetCategory[] = [
+  'location', 'catering', 'decoration', 'entertainment', 'photography', 'transportation', 'other',
+];
+
+function isDefaultCategory(category: string): category is BudgetCategory {
+  return DEFAULT_CATEGORIES.includes(category as BudgetCategory);
+}
+
 interface CategoryBadgeProps {
-  category: BudgetCategory;
+  /** Slug (default or custom category) */
+  category: string;
+  /** Display name for custom categories; ignored when category is a default one */
+  label?: string;
+  /** Hex color for custom categories; ignored when category is default */
+  color?: string | null;
   showIcon?: boolean;
   className?: string;
 }
 
 export function CategoryBadge({
   category,
+  label: customLabel,
+  color: customColor,
   showIcon = true,
   className,
 }: CategoryBadgeProps) {
-  const config = categoryConfig[category] || categoryConfig.other;
+  const isDefault = isDefaultCategory(category);
+  const config = isDefault ? categoryConfig[category as BudgetCategory] : categoryConfig.other;
   const Icon = config.icon;
+  const displayLabel = isDefault ? config.label : (customLabel ?? category);
+
+  const isCustom = !isDefault;
+  const style = isCustom && customColor
+    ? { backgroundColor: `${customColor}20`, borderColor: customColor, color: customColor }
+    : undefined;
 
   return (
-    <Badge variant="outline" className={cn(config.className, className)}>
+    <Badge
+      variant="outline"
+      className={cn(!style && config.className, className)}
+      style={style}
+    >
       {showIcon && <Icon className="mr-1 h-3 w-3" />}
-      {config.label}
+      {displayLabel}
     </Badge>
   );
 }
 
 interface CategoryIconProps {
-  category: BudgetCategory;
+  category: string;
+  color?: string | null;
   className?: string;
 }
 
-export function CategoryIcon({ category, className }: CategoryIconProps) {
-  const config = categoryConfig[category] || categoryConfig.other;
+export function CategoryIcon({ category, color: customColor, className }: CategoryIconProps) {
+  const isDefault = isDefaultCategory(category);
+  const config = isDefault ? categoryConfig[category as BudgetCategory] : categoryConfig.other;
   const Icon = config.icon;
+  const style = !isDefault && customColor ? { backgroundColor: customColor } : undefined;
 
   return (
     <div
       className={cn(
         'flex h-8 w-8 items-center justify-center rounded-lg',
-        config.bgColor,
+        !style && config.bgColor,
         className
       )}
+      style={style}
     >
       <Icon className="h-4 w-4 text-white" />
     </div>

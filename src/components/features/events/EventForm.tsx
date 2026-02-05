@@ -43,14 +43,6 @@ const eventFormSchema = z.object({
   time: z.string().min(1, "L'heure est requise"),
   location: z.string().min(1, 'Le lieu est requis'),
   description: z.string().optional(),
-  expected_guests: z
-    .union([z.string(), z.number()])
-    .optional()
-    .transform((val) => {
-      if (val === '' || val === undefined || val === null) return undefined;
-      const num = Number(val);
-      return isNaN(num) ? undefined : num;
-    }),
   budget: z
     .union([z.string(), z.number()])
     .optional()
@@ -83,6 +75,7 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
   const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
   const [coverPhotoPreview, setCoverPhotoPreview] = useState<string | null>(null);
   const [showPhotoUploader, setShowPhotoUploader] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   // Load user's custom event types
   const { data: userEventTypes } = useEventTypes();
@@ -110,7 +103,6 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
       time: event?.time || '',
       location: event?.location || '',
       description: event?.description || '',
-      expected_guests: event?.expected_guests || undefined,
       budget: event?.budget || undefined,
       theme: event?.theme || '',
     },
@@ -164,7 +156,6 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
       time: transformed.time,
       location: transformed.location,
       description: transformed.description || undefined,
-      expected_guests: transformed.expected_guests,
       budget: transformed.budget,
       theme: transformed.theme || undefined,
       template_id: transformed.template_id,
@@ -247,49 +238,43 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
             </SelectContent>
           </Select>
           {selectedTemplate && (
-            <Card className="mt-2 border-[#4F46E5]/20 bg-gradient-to-br from-[#4F46E5]/5 to-transparent">
+            <Card className="mt-2 bg-muted/50">
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-[#4F46E5]" />
-                  <span className="text-sm font-semibold text-[#1a1a2e]">
-                    Aperçu du template: {selectedTemplate.name}
+                  <span className="text-sm font-medium">
+                    Aperçu: {selectedTemplate.name}
                   </span>
                 </div>
                 {selectedTemplate.description && (
-                  <p className="text-sm text-[#6b7280]">{selectedTemplate.description}</p>
+                  <p className="text-sm text-muted-foreground">{selectedTemplate.description}</p>
                 )}
-                <div className="grid grid-cols-3 gap-3 pt-2 border-t border-[#e5e7eb]">
+                <div className="grid grid-cols-3 gap-3 pt-2 border-t">
                   <div className="flex items-center gap-2">
-                    <ListTodo className="h-4 w-4 text-[#6b7280]" />
+                    <ListTodo className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className="text-xs text-[#6b7280]">Tâches</p>
-                      <p className="text-sm font-semibold text-[#1a1a2e]">
-                        {selectedTemplate.default_tasks?.length || 0}
-                      </p>
+                      <p className="text-xs text-muted-foreground">Tâches</p>
+                      <p className="text-sm font-medium">{selectedTemplate.default_tasks?.length || 0}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Wallet className="h-4 w-4 text-[#6b7280]" />
+                    <Wallet className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className="text-xs text-[#6b7280]">Budget</p>
-                      <p className="text-sm font-semibold text-[#1a1a2e]">
-                        {selectedTemplate.default_budget_categories?.length || 0}
-                      </p>
+                      <p className="text-xs text-muted-foreground">Budget</p>
+                      <p className="text-sm font-medium">{selectedTemplate.default_budget_categories?.length || 0}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Palette className="h-4 w-4 text-[#6b7280]" />
+                    <Palette className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className="text-xs text-[#6b7280]">Thèmes</p>
-                      <p className="text-sm font-semibold text-[#1a1a2e]">
-                        {selectedTemplate.suggested_themes?.length || 0}
-                      </p>
+                      <p className="text-xs text-muted-foreground">Thèmes</p>
+                      <p className="text-sm font-medium">{selectedTemplate.suggested_themes?.length || 0}</p>
                     </div>
                   </div>
                 </div>
                 {selectedTemplate.suggested_themes && selectedTemplate.suggested_themes.length > 0 && (
-                  <div className="pt-2 border-t border-[#e5e7eb]">
-                    <p className="text-xs text-[#6b7280] mb-2">Thèmes suggérés:</p>
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-muted-foreground mb-2">Thèmes suggérés</p>
                     <div className="flex flex-wrap gap-1">
                       {selectedTemplate.suggested_themes.map((theme, idx) => (
                         <Badge key={idx} variant="secondary" className="text-xs">
@@ -309,7 +294,7 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label>Date *</Label>
-          <Popover>
+          <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -328,7 +313,10 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
               <Calendar
                 mode="single"
                 selected={selectedDate ? new Date(selectedDate) : undefined}
-                onSelect={(date) => setValue('date', date ? format(date, 'yyyy-MM-dd') : '')}
+                onSelect={(date) => {
+                  setValue('date', date ? format(date, 'yyyy-MM-dd') : '');
+                  setDatePickerOpen(false);
+                }}
                 initialFocus
                 disabled={(date) => {
                   // Désactiver les dates passées (avant aujourd'hui)
@@ -367,31 +355,17 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
         />
       </div>
 
-      {/* Expected guests and Budget */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="expected_guests">Nombre d'invites prevu</Label>
-          <Input
-            id="expected_guests"
-            type="number"
-            min="0"
-            placeholder="Ex: 100"
-            onKeyDown={blockInvalidNumberKeys}
-            {...register('expected_guests')}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="budget">Budget (FCFA)</Label>
-          <Input
-            id="budget"
-            type="number"
-            min="0"
-            placeholder="Ex: 500000"
-            onKeyDown={blockInvalidNumberKeys}
-            {...register('budget')}
-          />
-        </div>
+      {/* Budget */}
+      <div className="space-y-2">
+        <Label htmlFor="budget">Budget (FCFA)</Label>
+        <Input
+          id="budget"
+          type="number"
+          min="0"
+          placeholder="Ex: 500000"
+          onKeyDown={blockInvalidNumberKeys}
+          {...register('budget')}
+        />
       </div>
 
       {/* Theme */}

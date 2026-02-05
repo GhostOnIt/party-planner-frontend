@@ -140,109 +140,127 @@ export function PollResultsDialog({
   };
 
   const resultsData = getResultsData();
+  const hasVotes = resultsData.totalVotes > 0;
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Résultats du sondage</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg">Résultats du sondage</DialogTitle>
+            <DialogDescription className="text-sm">
               {spot?.pollQuestion || 'Question du sondage'}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
+          <div className="py-6">
             {isLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-6 w-full" />
-                  </div>
-                ))}
+              <div className="space-y-6">
+                <Skeleton className="h-12 w-24 mx-auto" />
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-2 w-full" />
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
               <>
                 {/* Total votes */}
-                <div className="text-center">
-                  <span className="text-3xl font-bold text-primary">
+                <div className="text-center mb-8">
+                  <div className="text-4xl font-semibold mb-1">
                     {resultsData.totalVotes}
-                  </span>
-                  <span className="ml-2 text-muted-foreground">
-                    vote{resultsData.totalVotes !== 1 ? 's' : ''} au total
-                  </span>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    vote{resultsData.totalVotes !== 1 ? 's' : ''}
+                  </div>
                 </div>
 
-                {/* Results bars */}
-                <div className="space-y-4">
-                  {resultsData.options.map((option) => (
-                    <div key={option.id} className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{option.label}</span>
-                        <span className="text-muted-foreground">
-                          {option.votes} ({option.percentage}%)
-                        </span>
-                      </div>
-                      <Progress value={option.percentage} className="h-3" />
-                    </div>
-                  ))}
-                </div>
-
-                {resultsData.totalVotes === 0 && (
-                  <p className="text-center text-muted-foreground py-4">
-                    Aucun vote pour le moment
-                  </p>
+                {/* Results */}
+                {hasVotes ? (
+                  <div className="space-y-5">
+                    {resultsData.options
+                      .sort((a, b) => b.votes - a.votes)
+                      .map((option) => (
+                        <div key={option.id} className="space-y-2">
+                          <div className="flex items-baseline justify-between">
+                            <span className="text-sm font-medium">
+                              {option.label}
+                            </span>
+                            <span className="text-xs text-gray-500 tabular-nums">
+                              {option.votes} · {option.percentage}%
+                            </span>
+                          </div>
+                          <Progress 
+                            value={option.percentage} 
+                            className="h-2"
+                          />
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-sm text-gray-500">
+                    Aucun vote enregistré
+                  </div>
                 )}
               </>
             )}
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={handleExport}
-              disabled={isExporting || resultsData.totalVotes === 0}
-              className="gap-2"
-            >
-              <Download className="h-4 w-4" />
-              {isExporting ? 'Export...' : 'Exporter CSV'}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setConfirmReset(true)}
-              disabled={resultsData.totalVotes === 0}
-              className="gap-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Réinitialiser
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setConfirmClose(true)}
-              className="gap-2"
-            >
-              <XCircle className="h-4 w-4" />
-              Fermer le sondage
-            </Button>
+          <DialogFooter className="border-t pt-4">
+            <div className="flex flex-col sm:flex-row gap-2 w-full">
+              <Button
+                variant="outline"
+                onClick={handleExport}
+                disabled={isExporting || !hasVotes}
+                className="gap-2 flex-1"
+                size="sm"
+              >
+                <Download className="h-4 w-4" />
+                Exporter
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setConfirmReset(true)}
+                disabled={!hasVotes}
+                className="gap-2 flex-1"
+                size="sm"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Réinitialiser
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setConfirmClose(true)}
+                className="gap-2 flex-1"
+                size="sm"
+              >
+                <XCircle className="h-4 w-4" />
+                Fermer
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Reset Confirmation */}
       <AlertDialog open={confirmReset} onOpenChange={setConfirmReset}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Réinitialiser les votes ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action est irréversible. Tous les votes seront supprimés et le compteur sera remis à zéro.
+            <AlertDialogTitle className="text-lg">
+              Réinitialiser les votes
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">
+              Tous les votes seront supprimés et le compteur remis à zéro. Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleReset}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-red-600 hover:bg-red-700"
               disabled={isResetting}
             >
               {isResetting ? 'Réinitialisation...' : 'Réinitialiser'}
@@ -253,10 +271,12 @@ export function PollResultsDialog({
 
       {/* Close Poll Confirmation */}
       <AlertDialog open={confirmClose} onOpenChange={setConfirmClose}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Fermer le sondage ?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-lg">
+              Fermer le sondage
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">
               Le sondage sera fermé et aucun nouveau vote ne pourra être enregistré. Les résultats actuels seront conservés.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -266,7 +286,7 @@ export function PollResultsDialog({
               onClick={handleClose}
               disabled={isClosing}
             >
-              {isClosing ? 'Fermeture...' : 'Fermer le sondage'}
+              {isClosing ? 'Fermeture...' : 'Fermer'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

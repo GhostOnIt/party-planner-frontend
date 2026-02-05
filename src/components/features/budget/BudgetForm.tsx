@@ -96,29 +96,30 @@ export function BudgetForm({
 
   const selectedCategory = watch('category');
 
+  // Reset form only when dialog opens or edited item changes (not when categories ref changes)
   useEffect(() => {
-    if (open) {
-      if (item) {
-        reset({
-          category: item.category,
-          name: item.name,
-          estimated_cost: item.estimated_cost,
-          actual_cost: item.actual_cost ?? undefined,
-          vendor_name: item.vendor_name ?? '',
-          notes: item.notes ?? '',
-        });
-      } else {
-        reset({
-          category: (categories[0]?.value || 'other') as string,
-          name: '',
-          estimated_cost: 0,
-          actual_cost: undefined,
-          vendor_name: '',
-          notes: '',
-        });
-      }
+    if (!open) return;
+    if (item) {
+      reset({
+        category: item.category,
+        name: item.name,
+        estimated_cost: item.estimated_cost,
+        actual_cost: item.actual_cost ?? undefined,
+        vendor_name: item.vendor_name ?? '',
+        notes: item.notes ?? '',
+      });
+    } else {
+      reset({
+        category: (categories[0]?.value || 'other') as string,
+        name: '',
+        estimated_cost: 0,
+        actual_cost: undefined,
+        vendor_name: '',
+        notes: '',
+      });
     }
-  }, [open, item, reset, categories]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only reset on open/item change to avoid wiping user input
+  }, [open, item?.id]);
 
   const handleFormSubmit = (data: BudgetFormValues) => {
     onSubmit({

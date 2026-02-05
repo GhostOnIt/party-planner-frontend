@@ -14,6 +14,7 @@ function transformStats(rawStats: any): GuestStats | undefined {
     pending: rawStats.by_status?.pending || 0,
     maybe: rawStats.by_status?.maybe || 0,
     checked_in: rawStats.check_in?.checked_in || 0,
+    companions: rawStats.companions ?? 0,
   };
 }
 
@@ -26,6 +27,8 @@ interface GuestsApiResponse {
     total: number;
   };
   stats?: GuestStats;
+  /** Nombre d'accompagnateurs pour la liste courante (filtrée ou non) */
+  companions_count?: number;
 }
 
 // List guests with filters and pagination
@@ -53,6 +56,7 @@ export function useGuests(eventId: number | string, filters: GuestFilters = {}) 
             total: guestsData.total || 0,
           } : undefined,
           stats: transformStats(responseData.stats),
+          companions_count: responseData.companions_count ?? undefined,
         };
       }
 
@@ -61,6 +65,7 @@ export function useGuests(eventId: number | string, filters: GuestFilters = {}) 
         data: responseData.data || [],
         meta: responseData.meta,
         stats: transformStats(responseData.stats),
+        companions_count: responseData.companions_count ?? undefined,
       };
     },
     enabled: !!eventId,
@@ -85,6 +90,7 @@ export function useGuestStats(eventId: number | string) {
           pending: stats.by_status?.pending || 0,
           maybe: stats.by_status?.maybe || 0,
           checked_in: stats.check_in?.checked_in || 0,
+          companions: stats.companions ?? 0,
         };
       }
 

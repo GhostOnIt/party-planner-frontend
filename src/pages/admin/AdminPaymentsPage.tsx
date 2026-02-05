@@ -1,13 +1,7 @@
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  Search,
-  MoreHorizontal,
-  CreditCard,
-  RotateCcw,
-  Phone,
-} from 'lucide-react';
+import { Search, CreditCard, Phone } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,22 +15,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
   Table,
   TableBody,
   TableCell,
@@ -46,9 +24,8 @@ import {
 } from '@/components/ui/table';
 import { PerPageSelector } from '@/components/ui/per-page-selector';
 import { PageHeader } from '@/components/layout/page-header';
-import { useToast } from '@/hooks/use-toast';
-import { useAdminPayments, useRefundPayment, useAdminStats } from '@/hooks/useAdmin';
-import type { Payment, AdminPaymentFilters, PaymentStatus, PaymentMethod } from '@/types';
+import { useAdminPayments, useAdminStats } from '@/hooks/useAdmin';
+import type { AdminPaymentFilters, PaymentStatus, PaymentMethod } from '@/types';
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('fr-CM', {
@@ -83,17 +60,14 @@ const paymentMethodColors: Record<PaymentMethod, string> = {
 };
 
 export function AdminPaymentsPage() {
-  const { toast } = useToast();
   const [filters, setFilters] = useState<AdminPaymentFilters>({
     page: 1,
     per_page: 20,
   });
   const [searchInput, setSearchInput] = useState('');
-  const [refundPayment, setRefundPayment] = useState<(Payment & { subscription?: { event?: { user?: { id: number; name: string; email: string } } } }) | null>(null);
 
   const { data, isLoading } = useAdminPayments(filters);
   const { data: stats } = useAdminStats();
-  const { mutate: refundMutation, isPending: isRefunding } = useRefundPayment();
 
   const handleSearch = () => {
     setFilters((prev) => ({ ...prev, search: searchInput, page: 1 }));
@@ -120,29 +94,6 @@ export function AdminPaymentsPage() {
       setFilters((prev) => ({ ...prev, method: method as PaymentMethod, page: 1 }));
     }
   };
-
-  const handleRefund = () => {
-    if (!refundPayment) return;
-
-    refundMutation(refundPayment.id, {
-      onSuccess: () => {
-        toast({
-          title: 'Remboursement effectue',
-          description: `Le paiement de ${formatCurrency(refundPayment.amount)} a ete rembourse.`,
-        });
-        setRefundPayment(null);
-      },
-      onError: () => {
-        toast({
-          title: 'Erreur',
-          description: 'Impossible d\'effectuer le remboursement.',
-          variant: 'destructive',
-        });
-      },
-    });
-  };
-
-  // Calculate totals
 
   return (
     <div className="space-y-6">
@@ -262,7 +213,6 @@ export function AdminPaymentsPage() {
                     <TableHead>Montant</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Date</TableHead>
-                    <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -278,16 +228,20 @@ export function AdminPaymentsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {payment.subscription?.event?.user ? (
-                          <div>
-                            <p className="text-sm font-medium">{payment.subscription.event.user.name}</p>
-                            <p className="text-xs text-muted-foreground">{payment.subscription.event.user.email}</p>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            Utilisateur inconnu
-                          </span>
-                        )}
+                        {(() => {
+                          const user =
+                            payment.subscription?.event?.user ?? payment.subscription?.user;
+                          return user ? (
+                            <div>
+                              <p className="text-sm font-medium">{user.name}</p>
+                              <p className="text-xs text-muted-foreground">{user.email}</p>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">
+                              Utilisateur inconnu
+                            </span>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell>
                         {payment.payment_method ? (
@@ -313,25 +267,6 @@ export function AdminPaymentsPage() {
                         <span className="text-sm text-muted-foreground">
                           {format(parseISO(payment.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
                         </span>
-                      </TableCell>
-                      <TableCell>
-                        {payment.status === 'completed' && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => setRefundPayment(payment)}
-                              >
-                                <RotateCcw className="mr-2 h-4 w-4" />
-                                Rembourser
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -372,29 +307,6 @@ export function AdminPaymentsPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* Refund Confirmation */}
-      <AlertDialog open={!!refundPayment} onOpenChange={(open) => !open && setRefundPayment(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer le remboursement ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Vous allez rembourser {refundPayment && formatCurrency(refundPayment.amount)} a{' '}
-              {refundPayment?.subscription?.event?.user?.name || 'cet utilisateur'}.
-              Cette action est irreversible.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleRefund}
-              disabled={isRefunding}
-            >
-              {isRefunding ? 'Remboursement...' : 'Confirmer'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

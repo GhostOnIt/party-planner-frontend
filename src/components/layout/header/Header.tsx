@@ -26,7 +26,7 @@ export function Header({
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-[#e5e7eb] flex items-center justify-between px-6 z-40 lg:left-[250px] lg:right-0">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-1 items-center gap-3 min-w-0 mr-4">
         {/* Hamburger Menu Button - Mobile/Tablet only */}
         {onMenuClick && (
           <Button

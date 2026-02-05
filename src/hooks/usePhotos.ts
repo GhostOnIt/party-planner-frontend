@@ -116,14 +116,9 @@ export function useUploadPhotos(eventId: string) {
       });
       formData.append('type', type);
 
-      const response = await api.post<{ data: Photo[]; message: string }>(
+      const response = await api.post<{ message: string; photos: Photo[] }>(
         `/events/${eventId}/photos`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
+        formData
       );
       return response.data;
     },

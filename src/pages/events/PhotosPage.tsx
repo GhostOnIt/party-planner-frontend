@@ -105,9 +105,10 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
       {
         onSuccess: (data) => {
           setShowUploader(false);
+          const count = data?.photos?.length ?? 0;
           toast({
             title: 'Photos ajoutees',
-            description: `${data.data.length} photo(s) ajoutee(s) avec succes.`,
+            description: `${count} photo(s) ajoutee(s) avec succes.`,
           });
         },
         onError: () => {
