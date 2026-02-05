@@ -147,9 +147,6 @@ export function EventCard({
                 <DropdownMenuItem onClick={() => onEdit?.(event)}>
                   <Pencil className="mr-2 h-4 w-4" /> Modifier
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onDuplicate?.(event)}>
-                  <Copy className="mr-2 h-4 w-4" /> Dupliquer
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => onDelete?.(event)}
