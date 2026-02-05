@@ -1,5 +1,32 @@
 import { useState } from 'react';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
+
+// Map common color names to hex for native color input (value must be #rrggbb)
+const COLOR_NAME_TO_HEX: Record<string, string> = {
+  gray: '#6b7280',
+  grey: '#6b7280',
+  red: '#ef4444',
+  blue: '#3b82f6',
+  green: '#22c55e',
+  yellow: '#eab308',
+  orange: '#f97316',
+  purple: '#a855f7',
+  pink: '#ec4899',
+  indigo: '#6366f1',
+  teal: '#14b8a6',
+  cyan: '#06b6d4',
+};
+function toHexColor(color: string | null | undefined): string {
+  if (!color) return '#6b7280';
+  if (/^#[0-9A-Fa-f]{6}$/.test(color)) return color;
+  return COLOR_NAME_TO_HEX[color.toLowerCase()] ?? '#6b7280';
+}
+
+function formColorForPicker(color: string | undefined): string {
+  if (!color) return '#6b7280';
+  if (/^#[0-9A-Fa-f]{6}$/.test(color)) return color;
+  return toHexColor(color);
+}
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -55,11 +82,11 @@ export function BudgetCategoriesManager() {
   const [formData, setFormData] = useState<CreateBudgetCategoryData>({
     name: '',
     slug: '',
-    color: 'gray',
+    color: '#6b7280',
   });
 
   const handleCreate = () => {
-    setFormData({ name: '', slug: '', color: 'gray' });
+    setFormData({ name: '', slug: '', color: '#6b7280' });
     setIsCreateDialogOpen(true);
   };
 
@@ -68,7 +95,7 @@ export function BudgetCategoriesManager() {
     setFormData({
       name: category.name,
       slug: category.slug,
-      color: category.color || 'gray',
+      color: toHexColor(category.color),
     });
     setIsEditDialogOpen(true);
   };
@@ -86,7 +113,7 @@ export function BudgetCategoriesManager() {
           description: 'La catégorie de budget a été créée avec succès.',
         });
         setIsCreateDialogOpen(false);
-        setFormData({ name: '', slug: '', color: 'gray' });
+        setFormData({ name: '', slug: '', color: '#6b7280' });
       },
       onError: (error: any) => {
         toast({
@@ -191,10 +218,12 @@ export function BudgetCategoriesManager() {
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <div
-                      className="h-4 w-4 rounded-full border"
-                      style={{ backgroundColor: category.color || '#gray' }}
+                      className="h-4 w-4 rounded-full border border-border"
+                      style={{ backgroundColor: toHexColor(category.color) }}
                     />
-                    <span className="text-sm">{category.color || 'gray'}</span>
+                    <span className="text-sm font-mono text-muted-foreground">
+                      {toHexColor(category.color)}
+                    </span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -269,12 +298,30 @@ export function BudgetCategoriesManager() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="cat-color">Couleur</Label>
-              <Input
-                id="cat-color"
-                value={formData.color}
-                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                placeholder="Ex: blue"
-              />
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  id="cat-color"
+                  value={formColorForPicker(formData.color)}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  className="h-10 w-14 cursor-pointer rounded-md border border-input bg-transparent p-1"
+                  title="Choisir une couleur"
+                />
+                <Input
+                  value={formData.color ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === '') {
+                      setFormData({ ...formData, color: '#6b7280' });
+                    } else if (/^#[0-9A-Fa-f]{0,6}$/.test(v) || /^[0-9A-Fa-f]{0,6}$/.test(v)) {
+                      const hex = v.startsWith('#') ? v : `#${v}`;
+                      setFormData({ ...formData, color: hex });
+                    }
+                  }}
+                  placeholder="#6b7280"
+                  className="font-mono text-sm max-w-32"
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -323,11 +370,30 @@ export function BudgetCategoriesManager() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-cat-color">Couleur</Label>
-              <Input
-                id="edit-cat-color"
-                value={formData.color}
-                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-              />
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  id="edit-cat-color"
+                  value={formColorForPicker(formData.color)}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  className="h-10 w-14 cursor-pointer rounded-md border border-input bg-transparent p-1"
+                  title="Choisir une couleur"
+                />
+                <Input
+                  value={formData.color ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === '') {
+                      setFormData({ ...formData, color: '#6b7280' });
+                    } else if (/^#[0-9A-Fa-f]{0,6}$/.test(v) || /^[0-9A-Fa-f]{0,6}$/.test(v)) {
+                      const hex = v.startsWith('#') ? v : `#${v}`;
+                      setFormData({ ...formData, color: hex });
+                    }
+                  }}
+                  placeholder="#6b7280"
+                  className="font-mono text-sm max-w-32"
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>

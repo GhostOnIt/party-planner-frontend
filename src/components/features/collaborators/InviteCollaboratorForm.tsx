@@ -43,11 +43,17 @@ export function InviteCollaboratorForm({
   const { data: rolesData, isLoading: isLoadingRoles } = useAvailableRoles();
   const availableRoleDefinitions = rolesData?.roles || [];
 
-  // Filter roles based on availableRoles prop (if provided)
-  const filteredRoles =
+  // Filter and deduplicate system roles by value (API may have returned duplicates)
+  const systemRolesRaw =
     availableRoles.length > 0
       ? availableRoleDefinitions.filter((role) => availableRoles.includes(role.value as string))
-      : availableRoleDefinitions;
+      : availableRoleDefinitions.filter((r) => r.is_system !== false);
+  const seenValues = new Set<string>();
+  const filteredRoles = systemRolesRaw.filter((role) => {
+    if (seenValues.has(role.value)) return false;
+    seenValues.add(role.value);
+    return true;
+  });
 
   // Create schema for invitation form
   const inviteSchema = z
@@ -141,83 +147,86 @@ export function InviteCollaboratorForm({
           </div>
 
           <div className="space-y-2">
-            <Label>Nouveaux rôles *</Label>
-            <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
-              {/* Custom roles (if any) */}
+            <Label>Rôles *</Label>
+            <div className="space-y-3 max-h-56 overflow-y-auto border rounded-md p-3">
+              {/* 1. Rôles système */}
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground py-1">
+                  Rôles système
+                </p>
+                {filteredRoles.map((role) => (
+                  <div key={role.value} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={`role-${role.value}`}
+                      checked={selectedRoles?.includes(role.value) || false}
+                      onChange={(e) => {
+                        const currentRoles = selectedRoles || [];
+                        if (e.target.checked) {
+                          setValue('roles', [...currentRoles, role.value]);
+                        } else {
+                          setValue(
+                            'roles',
+                            currentRoles.filter((r) => r !== role.value)
+                          );
+                        }
+                      }}
+                      className="rounded border-gray-300"
+                    />
+                    <label
+                      htmlFor={`role-${role.value}`}
+                      className="text-sm font-medium cursor-pointer flex-1"
+                    >
+                      <div>
+                        <p className="font-medium">{role.label}</p>
+                        <p className="text-xs text-muted-foreground">{role.description}</p>
+                      </div>
+                    </label>
+                  </div>
+                ))}
+              </div>
+
+              {/* 2. Séparateur puis rôles personnalisés */}
               {customRoles.filter((r) => !r.is_system).length > 0 && (
                 <>
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Rôles personnalisés
-                  </p>
-
-                  {customRoles
-                    .filter((r) => !r.is_system)
-                    .map((role) => (
-                      <div key={role.id} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={`custom-role-${role.id}`}
-                          checked={selectedCustomRoleIds.includes(role.id)}
-                          onChange={() => {
-                            const isChecked = selectedCustomRoleIds.includes(role.id);
-                            const next = isChecked
-                              ? selectedCustomRoleIds.filter((id) => id !== role.id)
-                              : [...selectedCustomRoleIds, role.id];
-                            setValue('custom_role_ids', next);
-                          }}
-                          className="rounded border-gray-300"
-                        />
-                        <label
-                          htmlFor={`custom-role-${role.id}`}
-                          className="text-sm font-medium cursor-pointer flex-1"
-                        >
-                          <div>
-                            <p className="font-medium">{role.name}</p>
-                            {role.description && (
-                              <p className="text-xs text-muted-foreground">{role.description}</p>
-                            )}
-                          </div>
-                        </label>
-                      </div>
-                    ))}
-
-                  <div className="my-2 border-t" />
+                  <div className="border-t my-2" />
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground py-1">
+                      Rôles personnalisés
+                    </p>
+                    {customRoles
+                      .filter((r) => !r.is_system)
+                      .map((role) => (
+                        <div key={role.id} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`custom-role-${role.id}`}
+                            checked={selectedCustomRoleIds.includes(role.id)}
+                            onChange={() => {
+                              const isChecked = selectedCustomRoleIds.includes(role.id);
+                              const next = isChecked
+                                ? selectedCustomRoleIds.filter((id) => id !== role.id)
+                                : [...selectedCustomRoleIds, role.id];
+                              setValue('custom_role_ids', next);
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                          <label
+                            htmlFor={`custom-role-${role.id}`}
+                            className="text-sm font-medium cursor-pointer flex-1"
+                          >
+                            <div>
+                              <p className="font-medium">{role.name}</p>
+                              {role.description && (
+                                <p className="text-xs text-muted-foreground">{role.description}</p>
+                              )}
+                            </div>
+                          </label>
+                        </div>
+                      ))}
+                  </div>
                 </>
               )}
-
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Rôles système
-              </p>
-              {filteredRoles.map((role) => (
-                <div key={role.value} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id={`role-${role.value}`}
-                    checked={selectedRoles?.includes(role.value) || false}
-                    onChange={(e) => {
-                      const currentRoles = selectedRoles || [];
-                      if (e.target.checked) {
-                        setValue('roles', [...currentRoles, role.value]);
-                      } else {
-                        setValue(
-                          'roles',
-                          currentRoles.filter((r) => r !== role.value)
-                        );
-                      }
-                    }}
-                    className="rounded border-gray-300"
-                  />
-                  <label
-                    htmlFor={`role-${role.value}`}
-                    className="text-sm font-medium cursor-pointer flex-1"
-                  >
-                    <div>
-                      <p className="font-medium">{role.label}</p>
-                      <p className="text-xs text-muted-foreground">{role.description}</p>
-                    </div>
-                  </label>
-                </div>
-              ))}
             </div>
             {errors.roles && <p className="text-sm text-destructive">{errors.roles.message}</p>}
           </div>

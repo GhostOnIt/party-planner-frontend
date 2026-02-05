@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { Eye, Edit, Copy, Trash2 } from 'lucide-react';
+import { Eye, Edit, Trash2 } from 'lucide-react';
 import type { DisplayEvent } from '@/utils/eventUtils';
 
 interface EventActionsMenuProps {
@@ -18,7 +18,7 @@ export function EventActionsMenu({
   onOpenChange,
   onView,
   onEdit,
-  onDuplicate,
+  onDuplicate: _onDuplicate,
   onDelete,
 }: EventActionsMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -76,20 +76,7 @@ export function EventActionsMenu({
           Modifier
         </button>
       )}
-      {onDuplicate && (
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onDuplicate(event);
-            onOpenChange(false);
-          }}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#1a1a2e]"
-        >
-          <Copy className="w-4 h-4" />
-          Dupliquer
-        </button>
-      )}
+    
       <div className="border-t border-[#f3f4f6] my-1" />
       {onDelete && (
         <button

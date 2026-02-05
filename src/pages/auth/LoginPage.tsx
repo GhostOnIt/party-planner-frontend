@@ -102,7 +102,15 @@ export function LoginPage() {
           >
             {error && (
               <Alert variant="destructive">
-                <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
+                <AlertDescription>
+                  {(() => {
+                    const msg = getApiErrorMessage(error);
+                    if (/credentials do not match|invalid credentials/i.test(msg)) {
+                      return 'Email ou mot de passe incorrect';
+                    }
+                    return msg;
+                  })()}
+                </AlertDescription>
               </Alert>
             )}
 
@@ -122,9 +130,7 @@ export function LoginPage() {
                   className="pl-10 h-12 bg-secondary/50 border-0 focus-visible:ring-2 focus-visible:ring-primary"
                 />
               </div>
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              )}
+            
             </div>
 
             {/* Password Field */}

@@ -204,7 +204,15 @@ export function SpotFormDialog({
                 <Select
                   value={formData.type}
                   onValueChange={(value: SpotType) =>
-                    setFormData((prev) => ({ ...prev, type: value }))
+                    setFormData((prev) => {
+                      const next = { ...prev, type: value };
+                      // Les sondages ne peuvent pas être sur la page de connexion
+                      if (value === 'poll' && prev.displayLocations.includes('login')) {
+                        next.displayLocations = prev.displayLocations.filter((l) => l !== 'login');
+                        if (next.displayLocations.length === 0) next.displayLocations = ['dashboard'];
+                      }
+                      return next;
+                    })
                   }
                 >
                   <SelectTrigger>
@@ -462,19 +470,26 @@ export function SpotFormDialog({
                           Dashboard
                         </Label>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="loc-login"
-                          checked={formData.displayLocations.includes('login')}
-                          onCheckedChange={(checked) =>
-                            handleLocationChange('login', checked as boolean)
-                          }
-                        />
-                        <Label htmlFor="loc-login" className="font-normal">
-                          Page de connexion
-                        </Label>
-                      </div>
+                      {formData.type === 'banner' && (
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="loc-login"
+                            checked={formData.displayLocations.includes('login')}
+                            onCheckedChange={(checked) =>
+                              handleLocationChange('login', checked as boolean)
+                            }
+                          />
+                          <Label htmlFor="loc-login" className="font-normal">
+                            Page de connexion
+                          </Label>
+                        </div>
+                      )}
                     </div>
+                    {formData.type === 'poll' && (
+                      <p className="text-xs text-muted-foreground">
+                        Les sondages ne peuvent être affichés que sur le dashboard (pas sur la page de connexion).
+                      </p>
+                    )}
                   </div>
 
                   {/* Active Status */}

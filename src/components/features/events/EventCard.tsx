@@ -6,7 +6,6 @@ import {
   Users,
   MoreHorizontal,
   Pencil,
-  Copy,
   Trash2,
   ImageIcon,
 } from 'lucide-react';
@@ -42,7 +41,7 @@ export function EventCard({
   subscription,
   currentUserId,
   onEdit,
-  onDuplicate,
+  onDuplicate: _onDuplicate,
   onDelete,
 }: EventCardProps) {
   const [imageError, setImageError] = useState(false);
@@ -146,9 +145,6 @@ export function EventCard({
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => onEdit?.(event)}>
                   <Pencil className="mr-2 h-4 w-4" /> Modifier
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onDuplicate?.(event)}>
-                  <Copy className="mr-2 h-4 w-4" /> Dupliquer
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

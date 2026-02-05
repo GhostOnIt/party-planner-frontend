@@ -87,9 +87,9 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
   const { toast } = useToast();
   const { mutate: subscribeToPlan, isPending: isSubscribing } = useSubscribeToPlan();
 
-  // Get enabled features
+  // Get enabled features (only those that have a label, to hide deprecated ones like planning.enabled, support.dedicated, assistance.human)
   const enabledFeatures = Object.entries(plan.features || {})
-    .filter(([_, enabled]) => enabled)
+    .filter(([key, enabled]) => enabled && PLAN_FEATURE_LABELS[key])
     .map(([key]) => key);
 
   // Get key limits
@@ -385,7 +385,7 @@ export function PlansPage() {
           {/* Main Heading */}
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-5 text-balance tracking-tight">
-              <span className="bg-gradient-to-r from-[#4F46E5] via-[#7C3AED] to-[#E91E8C] bg-clip-text text-transparent">
+              <span className=" bg-clip-text">
                 Plans tarifaires
               </span>
             </h1>

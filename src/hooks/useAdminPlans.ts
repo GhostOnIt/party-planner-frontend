@@ -37,7 +37,6 @@ export interface PlanLimits {
 
 export interface PlanFeatures {
   'budget.enabled'?: boolean;
-  'planning.enabled'?: boolean;
   'tasks.enabled'?: boolean;
   'guests.manage'?: boolean;
   'guests.import'?: boolean;
@@ -53,9 +52,7 @@ export interface PlanFeatures {
   'reporting.enabled'?: boolean;
   'branding.custom'?: boolean;
   'support.whatsapp_priority'?: boolean;
-  'support.dedicated'?: boolean;
   'multi_client.enabled'?: boolean;
-  'assistance.human'?: boolean;
   [key: string]: boolean | undefined;
 }
 
@@ -223,7 +220,6 @@ export function useAvailableTrial() {
 
 export const PLAN_FEATURE_LABELS: Record<string, string> = {
   'budget.enabled': 'Gestion du budget',
-  'planning.enabled': 'Planning',
   'tasks.enabled': 'Gestion des tâches',
   'guests.manage': 'Gestion des invités',
   'guests.import': 'Import des invités',
@@ -239,9 +235,7 @@ export const PLAN_FEATURE_LABELS: Record<string, string> = {
   'reporting.enabled': 'Reporting',
   'branding.custom': 'Branding personnalisé',
   'support.whatsapp_priority': 'Support WhatsApp prioritaire',
-  'support.dedicated': 'Support dédié',
   'multi_client.enabled': 'Multi-clients',
-  'assistance.human': 'Assistance humaine',
 };
 
 export const PLAN_LIMIT_LABELS: Record<string, string> = {

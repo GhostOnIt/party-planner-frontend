@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PageHeader } from '@/components/layout/page-header';
 import { PaymentForm } from '@/components/features/payment/PaymentForm';
 import { PaymentStatus } from '@/components/features/payment/PaymentStatus';
-import { usePlans, formatLimitValue } from '@/hooks/useAdminPlans';
+import { usePlans, formatLimitValue, PLAN_FEATURE_LABELS } from '@/hooks/useAdminPlans';
 import { useSubscribeToPlan } from '@/hooks/useSubscription';
 import { useInitiatePayment } from '@/hooks/usePayment';
 import { useToast } from '@/hooks/use-toast';
@@ -187,12 +187,12 @@ export function SubscribePage() {
                     </li>
                   )}
                   {Object.entries(plan.features || {})
-                    .filter(([_, enabled]) => enabled)
+                    .filter(([key, enabled]) => enabled && PLAN_FEATURE_LABELS[key])
                     .slice(0, 5)
                     .map(([key]) => (
                       <li key={key} className="flex items-center gap-2 text-sm">
                         <Check className="h-4 w-4 text-primary" />
-                        <span>{key.replace(/\./g, ' ')}</span>
+                        <span>{PLAN_FEATURE_LABELS[key] ?? key.replace(/\./g, ' ')}</span>
                       </li>
                     ))}
                 </ul>

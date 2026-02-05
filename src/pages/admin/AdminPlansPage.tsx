@@ -102,7 +102,6 @@ const defaultLimits: PlanLimits = {
 
 const defaultFeatures: PlanFeatures = {
   'budget.enabled': false,
-  'planning.enabled': false,
   'tasks.enabled': false,
   'guests.manage': false,
   'guests.import': false,
@@ -118,9 +117,7 @@ const defaultFeatures: PlanFeatures = {
   'reporting.enabled': false,
   'branding.custom': false,
   'support.whatsapp_priority': false,
-  'support.dedicated': false,
   'multi_client.enabled': false,
-  'assistance.human': false,
 };
 
 export function AdminPlansPage() {
