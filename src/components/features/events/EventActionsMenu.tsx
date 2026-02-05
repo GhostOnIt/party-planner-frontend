@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { Eye, Edit, Copy, Trash2 } from 'lucide-react';
+import { Eye, Edit, Trash2 } from 'lucide-react';
 import type { DisplayEvent } from '@/utils/eventUtils';
 
 interface EventActionsMenuProps {
@@ -18,7 +18,7 @@ export function EventActionsMenu({
   onOpenChange,
   onView,
   onEdit,
-  onDuplicate,
+  onDuplicate: _onDuplicate,
   onDelete,
 }: EventActionsMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);

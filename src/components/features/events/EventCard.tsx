@@ -6,7 +6,6 @@ import {
   Users,
   MoreHorizontal,
   Pencil,
-  Copy,
   Trash2,
   ImageIcon,
 } from 'lucide-react';
@@ -42,7 +41,7 @@ export function EventCard({
   subscription,
   currentUserId,
   onEdit,
-  onDuplicate,
+  onDuplicate: _onDuplicate,
   onDelete,
 }: EventCardProps) {
   const [imageError, setImageError] = useState(false);
