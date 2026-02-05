@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard,
@@ -20,6 +20,16 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import logo from '@/assets/logo.png';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface SidebarProps {
   isAdmin?: boolean;
@@ -56,12 +66,18 @@ const adminNavItems: NavItem[] = [
 export function Sidebar({ isAdmin = false, onLogout }: SidebarProps) {
   const { t } = useTranslation();
   const location = useLocation();
-  
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+
   // Détecter si on est dans la section admin
   const isInAdminSection = location.pathname.startsWith('/admin');
   // Vérifier si on vient de la section admin (via sessionStorage)
   const fromAdminSection = sessionStorage.getItem('fromAdminSection') === 'true';
-  
+
+  const handleLogoutConfirm = () => {
+    setShowLogoutDialog(false);
+    onLogout();
+  };
+
   // Nettoyer le flag quand on revient à une route admin ou qu'on navigue ailleurs que /events/:id
   useEffect(() => {
     if (isInAdminSection) {
@@ -163,13 +179,33 @@ export function Sidebar({ isAdmin = false, onLogout }: SidebarProps) {
         </NavLink>
 
         <button
-          onClick={onLogout}
+          onClick={() => setShowLogoutDialog(true)}
           className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
         >
           <LogOut className="w-4 h-4" />
           {t('nav.logout')}
         </button>
       </div>
+
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Déconnexion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir vous déconnecter ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogoutConfirm}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Se déconnecter
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </aside>
   );
 }
