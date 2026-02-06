@@ -10,7 +10,7 @@ import { MainLayout } from '@/layouts/MainLayout';
 import { AuthLayout } from '@/layouts/AuthLayout';
 
 // Auth components (chargés immédiatement)
-import { PrivateRoute, PublicRoute, AdminRoute } from '@/components/auth';
+import { PrivateRoute, PublicRoute, AdminRoute, SessionGuard } from '@/components/auth';
 
 // Lazy loading des pages pour améliorer les performances
 // Auth pages
@@ -91,6 +91,7 @@ function App() {
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
+            <Route element={<SessionGuard />}>
             {/* Public routes (redirect if authenticated) */}
             <Route element={<PublicRoute />}>
               <Route element={<AuthLayout />}>
@@ -155,6 +156,7 @@ function App() {
 
             {/* 404 */}
             <Route path="*" element={<NotFoundPage />} />
+            </Route>
           </Routes>
         </Suspense>
       </BrowserRouter>
