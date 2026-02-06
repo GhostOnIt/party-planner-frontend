@@ -12,7 +12,7 @@ export type BudgetCategory =
   | 'photography'
   | 'transportation'
   | 'other';
-export type CollaboratorRole = 'owner' | 'coordinator' | 'guest_manager' | 'planner' | 'accountant' | 'photographer' | 'supervisor' | 'reporter' | 'editor' | 'viewer';
+export type CollaboratorRole = 'owner' | 'coordinator' | 'guest_manager' | 'planner' | 'accountant' | 'supervisor' | 'reporter' | 'editor' | 'viewer';
 export type PaymentMethod = 'mtn_mobile_money' | 'airtel_money';
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 export type PlanType = 'starter' | 'pro';
