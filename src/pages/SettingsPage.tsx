@@ -59,7 +59,7 @@ import {
   LegalPage as LegalPageType,
 } from '@/hooks/useLegalPages';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import {
   Dialog,
   DialogContent,
@@ -933,7 +933,7 @@ export function SettingsPage() {
                     Modifier : {editingLegalPage && getLegalSlugLabel(editingLegalPage.slug)}
                   </DialogTitle>
                   <DialogDescription>
-                    Modifiez le contenu de la page. Le contenu supporte le HTML.
+                    Modifiez le contenu avec l’éditeur ci‑dessous. Le contenu est enregistré en HTML.
                   </DialogDescription>
                 </DialogHeader>
 
@@ -965,34 +965,22 @@ export function SettingsPage() {
                     />
                   </div>
 
-                  {/* Content */}
+                  {/* Content — éditeur WYSIWYG (stockage HTML inchangé) */}
                   <div className="space-y-2">
-                    <Label htmlFor="legal-content">Contenu (HTML)</Label>
-                    <Textarea
-                      id="legal-content"
+                    <Label id="legal-content-label">Contenu</Label>
+                    <RichTextEditor
+                      key={editingLegalPage?.id}
                       value={legalEditForm.content}
-                      onChange={(e) => setLegalEditForm((prev) => ({ ...prev, content: e.target.value }))}
-                      placeholder="<h2>Section</h2><p>Contenu...</p>"
-                      className="min-h-[300px] font-mono text-sm"
+                      onChange={(html) =>
+                        setLegalEditForm((prev) => ({ ...prev, content: html }))
+                      }
+                      placeholder="Saisissez le contenu de la page…"
+                      minHeight="300px"
+                      className="[&_.ProseMirror]:min-h-[260px]"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Utilisez les balises HTML comme &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;strong&gt; pour formater le contenu.
+                      Utilisez la barre d’outils pour mettre en forme le texte (titres, listes, gras, italique). Le contenu est enregistré en HTML.
                     </p>
-                  </div>
-
-                  {/* Preview */}
-                  <div className="space-y-2">
-                    <Label>Aperçu</Label>
-                    <div
-                      className="rounded-lg border p-4 bg-muted/30 prose prose-sm dark:prose-invert max-w-none
-                        prose-headings:font-semibold prose-headings:text-foreground
-                        prose-h2:text-lg prose-h2:mt-4 prose-h2:mb-2
-                        prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:my-2
-                        prose-li:text-muted-foreground prose-li:my-0.5
-                        prose-strong:text-foreground
-                        prose-ul:my-2"
-                      dangerouslySetInnerHTML={{ __html: legalEditForm.content }}
-                    />
                   </div>
                 </div>
 

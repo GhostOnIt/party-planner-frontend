@@ -13,6 +13,8 @@ export interface SpotButton {
 export interface PollOption {
   id: string;
   label: string;
+  votes?: number;
+  percentage?: number;
 }
 
 export interface SpotStats {
@@ -39,6 +41,10 @@ export interface CommunicationSpot {
   // Poll specific
   pollQuestion?: string;
   pollOptions?: PollOption[];
+  /** Présent quand l’utilisateur connecté a déjà voté (liste des spots actifs). */
+  hasVoted?: boolean;
+  /** Option choisie par l’utilisateur (après vote ou au rechargement). */
+  userVoteOptionId?: string | null;
 
   // Administration
   isActive: boolean;

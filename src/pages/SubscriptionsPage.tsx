@@ -63,9 +63,7 @@ function SubscriptionCard({ subscription }: { subscription: Subscription }) {
                   {statusLabels[status] || status}
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Evenement #{subscription.event_id}
-              </p>
+              
               <p className="text-sm text-muted-foreground">
                 {isExpired ? (
                   <span className="text-destructive">

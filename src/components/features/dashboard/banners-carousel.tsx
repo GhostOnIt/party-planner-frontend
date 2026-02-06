@@ -154,9 +154,8 @@ export function BannersCarousel({
 
   const currentSlide = availableSlides[currentIndex]
 
-  // Convert spot to PromoCard props
+  // Convert spot to PromoCard props (inclut le vote utilisateur pour persistance au reload)
   const spotToPromoProps = (spot: CommunicationSpot) => {
-
     return {
       type: spot.type,
       badge: spot.badge,
@@ -169,8 +168,11 @@ export function BannersCarousel({
       pollOptions: spot.pollOptions?.map(opt => ({
         id: opt.id,
         label: opt.label,
-        votes: spot.stats.votes?.[opt.id] || 0,
+        votes: opt.votes ?? spot.stats.votes?.[opt.id] ?? 0,
+        percentage: opt.percentage,
       })),
+      hasVoted: spot.hasVoted,
+      userVoteOptionId: spot.userVoteOptionId ?? undefined,
       onVote: (optionId: string) => onSpotVote?.(spot.id, optionId),
       onButtonClick: (buttonType: "primary" | "secondary") => onSpotClick?.(spot.id, buttonType),
     }

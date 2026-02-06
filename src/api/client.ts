@@ -28,6 +28,7 @@ const getBaseUrl = (): string => {
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: getBaseUrl(),
+  withCredentials: true, // Envoie/reçoit les cookies (refresh_token) pour CORS
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -35,9 +36,10 @@ const api = axios.create({
   timeout: 30000, // 30 seconds timeout
 });
 
-// Public API client (no authentication required)
+// Public API client (no authentication required) — utilisé pour login et refresh
 export const publicApi = axios.create({
   baseURL: getBaseUrl(),
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -120,7 +122,7 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
         return api(originalRequest);
-      } catch (refreshError) {
+      } catch {
         // If refresh fails, fall through to global 401 handler below
       }
     }
@@ -130,6 +132,14 @@ api.interceptors.response.use(
       const logout = useAuthStore.getState().logout;
       logout();
 
+      const path = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/dashboard';
+      if (path !== '/login' && path !== '/') {
+        try {
+          sessionStorage.setItem('redirect_after_login', path);
+        } catch {
+          // ignore
+        }
+      }
       window.location.href = '/login';
     }
 

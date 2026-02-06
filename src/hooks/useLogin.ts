@@ -17,10 +17,21 @@ export function useLogin() {
     onSuccess: (data) => {
       setAuth(data.user, data.token);
 
-      // If the user was redirected to /login from a protected route,
-      // return them to that route after successful login.
-      const state = location.state as { from?: Location } | null;
-      const redirectTo = state?.from?.pathname || '/dashboard';
+      // Redirection après connexion : priorité à l’URL sauvegardée (déconnexion 401), puis state React, puis dashboard
+      let redirectTo = '/dashboard';
+      try {
+        const saved = sessionStorage.getItem('redirect_after_login');
+        if (saved && saved !== '/login') {
+          redirectTo = saved;
+          sessionStorage.removeItem('redirect_after_login');
+        } else {
+          const state = location.state as { from?: { pathname?: string } } | null;
+          if (state?.from?.pathname) redirectTo = state.from.pathname;
+        }
+      } catch {
+        const state = location.state as { from?: { pathname?: string } } | null;
+        if (state?.from?.pathname) redirectTo = state.from.pathname;
+      }
 
       navigate(redirectTo, { replace: true });
     },
