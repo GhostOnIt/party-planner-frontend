@@ -771,60 +771,55 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
         <GuestFilters filters={filters} onFiltersChange={setFilters} />
 
         <div className="flex items-center gap-2">
-          <PermissionGuard eventId={eventId!} permissions={['guests.export']}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" disabled={isExporting || !featureAccess.guests.canExport}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Exporter
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => handleExport('csv')}>Export CSV</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('xlsx')}>
-                  Export Excel
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('pdf')}>Export PDF</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setShowExportModal(true)}>
-                  Exporter avec filtres...
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </PermissionGuard>
+          {featureAccess.guests.canExport && (
+            <PermissionGuard eventId={eventId!} permissions={['guests.export']}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" disabled={isExporting}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Exporter
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => handleExport('csv')}>Export CSV</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('xlsx')}>
+                    Export Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('pdf')}>Export PDF</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setShowExportModal(true)}>
+                    Exporter avec filtres...
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </PermissionGuard>
+          )}
 
-          <PermissionGuard eventId={eventId!} permissions={['guests.import']}>
-            <Button
-              variant="outline"
-              onClick={() => setShowImport(true)}
-              disabled={!featureAccess.guests.canImport}
-              title={!featureAccess.guests.canImport ? 'Fonctionnalité non disponible' : undefined}
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              Importer
-            </Button>
-          </PermissionGuard>
+          {featureAccess.guests.canImport && (
+            <PermissionGuard eventId={eventId!} permissions={['guests.import']}>
+              <Button variant="outline" onClick={() => setShowImport(true)}>
+                <Upload className="mr-2 h-4 w-4" />
+                Importer
+              </Button>
+            </PermissionGuard>
+          )}
 
-          <PermissionGuard eventId={eventId!} permissions={['guests.create']}>
-            <Button
-              onClick={handleAddGuest}
-              disabled={!featureAccess.guests.canCreate || !canAddGuests}
-              title={
-                !featureAccess.guests.canCreate
-                  ? 'Fonctionnalité non disponible'
-                  : !canAddGuests
-                    ? 'Limite atteinte'
-                    : undefined
-              }
-            >
-              {!canAddGuests && featureAccess.guests.canCreate ? (
-                <Crown className="mr-2 h-4 w-4" />
-              ) : (
-                <Plus className="mr-2 h-4 w-4" />
-              )}
-              Ajouter un invite
-            </Button>
-          </PermissionGuard>
+          {featureAccess.guests.canCreate && (
+            <PermissionGuard eventId={eventId!} permissions={['guests.create']}>
+              <Button
+                onClick={handleAddGuest}
+                disabled={!canAddGuests}
+                title={!canAddGuests ? 'Limite atteinte' : undefined}
+              >
+                {!canAddGuests ? (
+                  <Crown className="mr-2 h-4 w-4" />
+                ) : (
+                  <Plus className="mr-2 h-4 w-4" />
+                )}
+                Ajouter un invite
+              </Button>
+            </PermissionGuard>
+          )}
         </div>
       </div>
 
