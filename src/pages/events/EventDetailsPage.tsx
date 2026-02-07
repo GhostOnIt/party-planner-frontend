@@ -622,7 +622,7 @@ export function EventDetailsPage() {
                 {event.user && (
                   <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
                     <div className="px-6 py-4 border-b border-[#f3f4f6] bg-[#f9fafb]">
-                      <h3 className="font-semibold text-[#1a1a2e]">Créateur</h3>
+                      <h3 className="font-semibold text-[#1a1a2e]">Créé par</h3>
                     </div>
                     <div className="p-6">
                       <div className="flex items-center gap-3">

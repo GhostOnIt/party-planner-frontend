@@ -45,6 +45,7 @@ import {
   useMarkUnpaid,
   useExportBudget,
 } from '@/hooks/useBudget';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { PermissionGuard } from '@/components/ui/permission-guard';
 import type {
   BudgetItem,
@@ -96,6 +97,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
   const [editingItem, setEditingItem] = useState<BudgetItem | undefined>();
   const [itemToDelete, setItemToDelete] = useState<BudgetItem | null>(null);
 
+  const featureAccess = useFeatureAccess(eventId!);
   const { data: budgetData, isLoading: isLoadingBudget } = useBudget(eventId!, filters);
   const stats = budgetData?.stats;
   const meta = budgetData?.meta;
@@ -309,30 +311,34 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
         <BudgetFilters filters={filters} onFiltersChange={setFilters} />
 
         <div className="flex items-center gap-2">
-          <PermissionGuard eventId={eventId!} permissions={['budget.export']}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" disabled={isExporting}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Exporter
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => handleExport('csv')}>Export CSV</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('xlsx')}>
-                  Export Excel
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('pdf')}>Export PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </PermissionGuard>
+          {featureAccess.budget.canExport && (
+            <PermissionGuard eventId={eventId!} permissions={['budget.export']}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" disabled={isExporting}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Exporter
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => handleExport('csv')}>Export CSV</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('xlsx')}>
+                    Export Excel
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport('pdf')}>Export PDF</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </PermissionGuard>
+          )}
 
-          <PermissionGuard eventId={eventId!} permissions={['budget.create']}>
-            <Button onClick={handleAddItem}>
-              <Plus className="mr-2 h-4 w-4" />
-              Ajouter une depense
-            </Button>
-          </PermissionGuard>
+          {featureAccess.budget.canCreate && (
+            <PermissionGuard eventId={eventId!} permissions={['budget.create']}>
+              <Button onClick={handleAddItem}>
+                <Plus className="mr-2 h-4 w-4" />
+                Ajouter une depense
+              </Button>
+            </PermissionGuard>
+          )}
         </div>
       </div>
 
@@ -358,7 +364,10 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
                 : "Vous n'avez pas encore ajoute de depenses. Commencez par en ajouter une !"
             }
             action={
-              !filters.category && filters.paid === undefined && !filters.search
+              featureAccess.budget.canCreate &&
+              !filters.category &&
+              filters.paid === undefined &&
+              !filters.search
                 ? {
                     label: 'Ajouter une depense',
                     onClick: handleAddItem,

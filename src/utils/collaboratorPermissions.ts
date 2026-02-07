@@ -124,7 +124,6 @@ export function roleCanEdit(role: CollaboratorRole): boolean {
     'guest_manager',
     'planner',
     'accountant',
-    'photographer',
     'editor',
   ].includes(role);
 }
@@ -337,14 +336,13 @@ export function getAssignableRoles(
       'guest_manager',
       'planner',
       'accountant',
-      'photographer',
       'supervisor',
       'reporter',
     ];
   }
 
   if (permissions.isCoordinator) {
-    return ['guest_manager', 'planner', 'accountant', 'photographer', 'supervisor', 'reporter'];
+    return ['guest_manager', 'planner', 'accountant', 'supervisor', 'reporter'];
   }
 
   return [];

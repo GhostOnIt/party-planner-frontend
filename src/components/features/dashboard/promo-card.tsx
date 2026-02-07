@@ -6,6 +6,7 @@ interface PollOption {
   id: string
   label: string
   votes: number
+  percentage?: number
 }
 
 interface PromoCardProps {
@@ -24,6 +25,10 @@ interface PromoCardProps {
   }
   pollQuestion?: string
   pollOptions?: PollOption[]
+  /** Vote déjà enregistré (API) — affiche le choix au rechargement */
+  hasVoted?: boolean
+  /** Option déjà choisie (API) — permet d’afficher la sélection après reload */
+  userVoteOptionId?: string | null
   onVote?: (optionId: string) => void
   onDismiss?: () => void
   dismissible?: boolean
@@ -47,15 +52,23 @@ export function PromoCard({
     { id: "3", label: "Conférence", votes: 15 },
     { id: "4", label: "Autre", votes: 10 },
   ],
+  hasVoted: initialHasVoted,
+  userVoteOptionId: initialSelectedOptionId,
   onVote,
   onDismiss,
   dismissible = true,
   spotId,
   onButtonClick,
 }: PromoCardProps) {
-  const [hasVoted, setHasVoted] = useState(false)
-  const [selectedOption, setSelectedOption] = useState<string | null>(null)
+  const [hasVoted, setHasVoted] = useState(!!initialHasVoted)
+  const [selectedOption, setSelectedOption] = useState<string | null>(initialSelectedOptionId ?? null)
   const viewTracked = useRef(false)
+
+  // Synchroniser avec les props (ex. après reload ou refetch)
+  useEffect(() => {
+    setHasVoted(!!initialHasVoted)
+    setSelectedOption(initialSelectedOptionId ?? null)
+  }, [initialHasVoted, initialSelectedOptionId])
 
   // Tracking hooks
   const { mutate: trackView } = useTrackView()
@@ -75,9 +88,8 @@ export function PromoCard({
   }
 
   const handleVote = (optionId: string) => {
-    if (hasVoted) return
     setSelectedOption(optionId)
-    setHasVoted(true)
+    if (!hasVoted) setHasVoted(true)
     onVote?.(optionId)
   }
 
@@ -163,16 +175,15 @@ export function PromoCard({
 
           <div className="space-y-3">
             {pollOptions.map((option) => {
-              const percentage = totalVotes > 0 ? Math.round((option.votes / totalVotes) * 100) : 0
+              const percentage = option.percentage ?? (totalVotes > 0 ? Math.round((option.votes / totalVotes) * 100) : 0)
               const isSelected = selectedOption === option.id
 
               return (
                 <button
                   key={option.id}
                   onClick={() => handleVote(option.id)}
-                  disabled={hasVoted}
                   className={`w-full text-left relative overflow-hidden rounded-lg transition-all ${
-                    hasVoted ? "bg-white/10 cursor-default" : "bg-white/20 hover:bg-white/30 cursor-pointer"
+                    hasVoted ? "bg-white/10 hover:bg-white/15 cursor-pointer" : "bg-white/20 hover:bg-white/30 cursor-pointer"
                   }`}
                 >
                   {hasVoted && (

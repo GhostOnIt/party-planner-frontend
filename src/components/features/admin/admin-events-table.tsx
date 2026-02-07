@@ -164,7 +164,7 @@ export function AdminEventsTable({ filter: _filter = "7days", customRange: _cust
                     <div className="flex items-center gap-1.5">Événement <SortIcon field="title" /></div>
                   </th>
                   <th onClick={() => handleSort("user")} className="text-left py-3 px-3 font-medium text-[#6b7280] cursor-pointer hover:bg-[#eef0f4] transition-colors">
-                    <div className="flex items-center gap-1.5">Créateur <SortIcon field="user" /></div>
+                    <div className="flex items-center gap-1.5">Créé par <SortIcon field="user" /></div>
                   </th>
                   <th onClick={() => handleSort("type")} className="text-center py-3 px-3 font-medium text-[#6b7280] cursor-pointer hover:bg-[#eef0f4] transition-colors">
                     <div className="flex items-center justify-center gap-1.5">Type <SortIcon field="type" /></div>
