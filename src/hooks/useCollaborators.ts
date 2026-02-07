@@ -163,7 +163,6 @@ export function useCurrentUserPermissions(eventId: string) {
                         role === 'guest_manager' ? "Gestionnaire d'Invités" :
                         role === 'planner' ? 'Planificateur' :
                         role === 'accountant' ? 'Comptable' :
-                        role === 'photographer' ? 'Photographe' :
                         role === 'supervisor' ? 'Superviseur' :
                         role === 'reporter' ? 'Rapporteur' :
                         'Aucun',

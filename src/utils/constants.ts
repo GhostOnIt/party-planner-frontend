@@ -9,7 +9,6 @@ export const ROLE_LABELS: Record<CollaboratorRole, string> = {
   guest_manager: "Gestionnaire d'Invités",
   planner: 'Planificateur',
   accountant: 'Comptable',
-  photographer: 'Photographe',
   supervisor: 'Superviseur',
   reporter: 'Rapporteur',
   editor: 'Éditeur',
