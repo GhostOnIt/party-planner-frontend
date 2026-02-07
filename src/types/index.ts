@@ -107,6 +107,9 @@ export interface Task {
   assigned_to: number | null;
   assigned_user?: User;
   completed_at: string | null;
+  estimated_cost: number | null;
+  budget_category: BudgetCategory | null;
+  budget_item?: BudgetItem | null;
   created_at: string;
 }
 
@@ -114,6 +117,7 @@ export interface Task {
 export interface BudgetItem {
   id: number;
   event_id: number;
+  task_id: number | null;
   category: BudgetCategory;
   name: string;
   estimated_cost: number;
@@ -410,6 +414,8 @@ export interface CreateTaskFormData {
   priority: TaskPriority;
   due_date?: string;
   assigned_to_user_id?: number;
+  estimated_cost?: number;
+  budget_category?: BudgetCategory;
 }
 
 export interface CreateBudgetItemFormData {
