@@ -17,6 +17,7 @@ interface VerifyOtpLocationState {
   channel: OtpChannel;
   otp_id: number;
   redirect?: string;
+  remember_me?: boolean;
 }
 
 const channelLabels: Record<OtpChannel, string> = {
@@ -69,6 +70,7 @@ export function VerifyOtpPage() {
         identifier: state.identifier,
         code,
         type: 'login',
+        remember_me: state.remember_me ?? false,
       },
       {
         onError: () => {

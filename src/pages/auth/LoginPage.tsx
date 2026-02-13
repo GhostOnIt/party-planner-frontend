@@ -17,9 +17,10 @@ import logo from '@/assets/logo.png';
 const loginSchema = z.object({
   email: z.string().email('Email invalide'),
   password: z.string().min(1, 'Mot de passe requis'),
+  remember: z.boolean().default(false),
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type LoginFormValues = z.input<typeof loginSchema>;
 
 export function LoginPage() {
   const [searchParams] = useSearchParams();
@@ -178,8 +179,16 @@ export function LoginPage() {
               )}
             </div>
 
-            {/* Forgot Password */}
-            <div className="flex justify-end">
+            {/* Remember me + Forgot Password */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  {...register('remember')}
+                  className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                />
+                <span className="text-sm text-muted-foreground">Se souvenir de moi</span>
+              </label>
               <Link
                 to={emailParam ? `/forgot-password?email=${encodeURIComponent(emailParam)}` : '/forgot-password'}
                 className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"

@@ -1,24 +1,26 @@
 import { useState } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { useAuthStore } from '@/stores/authStore';
-import { usePageTracking } from '@/hooks/usePageTracking';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+  import api from '@/api/client';
+ import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 export function MainLayout() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { user, logout } = useAuthStore();
+   const { user, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Tracker automatiquement la navigation entre les pages
-  usePageTracking();
-
-  const handleLogout = () => {
-    logout();
-    // After logout, redirect to login and remember where the user was coming from.
-    navigate('/login', { state: { from: location } });
+ 
+  const handleLogout = async () => {
+    // Call API to revoke access token + refresh token cookie before clearing local state
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // Ignore errors (token may already be expired)
+    }
+     logout();
+    navigate('/login', { replace: true });
   };
 
   const handleProfileClick = () => {

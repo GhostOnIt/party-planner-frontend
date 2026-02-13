@@ -324,6 +324,7 @@ export interface OtpRequiredResponse {
   otp_id: number;
   channel: string;
   expires_in: number;
+  remember_me?: boolean;
 }
 
 // OTP Types
@@ -386,6 +387,7 @@ export interface ChartData {
 export interface LoginFormData {
   email: string;
   password: string;
+  remember?: boolean;
 }
 
 export interface RegisterFormData {

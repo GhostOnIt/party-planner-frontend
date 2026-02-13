@@ -68,6 +68,7 @@ export function useLogin() {
             channel: otpData.channel,
             otp_id: otpData.otp_id,
             redirect: redirectTo,
+            remember_me: otpData.remember_me ?? false,
           },
         });
         return;
