@@ -317,6 +317,15 @@ export interface AuthResponse {
   token: string;
 }
 
+export interface OtpRequiredResponse {
+  message: string;
+  requires_otp: true;
+  identifier: string;
+  otp_id: number;
+  channel: string;
+  expires_in: number;
+}
+
 // OTP Types
 export type OtpChannel = 'email' | 'sms' | 'whatsapp';
 export type OtpType = 'registration' | 'login' | 'password_reset';

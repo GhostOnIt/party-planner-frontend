@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '@/api/client';
 import { useAuthStore } from '@/stores/authStore';
-import type { AuthResponse, LoginFormData } from '@/types';
+import type { AuthResponse, LoginFormData, OtpRequiredResponse } from '@/types';
 
 function isValidRedirect(path: string | null): boolean {
   if (!path || typeof path !== 'string') return false;
@@ -24,11 +24,57 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: async (data: LoginFormData) => {
-      const response = await api.post<AuthResponse>('/auth/login', data);
+      const response = await api.post<AuthResponse | OtpRequiredResponse>('/auth/login', data);
       return response.data;
     },
     onSuccess: (data) => {
-      setAuth(data.user, data.token);
+      if ('requires_otp' in data && data.requires_otp) {
+        const otpData = data as OtpRequiredResponse;
+        let redirectTo = '/dashboard';
+        try {
+          const saved = sessionStorage.getItem('redirect_after_login');
+          if (saved && saved !== '/login') {
+            const resolved = resolveRedirect(saved);
+            if (resolved) {
+              redirectTo = resolved;
+              sessionStorage.removeItem('redirect_after_login');
+            }
+          }
+          if (redirectTo === '/dashboard') {
+            const params = new URLSearchParams(location.search);
+            const redirectParam = params.get('redirect');
+            const resolved = resolveRedirect(redirectParam);
+            if (resolved) redirectTo = resolved;
+          }
+          if (redirectTo === '/dashboard') {
+            const state = location.state as { from?: { pathname?: string } } | null;
+            if (state?.from?.pathname) redirectTo = state.from.pathname;
+          }
+        } catch {
+          const params = new URLSearchParams(location.search);
+          const redirectParam = params.get('redirect');
+          const resolved = resolveRedirect(redirectParam);
+          if (resolved) redirectTo = resolved;
+          if (redirectTo === '/dashboard') {
+            const state = location.state as { from?: { pathname?: string } } | null;
+            if (state?.from?.pathname) redirectTo = state.from.pathname;
+          }
+        }
+        navigate('/verify-otp', {
+          replace: true,
+          state: {
+            identifier: otpData.identifier,
+            type: 'login' as const,
+            channel: otpData.channel,
+            otp_id: otpData.otp_id,
+            redirect: redirectTo,
+          },
+        });
+        return;
+      }
+
+      const authData = data as AuthResponse;
+      setAuth(authData.user, authData.token);
 
       // Redirection après connexion : priorité à l’URL sauvegardée (déconnexion 401), puis state React, puis dashboard
       let redirectTo = '/dashboard';

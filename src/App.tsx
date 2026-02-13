@@ -19,6 +19,7 @@ const RegisterPage = lazy(() => import('@/pages/auth').then(m => ({ default: m.R
 const ForgotPasswordPage = lazy(() => import('@/pages/auth').then(m => ({ default: m.ForgotPasswordPage })));
 const ResetPasswordPage = lazy(() => import('@/pages/auth').then(m => ({ default: m.ResetPasswordPage })));
 const OtpPage = lazy(() => import('@/pages/auth').then(m => ({ default: m.OtpPage })));
+const VerifyOtpPage = lazy(() => import('@/pages/auth').then(m => ({ default: m.VerifyOtpPage })));
 const SendOtpPage = lazy(() => import('@/pages/auth').then(m => ({ default: m.SendOtpPage })));
 const ResetPasswordOtpPage = lazy(() => import('@/pages/auth').then(m => ({ default: m.ResetPasswordOtpPage })));
 
@@ -101,6 +102,7 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/otp" element={<OtpPage />} />
+                <Route path="/verify-otp" element={<VerifyOtpPage />} />
                 <Route path="/send-otp" element={<SendOtpPage />} />
                 <Route path="/reset-password-otp" element={<ResetPasswordOtpPage />} />
               </Route>
