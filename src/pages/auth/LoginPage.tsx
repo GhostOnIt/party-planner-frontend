@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,6 +22,9 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect');
+  const emailParam = searchParams.get('email');
   const [showPassword, setShowPassword] = useState(false);
   const { mutate: login, isPending, error } = useLogin();
 
@@ -30,9 +33,18 @@ export function LoginPage() {
     handleSubmit,
     formState: { errors },
     setError,
+    reset,
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    defaultValues: { email: emailParam ?? '' },
   });
+
+  // Ensure email is set when coming from invitation (handles late URL update)
+  useEffect(() => {
+    if (emailParam) {
+      reset({ email: emailParam });
+    }
+  }, [emailParam, reset]);
 
   const onSubmit = (data: LoginFormValues) => {
     login(data, {
@@ -126,6 +138,7 @@ export function LoginPage() {
                   type="email"
                   placeholder="votre@email.com"
                   {...register('email')}
+                  readOnly={!!emailParam}
                   aria-invalid={!!errors.email}
                   className="pl-10 h-12 bg-secondary/50 border-0 focus-visible:ring-2 focus-visible:ring-primary"
                 />
@@ -168,7 +181,7 @@ export function LoginPage() {
             {/* Forgot Password */}
             <div className="flex justify-end">
               <Link
-                to="/forgot-password"
+                to={emailParam ? `/forgot-password?email=${encodeURIComponent(emailParam)}` : '/forgot-password'}
                 className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
               >
                 Mot de passe oublié ?
@@ -205,7 +218,12 @@ export function LoginPage() {
           >
             Pas encore de compte ?{" "}
             <Link
-              to="/register"
+              to={(() => {
+                if (!redirect) return '/register';
+                const params = new URLSearchParams({ redirect });
+                if (emailParam) params.set('email', emailParam);
+                return `/register?${params.toString()}`;
+              })()}
               className="text-primary hover:text-primary/80 font-semibold transition-colors"
             >
               S'inscrire gratuitement

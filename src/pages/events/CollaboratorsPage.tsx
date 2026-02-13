@@ -74,14 +74,14 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
   const customRoles = (rolesData?.roles || []).filter((r) => !r.is_system);
 
   // Get assignable roles for the current user
-  const assignableRoles = getAssignableRoles(collaborators, user?.id);
+  const assignableRoles = getAssignableRoles(collaborators as Collaborator[], user?.id);
   const handleInvite = (data: InviteCollaboratorFormData) => {
     inviteCollaborator(data, {
-      onSuccess: () => {
+      onSuccess: (response) => {
         setShowInviteForm(false);
         toast({
-          title: 'Invitation envoyee',
-          description: `Une invitation a ete envoyee a ${data.email}.`,
+          title: 'Invitation envoyée',
+          description: response?.message ?? `Une invitation a été envoyée à ${data.email}.`,
         });
       },
       onError: (error: any) => {
@@ -224,7 +224,11 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
             </div>
             <div>
               <span className="font-medium">
-                {collaborators.filter((c) => !c.accepted_at).length}
+                {
+                  collaborators.filter(
+                    (c: any) => !(c as { accepted_at?: string | null }).accepted_at
+                  ).length
+                }
               </span>
               <span className="ml-1 text-muted-foreground">en attente</span>
             </div>
@@ -257,7 +261,7 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
         />
       ) : (
         <CollaboratorList
-          collaborators={collaborators}
+          collaborators={collaborators as Collaborator[]}
           isLoading={isLoading || permissionsLoading || featureAccess.isLoading}
           currentUserId={user?.id}
           canManage={canManage}

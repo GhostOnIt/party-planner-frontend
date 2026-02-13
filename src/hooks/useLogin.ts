@@ -4,6 +4,19 @@ import api from '@/api/client';
 import { useAuthStore } from '@/stores/authStore';
 import type { AuthResponse, LoginFormData } from '@/types';
 
+function isValidRedirect(path: string | null): boolean {
+  if (!path || typeof path !== 'string') return false;
+  if (path.includes('//') || path.includes(':')) return false;
+  return path.startsWith('/invite/') || path.startsWith('/');
+}
+
+// When redirect is /invite/{token}, we go to /invitations (list page) instead
+function resolveRedirect(path: string | null): string | null {
+  if (!path || !isValidRedirect(path)) return path;
+  if (path.startsWith('/invite/')) return '/invitations';
+  return path;
+}
+
 export function useLogin() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,15 +35,31 @@ export function useLogin() {
       try {
         const saved = sessionStorage.getItem('redirect_after_login');
         if (saved && saved !== '/login') {
-          redirectTo = saved;
-          sessionStorage.removeItem('redirect_after_login');
-        } else {
+          const resolved = resolveRedirect(saved);
+          if (resolved) {
+            redirectTo = resolved;
+            sessionStorage.removeItem('redirect_after_login');
+          }
+        }
+        if (redirectTo === '/dashboard') {
+          const params = new URLSearchParams(location.search);
+          const redirectParam = params.get('redirect');
+          const resolved = resolveRedirect(redirectParam);
+          if (resolved) redirectTo = resolved;
+        }
+        if (redirectTo === '/dashboard') {
           const state = location.state as { from?: { pathname?: string } } | null;
           if (state?.from?.pathname) redirectTo = state.from.pathname;
         }
       } catch {
-        const state = location.state as { from?: { pathname?: string } } | null;
-        if (state?.from?.pathname) redirectTo = state.from.pathname;
+        const params = new URLSearchParams(location.search);
+        const redirectParam = params.get('redirect');
+        const resolved = resolveRedirect(redirectParam);
+        if (resolved) redirectTo = resolved;
+        if (redirectTo === '/dashboard') {
+          const state = location.state as { from?: { pathname?: string } } | null;
+          if (state?.from?.pathname) redirectTo = state.from.pathname;
+        }
       }
 
       navigate(redirectTo, { replace: true });

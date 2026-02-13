@@ -143,14 +143,18 @@ api.interceptors.response.use(
       logout();
 
       const path = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/dashboard';
-      if (path !== '/login' && path !== '/') {
+      const isValidPath = path && path !== '/login' && path !== '/' && !path.includes('//') && !path.includes(':');
+      if (isValidPath) {
         try {
           sessionStorage.setItem('redirect_after_login', path);
         } catch {
           // ignore
         }
+        // Include ?redirect= in URL so user sees it and it persists across page changes
+        window.location.href = '/login?redirect=' + encodeURIComponent(path);
+      } else {
+        window.location.href = '/login';
       }
-      window.location.href = '/login';
     }
 
     // Handle 500+ server errors
@@ -171,10 +175,17 @@ export interface ApiError {
   status: number;
 }
 
-// Helper to extract error message from API response
+// Helper to extract error message from API response (prefer validation field messages when present)
 export const getApiErrorMessage = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
     const apiError = error.response?.data as ApiError | undefined;
+    if (apiError?.errors && typeof apiError.errors === 'object') {
+      const firstKey = Object.keys(apiError.errors)[0];
+      const firstMessages = apiError.errors[firstKey];
+      if (Array.isArray(firstMessages) && firstMessages[0]) {
+        return firstMessages[0];
+      }
+    }
     return apiError?.message || error.message || 'Une erreur est survenue';
   }
   return 'Une erreur est survenue';

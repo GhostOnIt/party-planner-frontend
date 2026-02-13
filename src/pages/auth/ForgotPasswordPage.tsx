@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,6 +22,8 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export function ForgotPasswordPage() {
+  const [searchParams] = useSearchParams();
+  const emailParam = searchParams.get('email');
   const [emailSent, setEmailSent] = useState(false);
 
   const {
@@ -29,9 +31,17 @@ export function ForgotPasswordPage() {
     handleSubmit,
     formState: { errors },
     getValues,
+    reset,
   } = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: emailParam ?? '' },
   });
+
+  useEffect(() => {
+    if (emailParam) {
+      reset({ email: emailParam });
+    }
+  }, [emailParam, reset]);
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: async (data: ForgotPasswordFormValues) => {
@@ -175,6 +185,7 @@ export function ForgotPasswordPage() {
                   type="email"
                   placeholder="votre@email.com"
                   {...register('email')}
+                  readOnly={!!emailParam}
                   aria-invalid={!!errors.email}
                   className="pl-10 h-12 bg-secondary/50 border-0 focus-visible:ring-2 focus-visible:ring-primary"
                 />

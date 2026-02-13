@@ -25,6 +25,7 @@ const ResetPasswordOtpPage = lazy(() => import('@/pages/auth').then(m => ({ defa
 // Main pages
 const DashboardPage = lazy(() => import('@/pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
 const InvitationsPage = lazy(() => import('@/pages/InvitationsPage').then(m => ({ default: m.InvitationsPage })));
+const InviteByTokenPage = lazy(() => import('@/pages/InviteByTokenPage').then(m => ({ default: m.InviteByTokenPage })));
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
 const SubscriptionsPage = lazy(() => import('@/pages/SubscriptionsPage').then(m => ({ default: m.SubscriptionsPage })));
 const PlansPage = lazy(() => import('@/pages/PlansPage').then(m => ({ default: m.PlansPage })));
@@ -144,6 +145,9 @@ function App() {
 
             {/* Legal pages (public, no auth required) */}
             <Route path="/legal/:slug" element={<LegalPage />} />
+
+            {/* Collaboration invitation by token (redirects to login if not auth or wrong account) */}
+            <Route path="/invite/:token" element={<InviteByTokenPage />} />
 
             {/* Public invitation page (no auth required) */}
             <Route path="/invitation/:token" element={<InvitationResponsePage />} />

@@ -40,11 +40,11 @@ export function CollaboratorList({
     );
   }
 
-  // Sort: owner first, then by name
+  // Sort: owner first, then by name (all pending treated the same)
   const sortedCollaborators = [...collaborators].sort((a, b) => {
     if (a.role === 'owner') return -1;
     if (b.role === 'owner') return 1;
-    return a.user.name.localeCompare(b.user.name);
+    return (a.user?.name ?? a.user?.email ?? '').localeCompare(b.user?.name ?? b.user?.email ?? '');
   });
 
   return (

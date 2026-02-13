@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -37,6 +37,9 @@ const passwordRequirements = [
 ];
 
 export function RegisterPage() {
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect');
+  const emailParam = searchParams.get('email');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -48,9 +51,18 @@ export function RegisterPage() {
     watch,
     formState: { errors },
     setError,
+    reset,
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    defaultValues: { email: emailParam ?? '', name: '', password: '', password_confirmation: '' },
   });
+
+  // Ensure email is set when coming from invitation (handles late URL update)
+  useEffect(() => {
+    if (emailParam) {
+      reset({ email: emailParam }, { keepDefaultValues: true });
+    }
+  }, [emailParam, reset]);
 
   const password = watch('password', '');
   const confirmPassword = watch('password_confirmation', '');
@@ -161,6 +173,7 @@ export function RegisterPage() {
                   type="email"
                   placeholder="votre@email.com"
                   {...register('email')}
+                  readOnly={!!emailParam}
                   aria-invalid={!!errors.email}
                   className="pl-10 h-12 bg-secondary/50 border-0 focus-visible:ring-2 focus-visible:ring-primary"
                 />
@@ -317,7 +330,12 @@ export function RegisterPage() {
           >
             Déjà un compte ?{" "}
             <Link
-              to="/login"
+              to={(() => {
+                if (!redirect) return '/login';
+                const params = new URLSearchParams({ redirect });
+                if (emailParam) params.set('email', emailParam);
+                return `/login?${params.toString()}`;
+              })()}
               className="text-primary hover:text-primary/80 font-semibold transition-colors"
             >
               Se connecter
