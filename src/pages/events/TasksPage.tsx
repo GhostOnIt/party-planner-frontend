@@ -34,7 +34,7 @@ import { PermissionGuard } from '@/components/ui/permission-guard';
 import { useTasksPermissions } from '@/hooks/usePermissions';
 import { useEvent } from '@/hooks/useEvents';
 import { useAuthStore } from '@/stores/authStore';
-import type { Task, TaskFilters as TaskFiltersType, CreateTaskFormData, TaskStatus } from '@/types';
+import type { Task, TaskFilters as TaskFiltersType, CreateTaskFormData, TaskStatus, Collaborator } from '@/types';
 
 interface TasksPageProps {
   eventId?: string;
@@ -64,7 +64,7 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
   const { user: currentUser } = useAuthStore();
   const tasks = tasksData?.data || [];
   const collaborators =
-    collaboratorsData?.data?.map((c) => ({ id: c.user_id, name: c.user.name })) || [];
+    (collaboratorsData?.data as Collaborator[] | undefined)?.map((c) => ({ id: c.user_id, name: c.user.name })) || [];
 
   // Build assignable users list (current user + owner + collaborators)
   // Remove duplicates by using a Map
