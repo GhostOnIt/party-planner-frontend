@@ -172,7 +172,7 @@ export function useDeletePhotos(eventId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (photoIds: number[]) => {
+    mutationFn: async (photoIds: string[]) => {
       await api.post(`/events/${eventId}/photos/bulk-delete`, {
         photos: photoIds,
       });
@@ -232,7 +232,7 @@ export function useDownloadPhoto(eventId: string) {
 // Download multiple photos as ZIP
 export function useDownloadMultiplePhotos(eventId: string) {
   return useMutation({
-    mutationFn: async ({ photoIds }: { photoIds: number[] }) => {
+    mutationFn: async ({ photoIds }: { photoIds: string[] }) => {
       const response = await api.post(
         `/events/${eventId}/photos/bulk-download`,
         { photos: photoIds },

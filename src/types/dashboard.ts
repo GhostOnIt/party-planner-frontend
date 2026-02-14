@@ -28,7 +28,7 @@ export interface DashboardStatsResponse {
 // Confirmations Chart Types
 
 export interface ConfirmationEvent {
-  id: number
+  id: string
   name: string
   type: string
   month: string | null
@@ -81,7 +81,7 @@ export type RecentActivityResponse = RecentActivity[]
 // Upcoming Events Types
 
 export interface UpcomingEvent {
-  id: number
+  id: string
   name: string
   type: string
   date: string | null

@@ -15,7 +15,7 @@ import type { Photo } from '@/types';
 interface PhotoCardProps {
   photo: Photo;
   isSelected?: boolean;
-  onSelect?: (id: number) => void;
+  onSelect?: (id: string) => void;
   onView?: (photo: Photo) => void;
   onDelete?: (photo: Photo) => void;
   onDownload?: (photo: Photo) => void;

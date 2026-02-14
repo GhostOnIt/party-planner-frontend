@@ -51,7 +51,7 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
   const { toast } = useToast();
 
   const [filters, setFilters] = useState<PhotoFiltersType>({ per_page: 20 });
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showUploader, setShowUploader] = useState(false);
 
   // Le mode sélection s'active automatiquement quand des photos sont sélectionnées
@@ -61,7 +61,7 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
   const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState(false);
 
   // Track the photo ID when setting as featured to maintain lightbox position
-  const featuredPhotoIdRef = useRef<number | null>(null);
+  const featuredPhotoIdRef = useRef<string | null>(null);
 
   const { data: photosData, isLoading } = usePhotos(eventId!, filters);
   const { mutate: uploadPhotos, isPending: isUploading } = useUploadPhotos(eventId!);

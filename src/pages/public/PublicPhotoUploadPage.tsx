@@ -39,7 +39,7 @@ export function PublicPhotoUploadPage() {
   const previewRef = useRef<HTMLDivElement>(null);
   const [previewHeight, setPreviewHeight] = useState('0px');
 
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -145,13 +145,12 @@ export function PublicPhotoUploadPage() {
   };
 
   const handleSelect = (ids: number[]) => {
-    const numIds = ids.map((id) => (typeof id === 'string' ? parseInt(id, 10) : id));
-    setSelectedIds(numIds);
+    setSelectedIds(ids.map(String));
   };
 
   const handleSelectAll = () => {
     // Sélectionner uniquement les photos de la page actuelle
-    setSelectedIds(photos.map((p) => (typeof p.id === 'string' ? parseInt(p.id, 10) : p.id)));
+    setSelectedIds(photos.map((p) => p.id));
   };
 
   const handleDeselectAll = () => {
@@ -173,7 +172,6 @@ export function PublicPhotoUploadPage() {
 
   const handleDownload = () => {
     if (selectedIds.length === 0) return;
-    const photoIds = selectedIds.map((id) => (typeof id === 'string' ? parseInt(id, 10) : id));
 
     downloadPhotos(
       { photoIds },
@@ -196,11 +194,7 @@ export function PublicPhotoUploadPage() {
   };
 
   const handleView = (photo: Photo) => {
-    const photoId = typeof photo.id === 'string' ? parseInt(photo.id, 10) : photo.id;
-    const index = photos.findIndex((p) => {
-      const pId = typeof p.id === 'string' ? parseInt(p.id, 10) : p.id;
-      return pId === photoId;
-    });
+    const index = photos.findIndex((p) => p.id === photo.id);
     if (index !== -1) {
       setLightboxIndex(index);
     }

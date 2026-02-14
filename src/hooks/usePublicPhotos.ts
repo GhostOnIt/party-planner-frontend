@@ -89,7 +89,7 @@ export function usePublicUploadPhotos(eventId: string, token: string) {
 // Download multiple photos as ZIP
 export function usePublicDownloadPhotos(eventId: string, token: string) {
   return useMutation({
-    mutationFn: async ({ photoIds }: { photoIds: number[] }) => {
+    mutationFn: async ({ photoIds }: { photoIds: string[] }) => {
       const response = await publicApi.post(
         `/events/${eventId}/photos/public/${token}/download-multiple`,
         { photos: photoIds },

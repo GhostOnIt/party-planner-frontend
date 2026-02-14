@@ -101,7 +101,7 @@ export function EventsListPage() {
   };
 
   const handleDuplicate = (event: DisplayEvent) => {
-    duplicateEvent(parseInt(event.id));
+    duplicateEvent(event.id);
   };
 
   const handleDelete = (event: DisplayEvent) => {
@@ -201,7 +201,7 @@ export function EventsListPage() {
                 <EventCardGrid
                   key={event.id}
                   event={event}
-                  subscription={subscriptionsByEventId.get(parseInt(event.id))}
+                  subscription={subscriptionsByEventId.get(event.id)}
                   onView={handleView}
                   onEdit={handleEdit}
                   onDuplicate={handleDuplicate}
