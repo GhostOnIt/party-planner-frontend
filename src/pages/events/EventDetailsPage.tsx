@@ -21,6 +21,7 @@ import {
   PiggyBank,
   Sparkles,
   Ban,
+  ChevronDown,
 } from 'lucide-react';
 import { format, parseISO, differenceInDays, isPast, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -28,6 +29,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,7 +48,7 @@ import {
 import { EmptyState } from '@/components/ui/empty-state';
 import { EventStatusBadge, EventTypeBadge } from '@/components/features/events';
 import { DietaryRestrictionsCard } from '@/components/features/guests';
-import { useEvent, useDeleteEvent, useDuplicateEvent, useCancelEvent } from '@/hooks/useEvents';
+import { useEvent, useDeleteEvent, useDuplicateEvent, useCancelEvent, useUpdateEvent } from '@/hooks/useEvents';
 import { useAuthStore } from '@/stores/authStore';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { PermissionGuard } from '@/components/ui/permission-guard';
@@ -51,8 +58,10 @@ import { BudgetPage } from './BudgetPage';
 import { PhotosPage } from './PhotosPage';
 import { CollaboratorsPage } from './CollaboratorsPage';
 import { getApiErrorMessage } from '@/api/client';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { resolveUrl } from '@/lib/utils';
+import type { EventStatus } from '@/types';
 
 // Utility functions
 const formatBudget = (amount: number | string | null | undefined): string => {
@@ -111,7 +120,16 @@ export function EventDetailsPage() {
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
   const { mutate: duplicateEvent } = useDuplicateEvent();
   const { mutate: cancelEvent, isPending: isCancelling } = useCancelEvent();
+  const { mutate: updateEvent, isPending: isUpdatingStatus } = useUpdateEvent(id!);
+  const { toast } = useToast();
   const featureAccess = useFeatureAccess(id!);
+
+  const statusOptions: { value: EventStatus; label: string }[] = [
+    { value: 'upcoming', label: 'À venir' },
+    { value: 'ongoing', label: 'En cours' },
+    { value: 'completed', label: 'Terminé' },
+    { value: 'cancelled', label: 'Annulé' },
+  ];
 
   if (isLoading) {
     return (
@@ -240,6 +258,50 @@ export function EventDetailsPage() {
       <div className="bg-white border-b border-[#e5e7eb] sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-3">
           <div className="flex items-center justify-end gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  disabled={isUpdatingStatus}
+                >
+                  <EventStatusBadge status={event.status} />
+                  <ChevronDown className="h-4 w-4 opacity-70" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {statusOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => {
+                      if (option.value === event.status) return;
+                      updateEvent(
+                        { status: option.value },
+                        {
+                          onSuccess: () => {
+                            toast({
+                              title: 'Statut mis à jour',
+                              description: `L'événement est maintenant "${option.label}".`,
+                            });
+                          },
+                          onError: (err) => {
+                            toast({
+                              title: 'Impossible de modifier le statut',
+                              description: getApiErrorMessage(err),
+                              variant: 'destructive',
+                            });
+                          },
+                        }
+                      );
+                    }}
+                    disabled={option.value === event.status}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="outline" size="sm" onClick={() => duplicateEvent(event.id)} className="gap-2">
               <Copy className="h-4 w-4" />
               Dupliquer

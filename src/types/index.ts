@@ -407,6 +407,7 @@ export interface CreateEventFormData {
   expected_guests?: number;
   budget?: number;
   theme?: string;
+  status?: EventStatus;
 }
 
 export interface CreateGuestFormData {
