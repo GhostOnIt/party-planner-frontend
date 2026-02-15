@@ -157,7 +157,7 @@ export function useDeleteEvent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (eventId: number) => {
+    mutationFn: async (eventId: string) => {
       await api.delete(`/admin/events/${eventId}`);
     },
     onSuccess: () => {

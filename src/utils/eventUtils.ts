@@ -32,6 +32,9 @@ export interface DisplayEvent {
   };
   createdAt: string;
   isCollaborator?: boolean;
+  /** Événement à récupérer (créé par admin pour cet utilisateur) */
+  pending_claim?: boolean;
+  claim_token?: string;
 }
 
 export interface EventStats {
@@ -118,6 +121,8 @@ export function transformEventToDisplayFormat(
     },
     createdAt: formattedCreatedAt,
     isCollaborator: currentUserId ? event.user_id !== currentUserId : false,
+    pending_claim: event.pending_claim ?? false,
+    claim_token: event.claim_token,
   };
 }
 

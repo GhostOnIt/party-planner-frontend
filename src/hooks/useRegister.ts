@@ -33,13 +33,14 @@ export function useRegister() {
         let redirectTo = '/dashboard';
         try {
           const saved = sessionStorage.getItem('redirect_after_login');
-          if (saved && saved !== '/login') {
-            const resolved = resolveRedirect(saved);
-            if (resolved) {
-              redirectTo = resolved;
-              sessionStorage.removeItem('redirect_after_login');
-            }
+        if (saved && saved !== '/login') {
+          const resolved = resolveRedirect(saved);
+          if (resolved) {
+            redirectTo = resolved;
+            sessionStorage.removeItem('redirect_after_login');
+            sessionStorage.removeItem('redirect_email');
           }
+        }
           if (redirectTo === '/dashboard') {
             const params = new URLSearchParams(location.search);
             const redirectParam = params.get('redirect');
@@ -78,12 +79,13 @@ export function useRegister() {
 
       let redirectTo = '/dashboard';
       try {
-        const saved = sessionStorage.getItem('redirect_after_login');
+          const saved = sessionStorage.getItem('redirect_after_login');
         if (saved && saved !== '/login') {
           const resolved = resolveRedirect(saved);
           if (resolved) {
             redirectTo = resolved;
             sessionStorage.removeItem('redirect_after_login');
+            sessionStorage.removeItem('redirect_email');
           }
         }
         if (redirectTo === '/dashboard') {

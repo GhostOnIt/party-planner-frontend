@@ -22,9 +22,11 @@ import {
   Sparkles,
   Ban,
   ChevronDown,
+  Loader2,
 } from 'lucide-react';
 import { format, parseISO, differenceInDays, isPast, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import api from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -48,6 +50,7 @@ import {
 import { EmptyState } from '@/components/ui/empty-state';
 import { EventStatusBadge, EventTypeBadge } from '@/components/features/events';
 import { DietaryRestrictionsCard } from '@/components/features/guests';
+import { useQueryClient } from '@tanstack/react-query';
 import { useEvent, useDeleteEvent, useDuplicateEvent, useCancelEvent, useUpdateEvent } from '@/hooks/useEvents';
 import { useAuthStore } from '@/stores/authStore';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
@@ -91,6 +94,9 @@ const getDaysUntilEvent = (dateStr: string): { days: number; label: string; isUr
     return { days: Math.abs(days), label: `Il y a ${Math.abs(days)} jour${Math.abs(days) > 1 ? 's' : ''}`, isUrgent: false };
   }
   if (days <= 7) {
+     if (days === 0) {
+      return { days: 0, label: "C'est aujourd'hui !", isUrgent: true };
+    }
     return { days, label: `Dans ${days} jour${days > 1 ? 's' : ''}`, isUrgent: true };
   }
   if (days <= 30) {
@@ -99,6 +105,87 @@ const getDaysUntilEvent = (dateStr: string): { days: number; label: string; isUr
   const weeks = Math.floor(days / 7);
   return { days, label: `Dans ${weeks} semaine${weeks > 1 ? 's' : ''}`, isUrgent: false };
 };
+
+/** Écran "Récupérer l'événement" – événement créé par admin, nécessite un claim */
+function EventClaimScreen({
+  event,
+  onSuccess,
+}: {
+  event: { id: string | number; title: string; claim_token: string };
+  onSuccess: () => void;
+}) {
+  const { toast } = useToast();
+  const [isClaiming, setIsClaiming] = useState(false);
+
+  const handleClaim = async () => {
+    setIsClaiming(true);
+    try {
+      await api.post<{ event_id: string | number }>(
+        `/event-creation-invitations/${event.claim_token}/claim`
+      );
+      toast({
+        title: "Événement récupéré",
+        description: "Vous avez maintenant accès à l'événement.",
+      });
+      onSuccess();
+    } catch (err: unknown) {
+      const msg = getApiErrorMessage(err);
+      toast({
+        title: "Impossible de récupérer l'événement",
+        description: msg,
+        variant: "destructive",
+      });
+    } finally {
+      setIsClaiming(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F5F7FA]">
+      <div className="max-w-2xl mx-auto px-6 py-12">
+        <Link to="/events">
+          <Button variant="ghost" size="sm" className="gap-2 mb-8">
+            <ArrowLeft className="h-4 w-4" />
+            Retour aux événements
+          </Button>
+        </Link>
+
+        <div className="bg-white rounded-2xl border border-[#e5e7eb] p-8 shadow-sm">
+          <div className="text-center space-y-6">
+            <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto">
+              <Sparkles className="w-8 h-8 text-amber-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-[#1a1a2e] mb-2">
+                Un événement vous attend
+              </h1>
+              <p className="text-[#6b7280]">
+                « {event.title} » a été créé pour vous par un administrateur. Récupérez-le pour y accéder et le gérer.
+              </p>
+            </div>
+            <Button
+              onClick={handleClaim}
+              disabled={isClaiming}
+              className="gap-2 bg-linear-to-r from-[#4F46E5] to-[#7C3AED] hover:shadow-lg"
+            >
+              {isClaiming ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Récupération…
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  Récupérer l'événement
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function EventDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -116,6 +203,7 @@ export function EventDetailsPage() {
     setSearchParams({ tab: value });
   };
 
+  const queryClient = useQueryClient();
   const { data: event, isLoading, error } = useEvent(id);
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
   const { mutate: duplicateEvent } = useDuplicateEvent();
@@ -161,6 +249,23 @@ export function EventDetailsPage() {
           }}
         />
       </div>
+    );
+  }
+
+  // Événement créé par admin pour cet utilisateur : écran "Récupérer l'événement"
+  if (event.requires_claim && event.claim_token) {
+    return (
+      <EventClaimScreen
+        event={{
+          id: event.id,
+          title: event.title,
+          claim_token: event.claim_token,
+        }}
+        onSuccess={() => {
+          // Refetch : l'événement n'aura plus requires_claim
+          queryClient.invalidateQueries({ queryKey: ['events', id] });
+        }}
+      />
     );
   }
 
@@ -490,10 +595,16 @@ export function EventDetailsPage() {
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#E91E8C]/10">
                     <Clock className="w-6 h-6 text-[#E91E8C]" />
                   </div>
-                  {countdown.days > 0 && !isPast(parseISO(event.date)) && (
-                    <span className="text-3xl font-bold text-[#1a1a2e]">
-                      {countdown.days}
-                    </span>
+                  {!isPast(parseISO(event.date)) && (
+                    countdown.days > 0 ? (
+                      <span className="text-3xl font-bold text-[#1a1a2e]">
+                        {countdown.days}
+                      </span>
+                    ) : (
+                      <span className="text-lg font-bold text-[#1a1a2e] text-right leading-tight">
+                        {countdown.label}
+                      </span>
+                    )
                   )}
                 </div>
                 <p className="text-sm font-medium text-[#6b7280] mb-1">

@@ -19,14 +19,37 @@ export function PublicRoute() {
   const location = useLocation();
 
   if (isAuthenticated) {
-    // Respect ?redirect= param (e.g. after login from /invite/{token} flow)
+    // 1. Check ?redirect= URL param (e.g. /login?redirect=/event-created-for-you/xxx)
     const params = new URLSearchParams(location.search);
     const redirectParam = params.get('redirect');
-    const resolved = resolveRedirect(redirectParam);
-    if (resolved) {
-      return <Navigate to={resolved} replace />;
+    const resolvedFromParam = resolveRedirect(redirectParam);
+    if (resolvedFromParam) {
+      return <Navigate to={resolvedFromParam} replace />;
     }
 
+    // 2. Check location.state.redirect (e.g. /verify-otp state carries redirect from useLogin)
+    const stateRedirect = (location.state as { redirect?: string } | null)?.redirect;
+    const resolvedFromState = resolveRedirect(stateRedirect ?? null);
+    if (resolvedFromState) {
+      return <Navigate to={resolvedFromState} replace />;
+    }
+
+    // 3. Check sessionStorage (set by EventCreatedForYouPage / InviteByTokenPage before redirect)
+    try {
+      const saved = sessionStorage.getItem('redirect_after_login');
+      if (saved && saved !== '/login') {
+        const resolvedFromStorage = resolveRedirect(saved);
+        if (resolvedFromStorage) {
+          sessionStorage.removeItem('redirect_after_login');
+          sessionStorage.removeItem('redirect_email');
+          return <Navigate to={resolvedFromStorage} replace />;
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // 4. Fallback: location.state.from (PrivateRoute redirect) or dashboard
     const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard';
     return <Navigate to={from} replace />;
   }

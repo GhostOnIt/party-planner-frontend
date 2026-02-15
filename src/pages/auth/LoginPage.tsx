@@ -22,30 +22,47 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.input<typeof loginSchema>;
 
+const REDIRECT_EMAIL_KEY = 'redirect_email';
+
+function getPrefillEmail(searchParams: URLSearchParams): string {
+  const fromUrl = searchParams.get('email');
+  if (fromUrl) return fromUrl;
+  try {
+    const stored = sessionStorage.getItem(REDIRECT_EMAIL_KEY);
+    if (stored) return stored;
+  } catch {
+    // ignore
+  }
+  return '';
+}
+
 export function LoginPage() {
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect');
-  const emailParam = searchParams.get('email');
+  const prefillEmail = getPrefillEmail(searchParams);
   const [showPassword, setShowPassword] = useState(false);
   const { mutate: login, isPending, error } = useLogin();
 
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
     setError,
-    reset,
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: emailParam ?? '' },
+    defaultValues: { email: prefillEmail, password: '', remember: false },
   });
 
-  // Ensure email is set when coming from invitation (handles late URL update)
+  const emailValue = watch('email');
+
+  // Prefill email when coming from invite/event-created-for-you
   useEffect(() => {
-    if (emailParam) {
-      reset({ email: emailParam });
+    if (prefillEmail && emailValue !== prefillEmail) {
+      setValue('email', prefillEmail);
     }
-  }, [emailParam, reset]);
+  }, [prefillEmail, setValue, emailValue]);
 
   const onSubmit = (data: LoginFormValues) => {
     login(data, {
@@ -138,10 +155,11 @@ export function LoginPage() {
                   id="email"
                   type="email"
                   placeholder="votre@email.com"
+                  value={emailValue}
                   {...register('email')}
-                  readOnly={!!emailParam}
+                  readOnly={!!prefillEmail}
                   aria-invalid={!!errors.email}
-                  className="pl-10 h-12 bg-secondary/50 border-0 focus-visible:ring-2 focus-visible:ring-primary"
+                  className={`pl-10 h-12 bg-secondary/50 border-0 focus-visible:ring-2 focus-visible:ring-primary ${prefillEmail ? 'opacity-70 cursor-not-allowed' : ''}`}
                 />
               </div>
             
@@ -190,7 +208,7 @@ export function LoginPage() {
                 <span className="text-sm text-muted-foreground">Se souvenir de moi</span>
               </label>
               <Link
-                to={emailParam ? `/forgot-password?email=${encodeURIComponent(emailParam)}` : '/forgot-password'}
+                to={prefillEmail ? `/forgot-password?email=${encodeURIComponent(prefillEmail)}` : '/forgot-password'}
                 className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
               >
                 Mot de passe oublié ?
@@ -230,7 +248,7 @@ export function LoginPage() {
               to={(() => {
                 if (!redirect) return '/register';
                 const params = new URLSearchParams({ redirect });
-                if (emailParam) params.set('email', emailParam);
+                if (prefillEmail) params.set('email', prefillEmail);
                 return `/register?${params.toString()}`;
               })()}
               className="text-primary hover:text-primary/80 font-semibold transition-colors"

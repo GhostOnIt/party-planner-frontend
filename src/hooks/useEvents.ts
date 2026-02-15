@@ -56,10 +56,8 @@ export function useCreateEvent() {
 
         // Ajouter les données de l'événement
         Object.entries(eventData).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            if (key === 'budget' && typeof value === 'number') {
-              formData.append('estimated_budget', value.toString());
-            } else if (key === 'expected_guests' && typeof value === 'number') {
+          if (value !== undefined && value !== null && value !== '') {
+            if (key === 'expected_guests' && typeof value === 'number') {
               formData.append('expected_guests_count', value.toString());
             } else if (key === 'template_id' && typeof value === 'number') {
               formData.append('template_id', value.toString());
@@ -86,18 +84,10 @@ export function useCreateEvent() {
           ...eventData,
         };
 
-        // Mapper les noms de champs pour correspondre au backend
-        if (jsonData.budget !== undefined) {
-          jsonData.estimated_budget = jsonData.budget;
-          delete jsonData.budget;
-        }
         if (jsonData.expected_guests !== undefined) {
           jsonData.expected_guests_count = jsonData.expected_guests;
           delete jsonData.expected_guests;
         }
-        // template_id est déjà dans le bon format
-        // Si template_id est null, on l'envoie explicitement pour indiquer "Aucun template"
-        // Si template_id est undefined, on ne l'envoie pas (auto-application)
 
         const response = await api.post<CreateEventResponse>('/events', jsonData);
         return response.data.event;

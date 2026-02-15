@@ -66,6 +66,10 @@ export interface Event {
   updated_at: string;
   /** Check-in autorisé à partir de 24 h avant le début (calculé par le backend) */
   can_check_in?: boolean;
+  /** Événement créé par admin pour cet utilisateur, à récupérer */
+  pending_claim?: boolean;
+  claim_token?: string;
+  requires_claim?: boolean;
   // Statistics from backend
   guests_count?: number;
   guests_confirmed_count?: number;
@@ -405,9 +409,10 @@ export interface CreateEventFormData {
   location: string;
   description?: string;
   expected_guests?: number;
-  budget?: number;
   theme?: string;
   status?: EventStatus;
+  /** When current user is admin: create event for this user (email only). */
+  owner_email?: string;
 }
 
 export interface CreateGuestFormData {

@@ -201,7 +201,7 @@ export function EventsListPage() {
                 <EventCardGrid
                   key={event.id}
                   event={event}
-                  subscription={subscriptionsByEventId.get(event.id)}
+                  subscription={subscriptionsByEventId.get(Number(event.id))}
                   onView={handleView}
                   onEdit={handleEdit}
                   onDuplicate={handleDuplicate}

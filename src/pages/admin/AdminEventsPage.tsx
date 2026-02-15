@@ -10,6 +10,7 @@ import {
   Users,
   Trash2,
   Eye,
+  Plus,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -151,6 +152,14 @@ export function AdminEventsPage() {
       <PageHeader
         title="Evenements"
         description="Gestion des evenements de la plateforme"
+        actions={
+          <Link to="/events/create">
+            <Button className="gap-2 bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] hover:shadow-lg hover:shadow-[#4F46E5]/25">
+              <Plus className="h-4 w-4" />
+              Nouvel evenement
+            </Button>
+          </Link>
+        }
       />
 
       {/* Filters */}

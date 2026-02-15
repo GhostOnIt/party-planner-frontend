@@ -24,6 +24,9 @@ export function InviteByTokenPage() {
       const redirectPath = `/invite/${token}`;
       try {
         sessionStorage.setItem('redirect_after_login', redirectPath);
+        if (emailParam) {
+          sessionStorage.setItem('redirect_email', emailParam);
+        }
       } catch {
         // ignore
       }

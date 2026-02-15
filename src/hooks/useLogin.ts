@@ -37,11 +37,12 @@ export function useLogin() {
             const resolved = resolveRedirect(saved);
             if (resolved) {
               redirectTo = resolved;
-              sessionStorage.removeItem('redirect_after_login');
-            }
+            sessionStorage.removeItem('redirect_after_login');
+            sessionStorage.removeItem('redirect_email');
           }
-          if (redirectTo === '/dashboard') {
-            const params = new URLSearchParams(location.search);
+        }
+        if (redirectTo === '/dashboard') {
+          const params = new URLSearchParams(location.search);
             const redirectParam = params.get('redirect');
             const resolved = resolveRedirect(redirectParam);
             if (resolved) redirectTo = resolved;
@@ -86,6 +87,7 @@ export function useLogin() {
           if (resolved) {
             redirectTo = resolved;
             sessionStorage.removeItem('redirect_after_login');
+            sessionStorage.removeItem('redirect_email');
           }
         }
         if (redirectTo === '/dashboard') {
