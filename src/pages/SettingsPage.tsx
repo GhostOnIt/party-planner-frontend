@@ -140,7 +140,7 @@ export function SettingsPage() {
   const { mutate: deleteAvatar, isPending: isDeletingAvatar } = useDeleteAvatar();
 
   // Notification settings
-  const { data: notificationSettings, isLoading: isLoadingSettings } = useNotificationSettings();
+  //const { data: notificationSettings, isLoading: isLoadingSettings } = useNotificationSettings();
   const { mutate: updateNotificationSettings } = useUpdateNotificationSettings();
 
   // Legal pages (admin only)
@@ -379,10 +379,10 @@ export function SettingsPage() {
             <Shield className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.security')}</span>
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
+          {/* <TabsTrigger value="notifications" className="flex items-center gap-2">
             <Bell className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.notifications')}</span>
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value="event-types" className="flex items-center gap-2 min-w-fit">
             <Calendar className="h-4 w-4 shrink-0" />
             <span className="hidden sm:inline whitespace-nowrap">{t('settings.eventTypes')}</span>
@@ -780,7 +780,7 @@ export function SettingsPage() {
           </AlertDialog>
         </TabsContent>
 
-        {/* Notifications Tab */}
+        {/* Notifications Tab
         <TabsContent value="notifications" className="space-y-6">
           <Card>
             <CardHeader>
@@ -946,7 +946,7 @@ export function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
 
         {/* Event Types Tab */}
         <TabsContent value="event-types" className="space-y-6">
