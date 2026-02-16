@@ -51,7 +51,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { EventStatusBadge, EventTypeBadge } from '@/components/features/events';
 import { DietaryRestrictionsCard } from '@/components/features/guests';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEvent, useDeleteEvent, useDuplicateEvent, useCancelEvent, useUpdateEvent } from '@/hooks/useEvents';
+import { useEvent, useDeleteEvent, useCancelEvent, useUpdateEvent } from '@/hooks/useEvents';
 import { useAuthStore } from '@/stores/authStore';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { PermissionGuard } from '@/components/ui/permission-guard';
@@ -206,7 +206,6 @@ export function EventDetailsPage() {
   const queryClient = useQueryClient();
   const { data: event, isLoading, error } = useEvent(id);
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
-  const { mutate: duplicateEvent } = useDuplicateEvent();
   const { mutate: cancelEvent, isPending: isCancelling } = useCancelEvent();
   const { mutate: updateEvent, isPending: isUpdatingStatus } = useUpdateEvent(id!);
   const { toast } = useToast();
@@ -407,10 +406,12 @@ export function EventDetailsPage() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="outline" size="sm" onClick={() => duplicateEvent(event.id)} className="gap-2">
-              <Copy className="h-4 w-4" />
-              Dupliquer
-            </Button>
+            <Link to={`/events/duplicate/${event.id}`}>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Copy className="h-4 w-4" />
+                Dupliquer
+              </Button>
+            </Link>
             <Link to={`/events/${event.id}/edit`}>
               <Button variant="outline" size="sm" className="gap-2">
                 <Pencil className="h-4 w-4" />

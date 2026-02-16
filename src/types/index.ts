@@ -77,6 +77,8 @@ export interface Event {
   guests_pending_count?: number;
   tasks_count?: number;
   tasks_completed_count?: number;
+  budget_items_count?: number;
+  collaborators_count?: number;
   budget_spent?: string | number;
 }
 

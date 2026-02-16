@@ -224,19 +224,50 @@ export function useDeleteEvent() {
   });
 }
 
-// Duplicate event
+// Duplicate event (with form data + options: include guests, tasks, budget)
+export interface DuplicateEventPayload {
+  sourceEventId: string | number;
+  title: string;
+  type: string;
+  date?: string;
+  time?: string;
+  location?: string;
+  description?: string;
+  theme?: string;
+  expected_guests_count?: number;
+  include_guests: boolean;
+  include_tasks: boolean;
+  include_budget: boolean;
+  include_collaborators: boolean;
+}
+
 export function useDuplicateEvent() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (eventId: number | string) => {
-      const response = await api.post<Event>(`/events/${eventId}/duplicate`);
+    mutationFn: async (payload: DuplicateEventPayload) => {
+      const { sourceEventId, ...body } = payload;
+      const response = await api.post<Event>(`/events/${sourceEventId}/duplicate`, body);
       return response.data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      toast({
+        title: 'Événement dupliqué',
+        description: 'Votre événement a été dupliqué avec succès.',
+      });
       navigate(`/events/${data.id}`);
+    },
+    onError: (error: unknown) => {
+      const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast({
+        title: 'Erreur',
+        description: msg || 'Impossible de dupliquer l\'événement.',
+        variant: 'destructive',
+      });
     },
   });
 }

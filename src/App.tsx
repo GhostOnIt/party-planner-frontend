@@ -39,6 +39,7 @@ const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then(m => ({ defa
 // Event pages
 const EventsListPage = lazy(() => import('@/pages/events').then(m => ({ default: m.EventsListPage })));
 const CreateEventPage = lazy(() => import('@/pages/events').then(m => ({ default: m.CreateEventPage })));
+const DuplicateEventPage = lazy(() => import('@/pages/events').then(m => ({ default: m.DuplicateEventPage })));
 const EventDetailsPage = lazy(() => import('@/pages/events').then(m => ({ default: m.EventDetailsPage })));
 const EditEventPage = lazy(() => import('@/pages/events').then(m => ({ default: m.EditEventPage })));
 
@@ -120,6 +121,7 @@ function App() {
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/events" element={<EventsListPage />} />
                 <Route path="/events/create" element={<CreateEventPage />} />
+                <Route path="/events/duplicate/:id" element={<DuplicateEventPage />} />
                 <Route path="/events/:id" element={<EventDetailsPage />} />
                 <Route path="/events/:id/edit" element={<EditEventPage />} />
                 <Route path="/invitations" element={<InvitationsPage />} />
