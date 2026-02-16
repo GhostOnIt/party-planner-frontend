@@ -80,6 +80,8 @@ export interface Event {
   budget_items_count?: number;
   collaborators_count?: number;
   budget_spent?: string | number;
+  /** Somme des coûts estimés des lignes de budget */
+  budget_items_estimated?: string | number;
 }
 
 // Guest

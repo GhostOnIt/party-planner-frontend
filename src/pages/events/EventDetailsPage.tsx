@@ -285,7 +285,9 @@ export function EventDetailsPage() {
   const guestsPending = event.guests_pending_count || 0;
   const tasksTotal = event.tasks_count || 0;
   const tasksCompleted = event.tasks_completed_count || 0;
-  const budgetTotal = event.budget || 0;
+  // Budget estimé : somme des lignes de budget, sinon budget global de l'événement
+  const budgetEstimatedRaw = event.budget_items_estimated ?? event.budget;
+  const budgetTotal = typeof budgetEstimatedRaw === 'string' ? parseFloat(budgetEstimatedRaw) : (Number(budgetEstimatedRaw) || 0);
   const budgetSpent = typeof event.budget_spent === 'string' ? parseFloat(event.budget_spent) : (event.budget_spent || 0);
 
   const guestsProgress = getProgressPercent(guestsConfirmed, guestsTotal);
@@ -567,7 +569,7 @@ export function EventDetailsPage() {
                     </div>
                     <span className="text-lg font-bold text-[#1a1a2e]">{formatBudget(budgetTotal)}</span>
                   </div>
-                  <p className="text-sm font-medium text-[#6b7280] mb-3">Budget</p>
+                  <p className="text-sm font-medium text-[#6b7280] mb-3">Budget estimé</p>
                   <div className="space-y-2">
                     <div className="h-2 rounded-full bg-[#f3f4f6] overflow-hidden">
                       <div
