@@ -19,7 +19,6 @@ import {
   Wallet,
   ClipboardList,
   UserCog,
-  Settings,
   DollarSign,
   FileText,
   Pencil,
@@ -341,7 +340,7 @@ export function SettingsPage() {
       <PageHeader title={t('settings.title')} description={t('settings.description')} />
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-8 lg:w-[1150px]' : 'grid-cols-7 lg:w-[1000px]'}`}>
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-7 lg:w-[1000px]' : 'grid-cols-6 lg:w-[850px]'}`}>
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.profile')}</span>
@@ -365,10 +364,6 @@ export function SettingsPage() {
           <TabsTrigger value="budget-categories" className="flex items-center gap-2">
             <DollarSign className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.budgetCategories')}</span>
-          </TabsTrigger>
-          <TabsTrigger value="account" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('settings.account')}</span>
           </TabsTrigger>
           {isAdmin && (
             <TabsTrigger value="legal-pages" className="flex items-center gap-2">
@@ -488,6 +483,40 @@ export function SettingsPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Informations du compte (fusionné avec Profil) */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Informations du compte</CardTitle>
+              <CardDescription>Details de votre compte</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-sm text-muted-foreground">Email</p>
+                  <p className="font-medium">{user.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Membre depuis</p>
+                  <p className="font-medium">
+                    {new Date(user.created_at).toLocaleDateString('fr-FR', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Type de compte</p>
+                  <p className="font-medium capitalize">{user.role}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Email verifie</p>
+                  <p className="font-medium">{user.email_verified_at ? 'Oui' : 'Non'}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Security Tab */}
@@ -739,43 +768,6 @@ export function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* Account Tab */}
-        <TabsContent value="account" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informations du compte</CardTitle>
-              <CardDescription>Details de votre compte</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium">{user.email}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Membre depuis</p>
-                  <p className="font-medium">
-                    {new Date(user.created_at).toLocaleDateString('fr-FR', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Type de compte</p>
-                  <p className="font-medium capitalize">{user.role}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Email verifie</p>
-                  <p className="font-medium">{user.email_verified_at ? 'Oui' : 'Non'}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
         </TabsContent>
 
         {/* Event Types Tab */}
