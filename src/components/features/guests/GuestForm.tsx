@@ -162,7 +162,7 @@ export function GuestForm({
               <Label htmlFor="phone">Telephone</Label>
               <Input
                 id="phone"
-                placeholder="+237 6XX XXX XXX"
+                placeholder="+242 XX XXX XX XX"
                 {...register('phone')}
                 aria-invalid={!!errors.phone}
               />

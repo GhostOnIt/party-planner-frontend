@@ -264,7 +264,7 @@ import {
                    <Input
                      id="phone"
                      type="tel"
-                     placeholder="+237 6XX XXX XXX"
+                     placeholder="+242 XX XXX XX XX"
                      {...profileForm.register('phone')}
                    />
                    {profileForm.formState.errors.phone && (

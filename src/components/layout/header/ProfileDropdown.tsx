@@ -3,6 +3,16 @@ import { ChevronDown, LogOut, User, Settings } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useCurrentSubscription } from "@/hooks/useSubscription"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface ProfileDropdownProps {
   user: {
@@ -17,6 +27,7 @@ interface ProfileDropdownProps {
 
 export function ProfileDropdown({ user, onLogout, onProfileClick, onSettingsClick }: ProfileDropdownProps) {
   const [showProfile, setShowProfile] = useState(false)
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const navigate = useNavigate()
   const profileRef = useRef<HTMLDivElement>(null)
 
@@ -72,6 +83,12 @@ export function ProfileDropdown({ user, onLogout, onProfileClick, onSettingsClic
       navigate("/settings")
     }
     setShowProfile(false)
+  }
+
+  const handleLogoutConfirm = () => {
+    setShowLogoutDialog(false)
+    setShowProfile(false)
+    onLogout()
   }
 
   return (
@@ -134,8 +151,7 @@ export function ProfileDropdown({ user, onLogout, onProfileClick, onSettingsClic
           <div className="p-2 border-t border-[#e5e7eb]">
             <button
               onClick={() => {
-                onLogout()
-                setShowProfile(false)
+                setShowLogoutDialog(true)
               }}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#EF4444] hover:bg-[#FEF2F2] transition-colors"
             >
@@ -145,6 +161,26 @@ export function ProfileDropdown({ user, onLogout, onProfileClick, onSettingsClic
           </div>
         </div>
       )}
+
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Déconnexion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir vous déconnecter ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogoutConfirm}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Se déconnecter
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

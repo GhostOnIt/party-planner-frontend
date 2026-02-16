@@ -106,7 +106,7 @@ export function SendOtpPage() {
               <Input
                 id="identifier"
                 type={channel === 'email' ? 'email' : 'tel'}
-                placeholder={channel === 'email' ? 'votre@email.com' : '+237 6XX XXX XXX'}
+                placeholder={channel === 'email' ? 'votre@email.com' : '+242 XX XXX XX XX'}
                 {...register('identifier')}
                 aria-invalid={!!errors.identifier}
               />
