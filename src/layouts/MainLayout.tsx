@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { useAuthStore } from '@/stores/authStore';
+import { usePageTracking } from '@/hooks/usePageTracking';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 export function MainLayout() {
@@ -10,6 +11,9 @@ export function MainLayout() {
   const location = useLocation();
   const { user, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Tracker automatiquement la navigation entre les pages
+  usePageTracking();
 
   const handleLogout = () => {
     logout();
