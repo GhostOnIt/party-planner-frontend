@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/stores/authStore';
+import { activityTracker } from '@/services/activityTracker';
 import type { AuthResponse } from '@/types';
 
 // Custom event for server errors
@@ -75,6 +76,15 @@ api.interceptors.request.use(
 // Response interceptor to handle errors (including token refresh on 401)
 api.interceptors.response.use(
   (response) => {
+    // Tracker les appels API réussis (sauf le batch endpoint lui-même)
+    const url = response.config.url || '';
+    if (!url.includes('activity-logs/batch')) {
+      activityTracker.trackApiCall(
+        response.config.method || 'GET',
+        url,
+        response.status
+      );
+    }
     return response;
   },
   async (error: AxiosError) => {
