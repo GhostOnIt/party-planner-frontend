@@ -10,12 +10,19 @@ import {
   Filter,
   ChevronDown,
   ChevronUp,
+  Globe,
+  Monitor,
+  MousePointer,
+  Shield,
+  Users,
+  Cpu,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -51,25 +58,41 @@ import {
   useAdminActivityLogs,
   useAdminActivityStats,
   type ActivityLogFilters,
+  type ActorType,
+  type LogSource,
 } from '@/hooks/useAdmin';
 import { cn } from '@/lib/utils';
 
+// ─── Labels et constantes ────────────────────────────────
+
 const actionLabels: Record<string, string> = {
-  'user.created': 'Utilisateur cree',
-  'user.updated': 'Utilisateur modifie',
-  'user.deleted': 'Utilisateur supprime',
-  'user.role_changed': 'Role modifie',
-  'user.toggled_active': 'Statut modifie',
-  'event.created': 'Evenement cree',
-  'event.updated': 'Evenement modifie',
-  'event.deleted': 'Evenement supprime',
-  'template.created': 'Template cree',
-  'template.updated': 'Template modifie',
-  'template.deleted': 'Template supprime',
-  'template.toggled_active': 'Template active/desactive',
-  'subscription.extended': 'Abonnement prolonge',
-  'subscription.plan_changed': 'Plan modifie',
-  'login': 'Connexion admin',
+  'create': 'Creation',
+  'update': 'Modification',
+  'delete': 'Suppression',
+  'view': 'Consultation',
+  'login': 'Connexion',
+  'logout': 'Deconnexion',
+  'update_role': 'Role modifie',
+  'toggle_active': 'Statut modifie',
+  'refund': 'Remboursement',
+  'extend': 'Prolongation',
+  'change_plan': 'Plan modifie',
+  'cancel': 'Annulation',
+  'duplicate': 'Duplication',
+  'update_password': 'Mot de passe modifie',
+  'update_avatar': 'Avatar modifie',
+  'page_view': 'Page consultee',
+  'click': 'Clic',
+  'modal_open': 'Ouverture modale',
+  'modal_close': 'Fermeture modale',
+  'filter_applied': 'Filtre applique',
+  'tab_change': 'Changement onglet',
+  'api_read': 'Lecture API',
+  'api_create': 'Creation API',
+  'api_update': 'Modification API',
+  'api_delete': 'Suppression API',
+  'api_request': 'Requete API',
+  'api_call': 'Appel API',
 };
 
 const modelTypeLabels: Record<string, string> = {
@@ -78,16 +101,80 @@ const modelTypeLabels: Record<string, string> = {
   'App\\Models\\EventTemplate': 'Template',
   'App\\Models\\Subscription': 'Abonnement',
   'App\\Models\\Payment': 'Paiement',
+  'App\\Models\\Guest': 'Invite',
+  'App\\Models\\Task': 'Tache',
+  'App\\Models\\BudgetItem': 'Budget',
+  'App\\Models\\Photo': 'Photo',
+  'App\\Models\\Collaborator': 'Collaborateur',
 };
 
+const actorTypeLabels: Record<string, string> = {
+  admin: 'Admin',
+  user: 'Utilisateur',
+  system: 'Systeme',
+  guest: 'Invite',
+};
+
+const sourceLabels: Record<string, string> = {
+  api: 'API',
+  navigation: 'Navigation',
+  ui_interaction: 'Interaction UI',
+  system: 'Systeme',
+};
+
+const actorTypeIcons: Record<string, typeof Shield> = {
+  admin: Shield,
+  user: Users,
+  system: Cpu,
+  guest: Globe,
+};
+
+const sourceIcons: Record<string, typeof Globe> = {
+  api: Globe,
+  navigation: Monitor,
+  ui_interaction: MousePointer,
+  system: Cpu,
+};
+
+type TabKey = 'all' | 'admin' | 'user' | 'navigation' | 'ui' | 'system';
+
+interface TabConfig {
+  key: TabKey;
+  label: string;
+  actorType?: ActorType;
+  source?: LogSource;
+  icon: typeof Activity;
+}
+
+const tabs: TabConfig[] = [
+  { key: 'all', label: 'Tous', icon: Activity },
+  { key: 'admin', label: 'Admin', actorType: 'admin', icon: Shield },
+  { key: 'user', label: 'Utilisateurs', actorType: 'user', icon: Users },
+  { key: 'navigation', label: 'Navigation', source: 'navigation', icon: Monitor },
+  { key: 'ui', label: 'UI', source: 'ui_interaction', icon: MousePointer },
+  { key: 'system', label: 'Systeme', source: 'system', icon: Cpu },
+];
+
+// ─── Helpers ─────────────────────────────────────────────
+
 function getActionBadgeVariant(action: string): 'default' | 'secondary' | 'destructive' | 'outline' {
-  if (action.includes('deleted')) return 'destructive';
-  if (action.includes('created')) return 'default';
-  if (action.includes('updated') || action.includes('changed')) return 'secondary';
+  if (action.includes('delete') || action === 'cancel') return 'destructive';
+  if (action.includes('create') || action === 'login') return 'default';
+  if (action.includes('update') || action.includes('change') || action === 'extend') return 'secondary';
   return 'outline';
 }
 
+function getActorBadgeVariant(actorType: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+  if (actorType === 'admin') return 'default';
+  if (actorType === 'user') return 'secondary';
+  if (actorType === 'system') return 'outline';
+  return 'outline';
+}
+
+// ─── Composant principal ─────────────────────────────────
+
 export function AdminActivityLogsPage() {
+  const [activeTab, setActiveTab] = useState<TabKey>('all');
   const [filters, setFilters] = useState<ActivityLogFilters>({
     page: 1,
     per_page: 20,
@@ -95,10 +182,29 @@ export function AdminActivityLogsPage() {
   const [searchInput, setSearchInput] = useState('');
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
-  const { data: logsData, isLoading: isLoadingLogs, refetch } = useAdminActivityLogs(filters);
-  const { data: stats, isLoading: isLoadingStats } = useAdminActivityStats();
+  // Appliquer les filtres de l'onglet actif
+  const currentTab = tabs.find((t) => t.key === activeTab) || tabs[0];
+  const effectiveFilters: ActivityLogFilters = {
+    ...filters,
+    actor_type: currentTab.actorType || filters.actor_type,
+    source: currentTab.source || filters.source,
+  };
+
+  const { data: logsData, isLoading: isLoadingLogs, refetch } = useAdminActivityLogs(effectiveFilters);
+  const { data: stats, isLoading: isLoadingStats } = useAdminActivityStats(
+    currentTab.actorType,
+    currentTab.source
+  );
 
   const logs = logsData?.data || [];
+
+  // ─── Handlers ────────────────────────────────────────
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab as TabKey);
+    setFilters((prev) => ({ ...prev, page: 1, actor_type: undefined, source: undefined }));
+    setExpandedRows(new Set());
+  };
 
   const handleSearch = () => {
     setFilters((prev) => ({ ...prev, search: searchInput, page: 1 }));
@@ -169,11 +275,13 @@ export function AdminActivityLogsPage() {
     setSearchInput('');
   };
 
+  // ─── Rendu ───────────────────────────────────────────
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Journal d'activite"
-        description="Historique des actions administrateur"
+        description="Historique complet des actions - administrateurs, utilisateurs et systeme"
       />
 
       {/* Stats Cards */}
@@ -194,7 +302,7 @@ export function AdminActivityLogsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Aujourd'hui</CardTitle>
+            <CardTitle className="text-sm font-medium">Aujourd&apos;hui</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -235,267 +343,369 @@ export function AdminActivityLogsPage() {
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Filtres
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            {/* Search */}
-            <div className="flex gap-2">
-              <Input
-                placeholder="Rechercher..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              />
-              <Button variant="outline" size="icon" onClick={handleSearch}>
-                <Search className="h-4 w-4" />
-              </Button>
-            </div>
+      {/* Tabs + Content */}
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-6">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <TabsTrigger key={tab.key} value={tab.key} className="flex items-center gap-1.5">
+                <Icon className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
 
-            {/* Action Filter */}
-            <Select value={filters.action || 'all'} onValueChange={handleActionFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Type d'action" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toutes les actions</SelectItem>
-                {Object.entries(actionLabels).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Shared content for all tabs */}
+        {tabs.map((tab) => (
+          <TabsContent key={tab.key} value={tab.key} className="space-y-4">
+            {/* Filters */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  Filtres
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+                  {/* Search */}
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Rechercher..."
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    />
+                    <Button variant="outline" size="icon" onClick={handleSearch}>
+                      <Search className="h-4 w-4" />
+                    </Button>
+                  </div>
 
-            {/* Model Type Filter */}
-            <Select value={filters.model_type || 'all'} onValueChange={handleModelTypeFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Type de ressource" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toutes les ressources</SelectItem>
-                {Object.entries(modelTypeLabels).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Date From */}
-            <DatePicker
-              value={filters.date_from ? parseISO(filters.date_from) : undefined}
-              onChange={handleDateFromChange}
-              placeholder="Date debut"
-              disableFuture={true}
-            />
-
-            {/* Date To */}
-            <DatePicker
-              value={filters.date_to ? parseISO(filters.date_to) : undefined}
-              onChange={handleDateToChange}
-              placeholder="Date fin"
-              disableFuture={true}
-            />
-          </div>
-
-          <div className="flex justify-between mt-4">
-            <Button variant="outline" onClick={clearFilters}>
-              Reinitialiser les filtres
-            </Button>
-            <Button variant="outline" onClick={() => refetch()}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Actualiser
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Activity Logs Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Historique</CardTitle>
-          <CardDescription>
-            {logsData?.total || 0} action(s) trouvee(s)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoadingLogs ? (
-            <div className="space-y-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          ) : logs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Aucune activite trouvee
-            </div>
-          ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12"></TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Admin</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Ressource</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>IP</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {logs.map((log) => (
-                    <Collapsible key={log.id} asChild open={expandedRows.has(log.id)}>
-                      <>
-                        <TableRow className="cursor-pointer" onClick={() => toggleRowExpanded(log.id)}>
-                          <TableCell>
-                            <CollapsibleTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                {expandedRows.has(log.id) ? (
-                                  <ChevronUp className="h-4 w-4" />
-                                ) : (
-                                  <ChevronDown className="h-4 w-4" />
-                                )}
-                              </Button>
-                            </CollapsibleTrigger>
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {format(parseISO(log.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <UserIcon className="h-4 w-4 text-muted-foreground" />
-                              <span>{log.admin?.name || 'Inconnu'}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getActionBadgeVariant(log.action)}>
-                              {actionLabels[log.action] || log.action}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {log.model_type && (
-                              <div className="flex flex-col gap-1">
-                                {log.resource_name && (
-                                  <span className="text-sm font-medium truncate max-w-[150px]" title={log.resource_name}>
-                                    {log.resource_name}
-                                  </span>
-                                )}
-                                <Badge variant="outline">
-                                  {modelTypeLabels[log.model_type] || log.model_type.split('\\').pop()}
-                                </Badge> 
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell className="max-w-[300px] truncate">
-                            {log.description}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground text-sm">
-                            {log.ip_address}
-                          </TableCell>
-                        </TableRow>
-                        <CollapsibleContent asChild>
-                          <TableRow className="bg-muted/50">
-                            <TableCell colSpan={7}>
-                              <div className="p-4 space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  {log.old_values && Object.keys(log.old_values).length > 0 && (
-                                    <div>
-                                      <h4 className="font-medium mb-2 text-sm">Anciennes valeurs</h4>
-                                      <pre className="text-xs bg-background p-2 rounded overflow-auto max-h-40">
-                                        {JSON.stringify(log.old_values, null, 2)}
-                                      </pre>
-                                    </div>
-                                  )}
-                                  {log.new_values && Object.keys(log.new_values).length > 0 && (
-                                    <div>
-                                      <h4 className="font-medium mb-2 text-sm">Nouvelles valeurs</h4>
-                                      <pre className="text-xs bg-background p-2 rounded overflow-auto max-h-40">
-                                        {JSON.stringify(log.new_values, null, 2)}
-                                      </pre>
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  User Agent: {log.user_agent}
-                                </div>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        </CollapsibleContent>
-                      </>
-                    </Collapsible>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-
-          {/* Pagination */}
-          {logsData && (logsData.total > 0 || logsData.last_page > 1) && (
-            <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <PerPageSelector
-                value={filters.per_page || 20}
-                onChange={(value) => setFilters((prev) => ({ ...prev, per_page: value, page: 1 }))}
-              />
-              {logsData.last_page > 1 && (
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        onClick={() => handlePageChange(logsData?.current_page - 1)}
-                        className={cn(
-                          logsData?.current_page === 1 && 'pointer-events-none opacity-50'
-                        )}
-                      />
-                    </PaginationItem>
-
-                    {Array.from({ length: logsData?.last_page }, (_, i) => i + 1)
-                      .filter((page) => {
-                        const current = logsData?.current_page;
-                        return (
-                          page === 1 ||
-                          page === logsData?.last_page ||
-                          (page >= current - 1 && page <= current + 1)
-                        );
-                      })
-                      .map((page, index, array) => (
-                        <PaginationItem key={page}>
-                          {index > 0 && array[index - 1] !== page - 1 && (
-                            <span className="px-2">...</span>
-                          )}
-                          <PaginationLink
-                            onClick={() => handlePageChange(page)}
-                            isActive={page === logsData?.current_page}
-                          >
-                            {page}
-                          </PaginationLink>
-                        </PaginationItem>
+                  {/* Action Filter */}
+                  <Select value={filters.action || 'all'} onValueChange={handleActionFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Type d'action" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toutes les actions</SelectItem>
+                      {Object.entries(actionLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
 
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={() => handlePageChange(logsData?.current_page + 1)}
-                        className={cn(
-                          logsData?.current_page === logsData?.last_page &&
-                            'pointer-events-none opacity-50'
-                        )}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  {/* Model Type Filter (hidden for navigation/ui tabs) */}
+                  {tab.key !== 'navigation' && tab.key !== 'ui' && (
+                    <Select value={filters.model_type || 'all'} onValueChange={handleModelTypeFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Type de ressource" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Toutes les ressources</SelectItem>
+                        {Object.entries(modelTypeLabels).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+
+                  {/* Date From */}
+                  <DatePicker
+                    value={filters.date_from ? parseISO(filters.date_from) : undefined}
+                    onChange={handleDateFromChange}
+                    placeholder="Date debut"
+                    disableFuture={true}
+                  />
+
+                  {/* Date To */}
+                  <DatePicker
+                    value={filters.date_to ? parseISO(filters.date_to) : undefined}
+                    onChange={handleDateToChange}
+                    placeholder="Date fin"
+                    disableFuture={true}
+                  />
+                </div>
+
+                <div className="flex justify-between mt-4">
+                  <Button variant="outline" onClick={clearFilters}>
+                    Reinitialiser les filtres
+                  </Button>
+                  <Button variant="outline" onClick={() => refetch()}>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Actualiser
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Activity Logs Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Historique</CardTitle>
+                <CardDescription>
+                  {logsData?.total || 0} action(s) trouvee(s)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingLogs ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Skeleton key={i} className="h-16 w-full" />
+                    ))}
+                  </div>
+                ) : logs.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Aucune activite trouvee
+                  </div>
+                ) : (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12"></TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Utilisateur</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Action</TableHead>
+                          <TableHead>Source</TableHead>
+                          {tab.key !== 'navigation' && tab.key !== 'ui' && (
+                            <TableHead>Ressource</TableHead>
+                          )}
+                          {(tab.key === 'navigation' || tab.key === 'ui') && (
+                            <TableHead>Page</TableHead>
+                          )}
+                          <TableHead>Description</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {logs.map((log) => {
+                          const ActorIcon = actorTypeIcons[log.actor_type] || UserIcon;
+                          const SourceIcon = sourceIcons[log.source] || Globe;
+                          return (
+                            <Collapsible key={log.id} asChild open={expandedRows.has(log.id)}>
+                              <>
+                                <TableRow
+                                  className="cursor-pointer"
+                                  onClick={() => toggleRowExpanded(log.id)}
+                                >
+                                  <TableCell>
+                                    <CollapsibleTrigger asChild>
+                                      <Button variant="ghost" size="sm">
+                                        {expandedRows.has(log.id) ? (
+                                          <ChevronUp className="h-4 w-4" />
+                                        ) : (
+                                          <ChevronDown className="h-4 w-4" />
+                                        )}
+                                      </Button>
+                                    </CollapsibleTrigger>
+                                  </TableCell>
+                                  <TableCell className="whitespace-nowrap text-sm">
+                                    {format(parseISO(log.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex items-center gap-2">
+                                      <ActorIcon className="h-4 w-4 text-muted-foreground" />
+                                      <span className="text-sm">
+                                        {log.user?.name || log.admin?.name || 'Inconnu'}
+                                      </span>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant={getActorBadgeVariant(log.actor_type)}>
+                                      {actorTypeLabels[log.actor_type] || log.actor_type}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant={getActionBadgeVariant(log.action)}>
+                                      {actionLabels[log.action] || log.action}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                      <SourceIcon className="h-3.5 w-3.5" />
+                                      <span>{sourceLabels[log.source] || log.source}</span>
+                                    </div>
+                                  </TableCell>
+                                  {tab.key !== 'navigation' && tab.key !== 'ui' && (
+                                    <TableCell>
+                                      {log.model_type && (
+                                        <div className="flex flex-col gap-1">
+                                          {log.resource_name && (
+                                            <span
+                                              className="text-sm font-medium truncate max-w-[150px]"
+                                              title={log.resource_name}
+                                            >
+                                              {log.resource_name}
+                                            </span>
+                                          )}
+                                          <Badge variant="outline">
+                                            {modelTypeLabels[log.model_type] ||
+                                              log.model_type.split('\\').pop()}
+                                          </Badge>
+                                        </div>
+                                      )}
+                                    </TableCell>
+                                  )}
+                                  {(tab.key === 'navigation' || tab.key === 'ui') && (
+                                    <TableCell>
+                                      {log.page_url && (
+                                        <span className="text-sm font-mono text-muted-foreground">
+                                          {log.page_url}
+                                        </span>
+                                      )}
+                                    </TableCell>
+                                  )}
+                                  <TableCell className="max-w-[250px] truncate text-sm">
+                                    {log.description}
+                                  </TableCell>
+                                </TableRow>
+                                <CollapsibleContent asChild>
+                                  <TableRow className="bg-muted/50">
+                                    <TableCell colSpan={8}>
+                                      <div className="p-4 space-y-4">
+                                        {/* Diff ancien / nouveau */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                          {log.old_values &&
+                                            Object.keys(log.old_values).length > 0 && (
+                                              <div>
+                                                <h4 className="font-medium mb-2 text-sm">
+                                                  Anciennes valeurs
+                                                </h4>
+                                                <pre className="text-xs bg-background p-2 rounded overflow-auto max-h-40">
+                                                  {JSON.stringify(log.old_values, null, 2)}
+                                                </pre>
+                                              </div>
+                                            )}
+                                          {log.new_values &&
+                                            Object.keys(log.new_values).length > 0 && (
+                                              <div>
+                                                <h4 className="font-medium mb-2 text-sm">
+                                                  Nouvelles valeurs
+                                                </h4>
+                                                <pre className="text-xs bg-background p-2 rounded overflow-auto max-h-40">
+                                                  {JSON.stringify(log.new_values, null, 2)}
+                                                </pre>
+                                              </div>
+                                            )}
+                                        </div>
+                                        {/* Metadata */}
+                                        {log.metadata &&
+                                          Object.keys(log.metadata).length > 0 && (
+                                            <div>
+                                              <h4 className="font-medium mb-2 text-sm">Metadata</h4>
+                                              <pre className="text-xs bg-background p-2 rounded overflow-auto max-h-40">
+                                                {JSON.stringify(log.metadata, null, 2)}
+                                              </pre>
+                                            </div>
+                                          )}
+                                        {/* Details */}
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-muted-foreground">
+                                          <div>
+                                            <span className="font-medium">IP :</span> {log.ip_address}
+                                          </div>
+                                          {log.session_id && (
+                                            <div>
+                                              <span className="font-medium">Session :</span>{' '}
+                                              <span className="font-mono">{log.session_id.slice(0, 12)}...</span>
+                                            </div>
+                                          )}
+                                          {log.page_url && (
+                                            <div>
+                                              <span className="font-medium">Page :</span> {log.page_url}
+                                            </div>
+                                          )}
+                                          {log.s3_key && (
+                                            <div>
+                                              <span className="font-medium">S3 :</span>{' '}
+                                              <span className="font-mono">{log.s3_key.slice(-20)}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                          User Agent: {log.user_agent}
+                                        </div>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                </CollapsibleContent>
+                              </>
+                            </Collapsible>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                {/* Pagination */}
+                {logsData && (logsData.total > 0 || logsData.last_page > 1) && (
+                  <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <PerPageSelector
+                      value={filters.per_page || 20}
+                      onChange={(value) =>
+                        setFilters((prev) => ({ ...prev, per_page: value, page: 1 }))
+                      }
+                    />
+                    {logsData.last_page > 1 && (
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              onClick={() => handlePageChange(logsData?.current_page - 1)}
+                              className={cn(
+                                logsData?.current_page === 1 && 'pointer-events-none opacity-50'
+                              )}
+                            />
+                          </PaginationItem>
+
+                          {Array.from({ length: logsData?.last_page }, (_, i) => i + 1)
+                            .filter((page) => {
+                              const current = logsData?.current_page;
+                              return (
+                                page === 1 ||
+                                page === logsData?.last_page ||
+                                (page >= current - 1 && page <= current + 1)
+                              );
+                            })
+                            .map((page, index, array) => (
+                              <PaginationItem key={page}>
+                                {index > 0 && array[index - 1] !== page - 1 && (
+                                  <span className="px-2">...</span>
+                                )}
+                                <PaginationLink
+                                  onClick={() => handlePageChange(page)}
+                                  isActive={page === logsData?.current_page}
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            ))}
+
+                          <PaginationItem>
+                            <PaginationNext
+                              onClick={() => handlePageChange(logsData?.current_page + 1)}
+                              className={cn(
+                                logsData?.current_page === logsData?.last_page &&
+                                  'pointer-events-none opacity-50'
+                              )}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
+      </Tabs>
     </div>
   );
 }
