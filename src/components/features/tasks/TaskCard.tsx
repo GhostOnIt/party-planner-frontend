@@ -18,11 +18,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PriorityBadge } from './PriorityBadge';
 import type { Task, TaskStatus } from '@/types';
@@ -83,41 +81,48 @@ export function TaskCard({
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 shrink-0"
+                onPointerDown={(e) => e.stopPropagation()}
+              >
                 <MoreHorizontal className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" onPointerDown={(e) => e.stopPropagation()}>
               <DropdownMenuItem onClick={() => onEdit(task)}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Modifier
               </DropdownMenuItem>
               {onStatusChange ? (
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <RotateCcw className="mr-2 h-4 w-4" />
+                <>
+                  <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
+                    <RotateCcw className="h-4 w-4" />
                     Changer le statut
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    {statusOptions.map((option) => {
-                      const Icon = option.icon;
-                      return (
-                        <DropdownMenuItem
-                          key={option.value}
-                          onClick={() => onStatusChange(task, option.value)}
-                          disabled={task.status === option.value}
-                          className={cn(task.status === option.value && 'bg-accent')}
-                        >
-                          <Icon className="mr-2 h-4 w-4" />
-                          {option.label}
-                          {task.status === option.value && (
-                            <CheckCircle className="ml-auto h-4 w-4 text-primary" />
-                          )}
-                        </DropdownMenuItem>
-                      );
-                    })}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                  </DropdownMenuLabel>
+                  {statusOptions.map((option) => {
+                    const Icon = option.icon;
+                    return (
+                      <DropdownMenuItem
+                        key={option.value}
+                        onSelect={() => {
+                          if (onStatusChange) {
+                            onStatusChange(task, option.value);
+                          }
+                        }}
+                        disabled={task.status === option.value}
+                        className={cn(task.status === option.value && 'bg-accent')}
+                      >
+                        <Icon className="mr-2 h-4 w-4" />
+                        {option.label}
+                        {task.status === option.value && (
+                          <CheckCircle className="ml-auto h-4 w-4 text-primary" />
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </>
               ) : (
                 <>
                   {isCompleted ? (

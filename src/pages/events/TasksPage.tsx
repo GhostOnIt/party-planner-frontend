@@ -66,7 +66,7 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
   const collaborators =
     (collaboratorsData?.data as Collaborator[] | undefined)?.map((c) => ({ id: c.user_id, name: c.user.name })) || [];
 
-  // Build assignable users list (current user + owner + collaborators)
+  // Build assignable users list (owner + collaborators + current task assignee when editing)
   const assignableUsersMap = new Map<string, { id: string | number; name: string }>();
   if (eventData?.user) {
     const uid = String(eventData.user_id);
@@ -76,6 +76,17 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
     const key = String(c.id);
     assignableUsersMap.set(key, { id: c.id, name: c.name });
   });
+  // Include the task's current assignee when editing (e.g. owner who may not be in collaborators)
+  const editingTaskAssigneeId = editingTask?.assigned_to_user_id ?? editingTask?.assigned_to;
+  if (editingTaskAssigneeId && editingTask?.assigned_user) {
+    const key = String(editingTaskAssigneeId);
+    if (!assignableUsersMap.has(key)) {
+      assignableUsersMap.set(key, {
+        id: editingTaskAssigneeId,
+        name: editingTask.assigned_user.name,
+      });
+    }
+  }
   const assignableUsers = Array.from(assignableUsersMap.values()).sort((a, b) => {
     if (currentUser) {
       if (String(a.id) === String(currentUser.id)) return -1;

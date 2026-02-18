@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react"
 import { ChevronDown, LogOut, User, Settings } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import { cn } from "@/lib/utils"
+import { cn, resolveUrl } from "@/lib/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useCurrentSubscription } from "@/hooks/useSubscription"
 import {
   AlertDialog,
@@ -100,9 +101,12 @@ export function ProfileDropdown({ user, onLogout, onProfileClick, onSettingsClic
           showProfile ? "bg-[#f3f4f6]" : "hover:bg-[#f3f4f6]",
         )}
       >
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] flex items-center justify-center text-sm font-semibold text-white">
-          {initials || "U"}
-        </div>
+        <Avatar className="h-9 w-9 rounded-xl overflow-hidden shrink-0">
+          <AvatarImage src={resolveUrl(user.avatar_url)} alt={user.name} className="object-cover" />
+          <AvatarFallback className="rounded-xl bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] text-sm font-semibold text-white">
+            {initials || "U"}
+          </AvatarFallback>
+        </Avatar>
         <div className="hidden sm:block text-left">
           <p className="text-sm font-medium text-[#1a1a2e]">{user.name}</p>
           <p className="text-xs text-[#9ca3af]">{planName}</p>
@@ -114,9 +118,12 @@ export function ProfileDropdown({ user, onLogout, onProfileClick, onSettingsClic
         <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#e5e7eb] overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="p-4 border-b border-[#e5e7eb] bg-gradient-to-br from-[#4F46E5]/5 to-[#7C3AED]/5">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] flex items-center justify-center text-lg font-semibold text-white">
-                {initials || "U"}
-              </div>
+              <Avatar className="h-12 w-12 rounded-xl overflow-hidden shrink-0">
+                <AvatarImage src={resolveUrl(user.avatar_url)} alt={user.name} className="object-cover" />
+                <AvatarFallback className="rounded-xl bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] text-lg font-semibold text-white">
+                  {initials || "U"}
+                </AvatarFallback>
+              </Avatar>
               <div>
                 <p className="font-semibold text-[#1a1a2e]">{user.name}</p>
                 <p className="text-xs text-[#9ca3af]">{user.email}</p>
