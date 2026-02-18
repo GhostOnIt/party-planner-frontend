@@ -19,7 +19,7 @@ import type { CustomRole, InviteCollaboratorFormData } from '@/types';
 type InviteFormValues = {
   email: string;
   roles?: string[];
-  custom_role_ids?: number[];
+  custom_role_ids?: string[];
 };
 
 interface InviteCollaboratorFormProps {
@@ -60,7 +60,7 @@ export function InviteCollaboratorForm({
     .object({
       email: z.string().email('Email invalide'),
       roles: z.array(z.string()).optional(),
-      custom_role_ids: z.array(z.number()).optional(),
+      custom_role_ids: z.array(z.string()).optional(),
     })
     .superRefine((data, ctx) => {
       const rolesCount = (data.roles || []).length;
@@ -102,7 +102,7 @@ export function InviteCollaboratorForm({
           : selectedCustomRoleIds.length > 0
             ? ['viewer']
             : [],
-      custom_role_ids: selectedCustomRoleIds,
+      custom_role_ids: selectedCustomRoleIds as string[],
     });
   };
 

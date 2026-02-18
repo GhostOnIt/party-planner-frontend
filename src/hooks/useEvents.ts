@@ -47,8 +47,8 @@ export function useCreateEvent() {
   const subscribeMutation = useSubscribeToPlan();
 
   return useMutation({
-    mutationFn: async (data: CreateEventFormData & { cover_photo?: File }) => {
-      const { cover_photo, ...eventData } = data;
+    mutationFn: async (data: (CreateEventFormData & { cover_photo?: File }) | (Omit<CreateEventFormData, 'date' | 'time'> & { date?: string; time?: string; cover_photo?: File; template_id?: number | null })) => {
+      const { cover_photo, ...eventData } = data as CreateEventFormData & { cover_photo?: File };
 
       // Si une photo de couverture est fournie, utiliser FormData
       if (cover_photo) {
@@ -56,10 +56,8 @@ export function useCreateEvent() {
 
         // Ajouter les données de l'événement
         Object.entries(eventData).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            if (key === 'budget' && typeof value === 'number') {
-              formData.append('estimated_budget', value.toString());
-            } else if (key === 'expected_guests' && typeof value === 'number') {
+          if (value !== undefined && value !== null && value !== '') {
+            if (key === 'expected_guests' && typeof value === 'number') {
               formData.append('expected_guests_count', value.toString());
             } else if (key === 'template_id' && typeof value === 'number') {
               formData.append('template_id', value.toString());
@@ -86,18 +84,10 @@ export function useCreateEvent() {
           ...eventData,
         };
 
-        // Mapper les noms de champs pour correspondre au backend
-        if (jsonData.budget !== undefined) {
-          jsonData.estimated_budget = jsonData.budget;
-          delete jsonData.budget;
-        }
         if (jsonData.expected_guests !== undefined) {
           jsonData.expected_guests_count = jsonData.expected_guests;
           delete jsonData.expected_guests;
         }
-        // template_id est déjà dans le bon format
-        // Si template_id est null, on l'envoie explicitement pour indiquer "Aucun template"
-        // Si template_id est undefined, on ne l'envoie pas (auto-application)
 
         const response = await api.post<CreateEventResponse>('/events', jsonData);
         return response.data.event;
@@ -234,19 +224,62 @@ export function useDeleteEvent() {
   });
 }
 
-// Duplicate event
+// Duplicate event (with form data + options: include guests, tasks, budget)
+export interface DuplicateEventPayload {
+  sourceEventId: string | number;
+  title: string;
+  type: string;
+  date?: string;
+  time?: string;
+  location?: string;
+  description?: string;
+  theme?: string;
+  expected_guests_count?: number;
+  include_guests: boolean;
+  include_tasks: boolean;
+  include_budget: boolean;
+  include_collaborators: boolean;
+}
+
 export function useDuplicateEvent() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (eventId: number | string) => {
-      const response = await api.post<Event>(`/events/${eventId}/duplicate`);
+    mutationFn: async (payload: DuplicateEventPayload | string) => {
+      const resolved: DuplicateEventPayload =
+        typeof payload === 'string'
+          ? {
+              sourceEventId: payload,
+              title: '',
+              type: 'autre',
+              include_guests: false,
+              include_tasks: true,
+              include_budget: true,
+              include_collaborators: false,
+            }
+          : payload;
+      const { sourceEventId, ...body } = resolved;
+      const response = await api.post<Event>(`/events/${sourceEventId}/duplicate`, body);
       return response.data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      toast({
+        title: 'Événement dupliqué',
+        description: 'Votre événement a été dupliqué avec succès.',
+      });
       navigate(`/events/${data.id}`);
+    },
+    onError: (error: unknown) => {
+      const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast({
+        title: 'Erreur',
+        description: msg || 'Impossible de dupliquer l\'événement.',
+        variant: 'destructive',
+      });
     },
   });
 }

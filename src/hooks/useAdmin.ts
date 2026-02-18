@@ -106,7 +106,7 @@ export function useDeleteUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userId: number) => {
+    mutationFn: async (userId: string) => {
       await api.delete(`/admin/users/${userId}`);
     },
     onSuccess: () => {
@@ -157,7 +157,7 @@ export function useDeleteEvent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (eventId: number) => {
+    mutationFn: async (eventId: string) => {
       await api.delete(`/admin/events/${eventId}`);
     },
     onSuccess: () => {
@@ -196,7 +196,7 @@ export function useCancelSubscription() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (subscriptionId: number) => {
+    mutationFn: async (subscriptionId: string) => {
       await api.post(`/admin/subscriptions/${subscriptionId}/cancel`);
     },
     onSuccess: () => {
@@ -224,7 +224,7 @@ export function useChangePlan() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ subscriptionId, planType }: { subscriptionId: number; planType: 'starter' | 'pro' }) => {
+    mutationFn: async ({ subscriptionId, planType }: { subscriptionId: string; planType: 'starter' | 'pro' }) => {
       const response = await api.post(`/admin/subscriptions/${subscriptionId}/change-plan`, { plan_type: planType });
       return response.data;
     },
@@ -274,7 +274,7 @@ export function useAdminTemplates() {
   });
 }
 
-export function useAdminTemplate(templateId: number) {
+export function useAdminTemplate(templateId: string) {
   return useQuery({
     queryKey: ['admin', 'templates', templateId],
     queryFn: async (): Promise<EventTemplate> => {
@@ -353,7 +353,7 @@ export function useDeleteTemplate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (templateId: number) => {
+    mutationFn: async (templateId: string) => {
       await api.delete(`/admin/templates/${templateId}`);
     },
     onSuccess: () => {
@@ -366,7 +366,7 @@ export function useToggleTemplateActive() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ templateId, isActive }: { templateId: number; isActive: boolean }) => {
+    mutationFn: async ({ templateId, isActive }: { templateId: string; isActive: boolean }) => {
       const response = await api.post(`/admin/templates/${templateId}/toggle-active`, { is_active: isActive });
       return response.data;
     },
@@ -398,9 +398,13 @@ export function useRecentActivity(limit: number = 10) {
 
 // ============== Activity Logs ==============
 
+export type ActorType = 'admin' | 'user' | 'system' | 'guest';
+export type LogSource = 'api' | 'navigation' | 'ui_interaction' | 'system';
+
 export interface ActivityLog {
   id: number;
-  admin_id: number;
+  user_id: number;
+  actor_type: ActorType;
   action: string;
   model_type: string | null;
   model_id: number | null;
@@ -410,7 +414,19 @@ export interface ActivityLog {
   new_values: Record<string, unknown> | null;
   ip_address: string;
   user_agent: string;
+  source: LogSource;
+  page_url: string | null;
+  session_id: string | null;
+  metadata: Record<string, unknown> | null;
+  s3_key: string | null;
+  s3_archived_at: string | null;
   created_at: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  /** @deprecated Utiliser user a la place */
   admin?: {
     id: number;
     name: string;
@@ -423,7 +439,11 @@ export interface ActivityLogFilters {
   per_page?: number;
   action?: string;
   model_type?: string;
+  user_id?: number;
   admin_id?: number;
+  actor_type?: ActorType;
+  source?: LogSource;
+  session_id?: string;
   date_from?: string;
   date_to?: string;
   search?: string;
@@ -436,7 +456,14 @@ export interface ActivityLogStats {
   this_month: number;
   by_action: Record<string, number>;
   by_model_type: Record<string, number>;
-  by_admin: Array<{ admin_id: number; admin_name: string; count: number }>;
+  by_actor_type: Record<string, number>;
+  by_source: Record<string, number>;
+  by_user: Array<{ user_id: number; user_name: string; count: number }>;
+  recent_users: Array<{ user_id: number; name: string; last_activity: string }>;
+  /** @deprecated Utiliser by_user a la place */
+  by_admin: Array<{ admin: string; count: number }>;
+  /** @deprecated Utiliser recent_users a la place */
+  recent_admins: string[];
 }
 
 export function useAdminActivityLogs(filters: ActivityLogFilters = {}) {
@@ -449,11 +476,14 @@ export function useAdminActivityLogs(filters: ActivityLogFilters = {}) {
   });
 }
 
-export function useAdminActivityStats() {
+export function useAdminActivityStats(actorType?: ActorType, source?: LogSource) {
   return useQuery({
-    queryKey: ['admin', 'activity-logs', 'stats'],
+    queryKey: ['admin', 'activity-logs', 'stats', actorType, source],
     queryFn: async (): Promise<ActivityLogStats> => {
-      const response = await api.get('/admin/activity-logs/stats');
+      const params: Record<string, string> = {};
+      if (actorType) params.actor_type = actorType;
+      if (source) params.source = source;
+      const response = await api.get('/admin/activity-logs/stats', { params });
       return response.data.stats;
     },
   });

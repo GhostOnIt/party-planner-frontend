@@ -22,8 +22,8 @@ type ConfirmationAction = 'accept' | 'reject' | null;
 
 export function InvitationsPage() {
   const { toast } = useToast();
-  const [acceptingId, setAcceptingId] = useState<number | null>(null);
-  const [rejectingId, setRejectingId] = useState<number | null>(null);
+  const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [selectedInvitation, setSelectedInvitation] = useState<Invitation | null>(null);
   const [confirmationDialog, setConfirmationDialog] = useState<{
     isOpen: boolean;
@@ -48,8 +48,8 @@ export function InvitationsPage() {
       return dateB - dateA; // Most recent first
     });
 
-  const handleAccept = (invitationId: number) => {
-    const invitation = pendingInvitations.find((inv) => inv.id === invitationId);
+  const handleAccept = (id: string) => {
+    const invitation = pendingInvitations.find((inv) => inv.id === id);
     if (invitation) {
       setConfirmationDialog({
         isOpen: true,
@@ -59,8 +59,8 @@ export function InvitationsPage() {
     }
   };
 
-  const handleReject = (invitationId: number) => {
-    const invitation = pendingInvitations.find((inv) => inv.id === invitationId);
+  const handleReject = (invitationId: string) => {
+    const invitation = pendingInvitations.find((inv) => String(inv.id) === String(invitationId));
     if (invitation) {
       setConfirmationDialog({
         isOpen: true,
@@ -81,7 +81,7 @@ export function InvitationsPage() {
 
     if (action === 'accept') {
       setAcceptingId(invitationId);
-      acceptInvitation(invitationId, {
+      acceptInvitation(String(invitationId), {
         onSuccess: () => {
           toast({
             title: 'Invitation acceptee',
@@ -100,7 +100,7 @@ export function InvitationsPage() {
       });
     } else if (action === 'reject') {
       setRejectingId(invitationId);
-      rejectInvitation(invitationId, {
+      rejectInvitation(String(invitationId), {
         onSuccess: () => {
           toast({
             title: 'Invitation refusee',
@@ -123,13 +123,13 @@ export function InvitationsPage() {
     setSelectedInvitation(invitation);
   };
 
-  const handleAcceptFromDetails = (invitationId: number) => {
-    handleAccept(invitationId);
+  const handleAcceptFromDetails = (id: string) => {
+    handleAccept(id);
     setSelectedInvitation(null); // Fermer le dialogue de détails
   };
 
-  const handleRejectFromDetails = (invitationId: number) => {
-    handleReject(invitationId);
+  const handleRejectFromDetails = (id: string) => {
+    handleReject(id);
     setSelectedInvitation(null); // Fermer le dialogue de détails
   };
 
@@ -180,8 +180,8 @@ export function InvitationsPage() {
           }}
           onAccept={handleAcceptFromDetails}
           onReject={handleRejectFromDetails}
-          isAccepting={acceptingId === selectedInvitation.id}
-          isRejecting={rejectingId === selectedInvitation.id}
+          isAccepting={selectedInvitation != null && acceptingId === selectedInvitation.id}
+          isRejecting={selectedInvitation != null && rejectingId === selectedInvitation.id}
         />
       )}
 

@@ -120,7 +120,7 @@ export function useUpdateBudgetItem(eventId: string) {
       itemId,
       data,
     }: {
-      itemId: number;
+      itemId: string;
       data: Partial<CreateBudgetItemFormData>;
     }) => {
       const response = await api.put<BudgetItem>(
@@ -141,7 +141,7 @@ export function useDeleteBudgetItem(eventId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (itemId: number) => {
+    mutationFn: async (itemId: string) => {
       await api.delete(`/events/${eventId}/budget/items/${itemId}`);
     },
     onSuccess: () => {
@@ -173,7 +173,7 @@ export function useMarkUnpaid(eventId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (itemId: number) => {
+    mutationFn: async (itemId: string) => {
       const response = await api.post<BudgetItem>(
         `/events/${eventId}/budget/items/${itemId}/mark-unpaid`
       );

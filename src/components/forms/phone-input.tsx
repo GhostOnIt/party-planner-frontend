@@ -13,7 +13,7 @@ interface PhoneInputProps {
 export function PhoneInput({
   value,
   onChange,
-  placeholder = '+237 6XX XXX XXX',
+  placeholder = '+242 XX XXX XX XX',
   disabled = false,
   className,
 }: PhoneInputProps) {

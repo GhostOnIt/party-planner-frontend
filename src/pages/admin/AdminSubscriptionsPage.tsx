@@ -197,7 +197,7 @@ export function AdminSubscriptionsPage() {
   const handleExtend = () => {
     if (!extendSub) return;
     extendMutation(
-      { subscriptionId: extendSub.id, days: extendDays },
+      { subscriptionId: Number(extendSub.id), days: extendDays },
       {
         onSuccess: () => {
           toast({

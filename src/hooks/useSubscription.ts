@@ -116,7 +116,7 @@ export function useSubscribe(eventId: string | number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { plan_type: PlanType; payment_id?: number }) => {
+    mutationFn: async (data: { plan_type: PlanType; payment_id?: string | number }) => {
       console.log('useSubscribe mutation:', data);
       const response = await api.post(`/events/${eventId}/subscription`, data);
       return response.data;
@@ -134,7 +134,7 @@ export function useUpgradeSubscription(eventId: string | number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { plan_type: PlanType; payment_id?: number }) => {
+    mutationFn: async (data: { plan_type: PlanType; payment_id?: string | number }) => {
       console.log('useUpgradeSubscription mutation:', data);
       const response = await api.post(`/events/${eventId}/subscription/upgrade`, data);
       return response.data;
@@ -167,7 +167,7 @@ export function useRenewSubscription(eventId: string | number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { payment_id?: number }) => {
+    mutationFn: async (data: { payment_id?: string | number }) => {
       const response = await api.post(`/events/${eventId}/subscription/renew`, data);
       return response.data;
     },

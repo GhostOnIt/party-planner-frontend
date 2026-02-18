@@ -127,8 +127,8 @@ export function SubscriptionsPage() {
   const activeSubscriptions = subscriptions.filter((s) => getStatus(s) === 'paid' || getStatus(s) === 'active');
   const expiredSubscriptions = subscriptions.filter((s) => getStatus(s) !== 'paid' && getStatus(s) !== 'active');
 
-  const handleRetryPayment = (paymentId: number) => {
-    retryPayment(paymentId, {
+  const handleRetryPayment = (paymentId: string) => {
+    retryPayment(Number(paymentId), {
       onSuccess: () => {
         toast({
           title: 'Paiement relance',

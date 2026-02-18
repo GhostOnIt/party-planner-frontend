@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useState, useEffect } from 'react';
-import { CalendarIcon, Image, X, Sparkles, ListTodo, Wallet, Palette } from 'lucide-react';
+import { CalendarIcon, Image, X, Sparkles, ListTodo, Wallet, Palette, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
@@ -20,10 +20,12 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { PhotoUploader } from '@/components/features/photos';
 import { useTemplatesByType } from '@/hooks/useTemplates';
 import { useEventTypes } from '@/hooks/useSettings';
+import { useAuthStore } from '@/stores/authStore';
 import type { Event, CreateEventFormData, EventType } from '@/types';
 
 // Default event types (fallback if user types are not loaded)
@@ -38,44 +40,66 @@ const defaultEventTypes: { value: EventType; label: string }[] = [
 
 const eventFormSchema = z.object({
   title: z.string().min(1, 'Le titre est requis').max(255),
-  type: z.string().min(1, 'Le type est requis'), // Accept any string for custom types
-  date: z.string().min(1, 'La date est requise'),
-  time: z.string().min(1, "L'heure est requise"),
+  type: z.string().min(1, 'Le type est requis'),
+  date: z.string().optional(),
+  time: z.string().optional(),
   location: z.string().min(1, 'Le lieu est requis'),
   description: z.string().optional(),
-  budget: z
-    .union([z.string(), z.number()])
-    .optional()
-    .transform((val) => {
-      if (val === '' || val === undefined || val === null) return undefined;
-      const num = Number(val);
-      return isNaN(num) ? undefined : num;
-    }),
   theme: z.string().optional(),
   template_id: z.number().optional(),
+  owner_email: z.union([z.string().email(), z.literal('')]).optional(),
 });
 
 type EventFormValues = z.input<typeof eventFormSchema>;
 
+export interface DuplicateOptions {
+  includeGuests: boolean;
+  includeTasks: boolean;
+  includeBudget: boolean;
+  includeCollaborators: boolean;
+}
+
 interface EventFormProps {
   event?: Event;
-  onSubmit: (data: CreateEventFormData & { template_id?: number; cover_photo?: File }) => void;
+  /** When true, title default is empty and duplicate options (checkboxes) are shown. */
+  duplicateMode?: boolean;
+  /** Override initial title (e.g. '' for duplication). */
+  initialTitleOverride?: string;
+  /** For duplicate mode: optional counts to display next to checkboxes. */
+  sourceGuestsCount?: number;
+  sourceTasksCount?: number;
+  sourceBudgetCount?: number;
+  sourceCollaboratorsCount?: number;
+  onSubmit: (
+    data: Omit<CreateEventFormData, 'date' | 'time'> & { date?: string; time?: string; template_id?: number; cover_photo?: File },
+    duplicateOptions?: DuplicateOptions
+  ) => void;
   onCancel?: () => void;
   isSubmitting?: boolean;
 }
 
-// Helper to block 'e', 'E', '+', '-', '.' in number inputs
-const blockInvalidNumberKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {
-  if (['e', 'E', '+', '-', '.'].includes(e.key)) {
-    e.preventDefault();
-  }
-};
-
-export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: EventFormProps) {
+export function EventForm({
+  event,
+  duplicateMode = false,
+  initialTitleOverride,
+  sourceGuestsCount = 0,
+  sourceTasksCount = 0,
+  sourceBudgetCount = 0,
+  sourceCollaboratorsCount = 0,
+  onSubmit,
+  onCancel,
+  isSubmitting = false,
+}: EventFormProps) {
   const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
   const [coverPhotoPreview, setCoverPhotoPreview] = useState<string | null>(null);
   const [showPhotoUploader, setShowPhotoUploader] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [includeGuests, setIncludeGuests] = useState(false);
+  const [includeTasks, setIncludeTasks] = useState(true);
+  const [includeCollaborators, setIncludeCollaborators] = useState(false);
+  const [includeBudget, setIncludeBudget] = useState(true);
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.role === 'admin';
 
   // Load user's custom event types
   const { data: userEventTypes } = useEventTypes();
@@ -92,19 +116,20 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
     register,
     handleSubmit,
     setValue,
+    setError,
     watch,
     formState: { errors },
   } = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
-      title: event?.title || '',
+      title: initialTitleOverride !== undefined ? initialTitleOverride : (event?.title || ''),
       type: event?.type || (eventTypes[0]?.value || 'autre'),
       date: event?.date || '',
-      time: event?.time || '',
+      time: event?.time ? String(event.time).slice(0, 5) : '',
       location: event?.location || '',
       description: event?.description || '',
-      budget: event?.budget || undefined,
       theme: event?.theme || '',
+      owner_email: '',
     },
   });
 
@@ -117,7 +142,7 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
   const templates = templatesData?.templates || [];
   
   // Charger le template sélectionné pour l'aperçu
-  const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
+  const selectedTemplate = templates.find((t) => String(t.id) === String(selectedTemplateId));
 
   // Nettoyer les URLs de preview lors du démontage
   useEffect(() => {
@@ -146,21 +171,36 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
   };
 
   const handleFormSubmit = (data: EventFormValues) => {
-    // Transformer les données selon le schéma
-    const transformed = eventFormSchema.parse(data);
+    if (!duplicateMode) {
+      if (!data.date) {
+        setError('date', { message: 'La date est requise' });
+        return;
+      }
+      if (!data.time) {
+        setError('time', { message: "L'heure est requise" });
+        return;
+      }
+    }
+    const transformed = eventFormSchema.parse(data) as EventFormValues;
 
-    onSubmit({
+    const payload = {
       title: transformed.title,
       type: transformed.type as EventType,
       date: transformed.date,
       time: transformed.time,
       location: transformed.location,
       description: transformed.description || undefined,
-      budget: transformed.budget,
       theme: transformed.theme || undefined,
       template_id: transformed.template_id,
+      owner_email: transformed.owner_email?.trim() || undefined,
       cover_photo: coverPhoto || undefined,
-    });
+    };
+
+    if (duplicateMode) {
+      onSubmit(payload, { includeGuests, includeTasks, includeBudget, includeCollaborators });
+    } else {
+      onSubmit({ ...payload, date: payload.date!, time: payload.time! });
+    }
   };
 
   // Réinitialiser le template si le type change
@@ -355,19 +395,6 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
         />
       </div>
 
-      {/* Budget */}
-      <div className="space-y-2">
-        <Label htmlFor="budget">Budget (FCFA)</Label>
-        <Input
-          id="budget"
-          type="number"
-          min="0"
-          placeholder="Ex: 500000"
-          onKeyDown={blockInvalidNumberKeys}
-          {...register('budget')}
-        />
-      </div>
-
       {/* Theme */}
       <div className="space-y-2">
         <Label htmlFor="theme">Theme</Label>
@@ -377,6 +404,25 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
           {...register('theme')}
         />
       </div>
+
+      {/* Admin: créer l'événement pour un autre utilisateur */}
+      {isAdmin && !event && (
+        <div className="space-y-2 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30 p-4">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <UserPlus className="h-4 w-4" />
+            Creer pour un autre utilisateur (optionnel)
+          </div>
+          <Input
+            id="owner_email"
+            type="email"
+            placeholder="Email de l'utilisateur concerne"
+            {...register('owner_email')}
+          />
+          <p className="text-xs text-muted-foreground">
+            L'utilisateur recevra un email l'informant que cet evenement a ete cree pour lui.
+          </p>
+        </div>
+      )}
 
       {/* Photo de couverture */}
       <div className="space-y-2">
@@ -428,6 +474,58 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
         isUploading={false}
       />
 
+      {/* Options de duplication */}
+      {duplicateMode && (
+        <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+          <p className="text-sm font-medium">Options de duplication</p>
+          <p className="text-xs text-muted-foreground">
+            Choisissez ce que vous souhaitez copier vers le nouvel événement.
+          </p>
+          <div className="flex flex-wrap gap-6">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={includeGuests}
+                onCheckedChange={(c) => setIncludeGuests(!!c)}
+                disabled={isSubmitting}
+              />
+              <span className="text-sm flex items-center gap-1.5">
+                 Inclure les invités {sourceGuestsCount > 0 && `(${sourceGuestsCount})`}
+              </span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={includeTasks}
+                onCheckedChange={(c) => setIncludeTasks(!!c)}
+                disabled={isSubmitting}
+              />
+              <span className="text-sm flex items-center gap-1.5">
+                 Inclure les tâches {sourceTasksCount > 0 && `(${sourceTasksCount})`}
+              </span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={includeBudget}
+                onCheckedChange={(c) => setIncludeBudget(!!c)}
+                disabled={isSubmitting}
+              />
+              <span className="text-sm flex items-center gap-1.5">
+                 Inclure les lignes de budget {sourceBudgetCount > 0 && `(${sourceBudgetCount})`}
+              </span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={includeCollaborators}
+                onCheckedChange={(c) => setIncludeCollaborators(!!c)}
+                disabled={isSubmitting}
+              />
+              <span className="text-sm flex items-center gap-1.5">
+                 Inclure les collaborateurs {sourceCollaboratorsCount > 0 && `(${sourceCollaboratorsCount})`}
+              </span>
+            </label>
+          </div>
+        </div>
+      )}
+
       {/* Submit */}
       <div className="flex justify-end gap-4">
         {onCancel && (
@@ -437,12 +535,16 @@ export function EventForm({ event, onSubmit, onCancel, isSubmitting = false }: E
         )}
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting
-            ? event
-              ? 'Modification...'
-              : 'Creation...'
-            : event
-              ? 'Modifier'
-              : "Creer l'evenement"}
+            ? duplicateMode
+              ? 'Duplication...'
+              : event
+                ? 'Modification...'
+                : 'Creation...'
+            : duplicateMode
+              ? 'Créer la copie'
+              : event
+                ? 'Modifier'
+                : "Creer l'evenement"}
         </Button>
       </div>
     </form>

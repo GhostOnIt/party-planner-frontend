@@ -43,7 +43,7 @@ export function CreateEventPage() {
               </Alert>
             ) : null}
 
-            <EventForm onSubmit={createEvent} isSubmitting={isPending} />
+            <EventForm onSubmit={(data, _duplicateOptions) => createEvent(data)} isSubmitting={isPending} />
           </CardContent>
         </Card>
       </div>

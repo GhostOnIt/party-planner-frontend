@@ -36,7 +36,7 @@ interface InvitationDetailsSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   eventId: number | string;
-  guestId: number | null;
+  guestId: number | string | null;
   onEdit?: (guest: Guest) => void;
   onDelete?: (guest: Guest) => void;
 }
@@ -366,7 +366,7 @@ export function InvitationDetailsSheet({
                 className="flex-1 gap-2 border-[#e5e7eb] hover:bg-[#f3f4f6]"
                 onClick={() => {
                   onOpenChange(false);
-                  onEdit?.(guest as Guest);
+                  onEdit?.(guest as unknown as Guest);
                 }}
               >
                 <Pencil className="h-4 w-4" />
@@ -377,7 +377,7 @@ export function InvitationDetailsSheet({
                 className="flex-1 gap-2 text-[#EF4444] hover:text-[#DC2626] hover:bg-red-50 border-[#e5e7eb] hover:border-red-200"
                 onClick={() => {
                   onOpenChange(false);
-                  onDelete?.(guest as Guest);
+                  onDelete?.(guest as unknown as Guest);
                 }}
               >
                 <Trash2 className="h-4 w-4" />

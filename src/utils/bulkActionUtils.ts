@@ -11,7 +11,7 @@ export type BulkActionType =
 export interface EligibilityResult {
   eligible: Guest[];
   ineligible: Guest[];
-  reasons: Record<number, string>;
+  reasons: Record<string, string>;
 }
 
 /**
@@ -37,7 +37,7 @@ export function getEligibilityForAction(
 ): EligibilityResult {
   const eligible: Guest[] = [];
   const ineligible: Guest[] = [];
-  const reasons: Record<number, string> = {};
+  const reasons: Record<string, string> = {};
 
   guests.forEach((guest) => {
     let canPerform = true;

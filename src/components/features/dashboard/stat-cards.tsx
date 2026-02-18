@@ -63,7 +63,7 @@ export function StatCards({ filter = "7days", eventTypeFilter = "all", customRan
     },
     {
       icon: Users,
-      label: "Invités",
+      label: "Invitations",
       value: data.guests.total,
       data: data.guests,
       bgColor: "bg-[#FFF7ED]",

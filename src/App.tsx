@@ -19,12 +19,15 @@ const RegisterPage = lazy(() => import('@/pages/auth').then(m => ({ default: m.R
 const ForgotPasswordPage = lazy(() => import('@/pages/auth').then(m => ({ default: m.ForgotPasswordPage })));
 const ResetPasswordPage = lazy(() => import('@/pages/auth').then(m => ({ default: m.ResetPasswordPage })));
 const OtpPage = lazy(() => import('@/pages/auth').then(m => ({ default: m.OtpPage })));
+const VerifyOtpPage = lazy(() => import('@/pages/auth').then(m => ({ default: m.VerifyOtpPage })));
 const SendOtpPage = lazy(() => import('@/pages/auth').then(m => ({ default: m.SendOtpPage })));
 const ResetPasswordOtpPage = lazy(() => import('@/pages/auth').then(m => ({ default: m.ResetPasswordOtpPage })));
 
 // Main pages
 const DashboardPage = lazy(() => import('@/pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
 const InvitationsPage = lazy(() => import('@/pages/InvitationsPage').then(m => ({ default: m.InvitationsPage })));
+const InviteByTokenPage = lazy(() => import('@/pages/InviteByTokenPage').then(m => ({ default: m.InviteByTokenPage })));
+const EventCreatedForYouPage = lazy(() => import('@/pages/EventCreatedForYouPage'));
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
 const SubscriptionsPage = lazy(() => import('@/pages/SubscriptionsPage').then(m => ({ default: m.SubscriptionsPage })));
 const PlansPage = lazy(() => import('@/pages/PlansPage').then(m => ({ default: m.PlansPage })));
@@ -35,7 +38,9 @@ const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then(m => ({ defa
 
 // Event pages
 const EventsListPage = lazy(() => import('@/pages/events').then(m => ({ default: m.EventsListPage })));
+const GuestDirectoryPage = lazy(() => import('@/pages/GuestDirectory'));
 const CreateEventPage = lazy(() => import('@/pages/events').then(m => ({ default: m.CreateEventPage })));
+const DuplicateEventPage = lazy(() => import('@/pages/events').then(m => ({ default: m.DuplicateEventPage })));
 const EventDetailsPage = lazy(() => import('@/pages/events').then(m => ({ default: m.EventDetailsPage })));
 const EditEventPage = lazy(() => import('@/pages/events').then(m => ({ default: m.EditEventPage })));
 
@@ -100,6 +105,7 @@ function App() {
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/otp" element={<OtpPage />} />
+                <Route path="/verify-otp" element={<VerifyOtpPage />} />
                 <Route path="/send-otp" element={<SendOtpPage />} />
                 <Route path="/reset-password-otp" element={<ResetPasswordOtpPage />} />
               </Route>
@@ -116,6 +122,7 @@ function App() {
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/events" element={<EventsListPage />} />
                 <Route path="/events/create" element={<CreateEventPage />} />
+                <Route path="/events/duplicate/:id" element={<DuplicateEventPage />} />
                 <Route path="/events/:id" element={<EventDetailsPage />} />
                 <Route path="/events/:id/edit" element={<EditEventPage />} />
                 <Route path="/invitations" element={<InvitationsPage />} />
@@ -132,6 +139,7 @@ function App() {
                 <Route path="/admin" element={<AdminDashboardPage />} />
                 <Route path="/admin/users" element={<AdminUsersPage />} />
                 <Route path="/admin/events" element={<AdminEventsPage />} />
+                <Route path="/admin/guests" element={<GuestDirectoryPage />} />
                 <Route path="/admin/events/:id" element={<EventDetailsPage />} />
                 <Route path="/admin/payments" element={<AdminPaymentsPage />} />
                 <Route path="/admin/subscriptions" element={<AdminSubscriptionsPage />} />
@@ -144,6 +152,11 @@ function App() {
 
             {/* Legal pages (public, no auth required) */}
             <Route path="/legal/:slug" element={<LegalPage />} />
+
+            {/* Collaboration invitation by token (redirects to login if not auth or wrong account) */}
+            <Route path="/invite/:token" element={<InviteByTokenPage />} />
+            {/* Event created for you by admin (non-registered email): claim then redirect to event */}
+            <Route path="/event-created-for-you/:token" element={<EventCreatedForYouPage />} />
 
             {/* Public invitation page (no auth required) */}
             <Route path="/invitation/:token" element={<InvitationResponsePage />} />

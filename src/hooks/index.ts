@@ -30,3 +30,5 @@ export {
   isUnlimited,
 } from './useAdminPlans';
 export type { Plan, PlanLimits, PlanFeatures, CreatePlanData, UpdatePlanData, PlanFilters } from './useAdminPlans';
+export { usePageTracking } from './usePageTracking';
+export { useUITracking } from './useUITracking';

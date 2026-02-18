@@ -34,8 +34,8 @@ import type { Guest } from '@/types';
 interface GuestListProps {
   guests: Guest[];
   isLoading?: boolean;
-  selectedIds: number[];
-  onSelectChange: (ids: number[]) => void;
+  selectedIds: string[];
+  onSelectChange: (ids: string[]) => void;
   onEdit: (guest: Guest) => void;
   onDelete: (guest: Guest) => void;
   onSendInvitation: (guest: Guest) => void;
@@ -73,7 +73,7 @@ export function GuestList({
     }
   };
 
-  const handleSelectOne = (guestId: number) => {
+  const handleSelectOne = (guestId: string) => {
     if (selectedIds.includes(guestId)) {
       onSelectChange(selectedIds.filter((id) => id !== guestId));
     } else {

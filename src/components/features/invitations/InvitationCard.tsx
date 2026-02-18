@@ -11,8 +11,8 @@ import { resolveUrl } from '@/lib/utils';
 
 interface InvitationCardProps {
   invitation: Invitation;
-  onAccept: (id: number) => void;
-  onReject: (id: number) => void;
+  onAccept: (id: string) => void;
+  onReject: (id: string) => void;
   onViewDetails?: (invitation: Invitation) => void;
   isAccepting?: boolean;
   isRejecting?: boolean;

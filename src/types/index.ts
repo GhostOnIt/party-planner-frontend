@@ -1,3 +1,6 @@
+/** ID type for entities (API uses UUID strings) */
+export type EntityId = string | number;
+
 // Enums
 export type EventType = 'mariage' | 'anniversaire' | 'baby_shower' | 'soiree' | 'brunch' | 'autre';
 export type EventStatus = 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
@@ -21,7 +24,7 @@ export type UserRole = 'admin' | 'user';
 
 // User
 export interface User {
-  id: number;
+  id: string;
   name: string;
   email: string;
   phone?: string;
@@ -44,7 +47,7 @@ export interface NotificationPreferences {
 
 // Event
 export interface Event {
-  id: number;
+  id: string;
   title: string;
   type: EventType;
   status: EventStatus;
@@ -55,10 +58,10 @@ export interface Event {
   expected_guests: number | null;
   budget: number | null;
   theme: string | null;
-  user_id: number;
+  user_id: string;
   user?: User;
   featured_photo?: {
-    id: number;
+    id: string;
     url: string;
     thumbnail_url: string;
   } | null;
@@ -66,6 +69,10 @@ export interface Event {
   updated_at: string;
   /** Check-in autorisé à partir de 24 h avant le début (calculé par le backend) */
   can_check_in?: boolean;
+  /** Événement créé par admin pour cet utilisateur, à récupérer */
+  pending_claim?: boolean;
+  claim_token?: string;
+  requires_claim?: boolean;
   // Statistics from backend
   guests_count?: number;
   guests_confirmed_count?: number;
@@ -73,13 +80,17 @@ export interface Event {
   guests_pending_count?: number;
   tasks_count?: number;
   tasks_completed_count?: number;
+  budget_items_count?: number;
+  collaborators_count?: number;
   budget_spent?: string | number;
+  /** Somme des coûts estimés des lignes de budget */
+  budget_items_estimated?: string | number;
 }
 
 // Guest
 export interface Guest {
-  id: number;
-  event_id: number;
+  id: string;
+  event_id: string;
   name: string;
   email: string | null;
   phone: string | null;
@@ -97,24 +108,29 @@ export interface Guest {
 
 // Task
 export interface Task {
-  id: number;
-  event_id: number;
+  id: string;
+  event_id: string;
   title: string;
   description: string | null;
   status: TaskStatus;
   priority: TaskPriority;
   due_date: string | null;
-  assigned_to: number | null;
+  assigned_to_user_id?: string | null;
+  assigned_to: string | null;
   assigned_user?: User;
   completed_at: string | null;
+  estimated_cost: number | null;
+  budget_category: BudgetCategory | null;
+  budget_item?: BudgetItem | null;
   created_at: string;
 }
 
 // Budget Item
 export interface BudgetItem {
-  id: number;
+    id: number;
   event_id: number;
-  category: BudgetCategory;
+  task_id: number | null;
+   category: BudgetCategory;
   name: string;
   estimated_cost: number;
   actual_cost: number | null;
@@ -127,8 +143,8 @@ export interface BudgetItem {
 
 // Photo
 export interface Photo {
-  id: number;
-  event_id: number;
+  id: string;
+  event_id: string;
   filename: string;
   original_name: string;
   url: string;
@@ -138,22 +154,22 @@ export interface Photo {
   size: number;
   mime_type: string;
   is_featured: boolean;
-  uploaded_by: number;
+  uploaded_by: string;
   uploader?: User;
   created_at: string;
 }
 
 // Collaborator
 export interface Collaborator {
-  id: number;
-  event_id: number;
-  user_id: number;
+  id: string;
+  event_id: string;
+  user_id: string;
   user: User;
   role?: CollaboratorRole; // Legacy single role (for backward compatibility)
   roles?: CollaboratorRole[]; // New multiple roles
-  custom_role_id?: number; // Legacy single custom role (backward compatibility)
+  custom_role_id?: string; // Legacy single custom role (backward compatibility)
   custom_role?: CustomRole; // Legacy single custom role payload (backward compatibility)
-  custom_role_ids?: number[]; // New multi custom roles
+  custom_role_ids?: string[]; // New multi custom roles
   custom_roles?: CustomRole[]; // New multi custom roles payload
   accepted_at: string | null;
   created_at: string;
@@ -161,7 +177,7 @@ export interface Collaborator {
 
 // Permission
 export interface Permission {
-  id: number;
+  id: string;
   name: string;
   display_name: string;
   description: string | null;
@@ -173,7 +189,7 @@ export interface Permission {
 
 // Custom Role
 export interface CustomRole {
-  id: number;
+  id: string;
   name: string;
   description: string | null;
   icon: string;
@@ -195,7 +211,7 @@ export interface PermissionModule {
 export interface CustomRoleFormData {
   name: string;
   description?: string;
-  permissions: number[]; // Array of permission IDs
+  permissions: string[]; // Array of permission IDs (UUIDs)
 }
 
 // Notification
@@ -207,14 +223,14 @@ export interface Notification {
   data: Record<string, unknown>;
   read_at: string | null;
   created_at: string;
-  event_id?: number;
+  event_id?: string;
 }
 
 // Subscription
 export interface Subscription {
-  id: number;
-  user_id: number;
-  event_id: number;
+  id: string;
+  user_id: string;
+  event_id: string;
   plan_type: PlanType;
   base_price: string;
   guest_count: number;
@@ -242,8 +258,8 @@ export interface Subscription {
 
 // Payment
 export interface Payment {
-  id: number;
-  subscription_id: number;
+  id: string;
+  subscription_id: string;
   amount: number;
   currency: string;
   payment_method: PaymentMethod | null;
@@ -262,7 +278,7 @@ export interface Payment {
 
 // Event Template (Admin)
 export interface EventTemplate {
-  id: number;
+  id: string;
   event_type: EventType;
   name: string;
   description: string | null;
@@ -313,6 +329,16 @@ export interface AuthResponse {
   token: string;
 }
 
+export interface OtpRequiredResponse {
+  message: string;
+  requires_otp: true;
+  identifier: string;
+  otp_id: string;
+  channel: string;
+  expires_in: number;
+  remember_me?: boolean;
+}
+
 // OTP Types
 export type OtpChannel = 'email' | 'sms' | 'whatsapp';
 export type OtpType = 'registration' | 'login' | 'password_reset';
@@ -327,15 +353,16 @@ export interface OtpVerifyRequest {
   identifier: string;
   code: string;
   type: OtpType;
+  remember_me?: boolean;
 }
 
 export interface OtpResendRequest {
-  otp_id: number;
+  otp_id: string | number;
 }
 
 export interface OtpSendResponse {
   message: string;
-  otp_id: number;
+  otp_id: string;
   expires_in: number;
 }
 
@@ -373,6 +400,7 @@ export interface ChartData {
 export interface LoginFormData {
   email: string;
   password: string;
+  remember?: boolean;
 }
 
 export interface RegisterFormData {
@@ -390,8 +418,10 @@ export interface CreateEventFormData {
   location: string;
   description?: string;
   expected_guests?: number;
-  budget?: number;
   theme?: string;
+  status?: EventStatus;
+  /** When current user is admin: create event for this user (email only). */
+  owner_email?: string;
 }
 
 export interface CreateGuestFormData {
@@ -409,7 +439,9 @@ export interface CreateTaskFormData {
   description?: string;
   priority: TaskPriority;
   due_date?: string;
-  assigned_to_user_id?: number;
+  assigned_to_user_id?: string | null;
+  estimated_cost?: number | null;
+  budget_category?: BudgetCategory | null;
 }
 
 export interface CreateBudgetItemFormData {
@@ -424,13 +456,13 @@ export interface CreateBudgetItemFormData {
 export interface InviteCollaboratorFormData {
   email: string;
   roles: string[];
-  custom_role_ids?: number[];
+  custom_role_ids?: string[];
   // Legacy fallback (older backend)
-  custom_role_id?: number | null;
+  custom_role_id?: string | null;
 }
 
 export interface PaymentFormData {
-  event_id: number;
+  event_id: string;
   plan: PlanType;
   payment_method: PaymentMethod;
   phone_number: string;
@@ -464,7 +496,7 @@ export interface GuestFilters {
 export interface TaskFilters {
   status?: TaskStatus;
   priority?: TaskPriority;
-  assigned_to?: number;
+  assigned_to?: string;
   search?: string;
 }
 
@@ -506,12 +538,12 @@ export interface BudgetStats {
 export type InvitationStatus = 'pending' | 'accepted' | 'rejected';
 
 export interface Invitation {
-  id: number;
-  event_id: number;
+  id: string;
+  event_id: string;
   event: Event;
-  user_id: number;
+  user_id: string;
   user?: User;
-  inviter_id: number;
+  inviter_id: string;
   inviter: User;
   role?: CollaboratorRole; // Legacy single role
   roles?: CollaboratorRole[]; // New multiple roles
@@ -588,7 +620,7 @@ export interface AdminUserFilters {
 export interface AdminEventFilters {
   type?: EventType;
   status?: EventStatus;
-  user_id?: number;
+  user_id?: string;
   search?: string;
   page?: number;
   per_page?: number;

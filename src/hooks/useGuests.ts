@@ -122,7 +122,7 @@ export function useUpdateGuest(eventId: number | string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ guestId, data }: { guestId: number; data: Partial<CreateGuestFormData> }) => {
+    mutationFn: async ({ guestId, data }: { guestId: number | string; data: Partial<CreateGuestFormData> }) => {
       const response = await api.put<Guest>(`/events/${eventId}/guests/${guestId}`, data);
       return response.data;
     },
@@ -137,7 +137,7 @@ export function useDeleteGuest(eventId: number | string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (guestId: number) => {
+    mutationFn: async (guestId: number | string) => {
       await api.delete(`/events/${eventId}/guests/${guestId}`);
       return guestId;
     },
@@ -153,7 +153,7 @@ export function useSendInvitation(eventId: number | string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (guestId: number) => {
+    mutationFn: async (guestId: number | string) => {
       const response = await api.post(`/events/${eventId}/guests/${guestId}/send-invitation`);
       return response.data;
     },
@@ -168,7 +168,7 @@ export function useSendReminder(eventId: number | string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (guestId: number) => {
+    mutationFn: async (guestId: number | string) => {
       const response = await api.post(`/events/${eventId}/guests/${guestId}/send-reminder`);
       return response.data;
     },
@@ -183,7 +183,7 @@ export function useCheckInGuest(eventId: number | string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (guestId: number) => {
+    mutationFn: async (guestId: number | string) => {
       const response = await api.post(`/events/${eventId}/guests/${guestId}/check-in`);
       return response.data;
     },
@@ -198,7 +198,7 @@ export function useUndoCheckIn(eventId: number | string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (guestId: number) => {
+    mutationFn: async (guestId: number | string) => {
       const response = await api.post(`/events/${eventId}/guests/${guestId}/undo-check-in`);
       return response.data;
     },
@@ -211,7 +211,7 @@ export function useUndoCheckIn(eventId: number | string) {
 // Get invitation details
 export interface InvitationDetailsResponse {
   guest: {
-    id: number;
+    id: number | string;
     name: string;
     email: string | null;
     phone: string | null;

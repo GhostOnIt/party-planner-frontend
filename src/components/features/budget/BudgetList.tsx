@@ -25,8 +25,8 @@ import { cn } from '@/lib/utils';
 interface BudgetListProps {
   items: BudgetItem[];
   isLoading?: boolean;
-  selectedIds: number[];
-  onSelectChange: (ids: number[]) => void;
+  selectedIds: string[];
+  onSelectChange: (ids: string[]) => void;
   onEdit: (item: BudgetItem) => void;
   onDelete: (item: BudgetItem) => void;
   onMarkPaid: (item: BudgetItem) => void;
@@ -68,11 +68,11 @@ export function BudgetList({
     if (allSelected) {
       onSelectChange([]);
     } else {
-      onSelectChange(items.map((item) => item.id));
+      onSelectChange(items.map((item) => String(item.id)));
     }
   };
 
-  const handleSelectOne = (id: number) => {
+  const handleSelectOne = (id: string) => {
     if (selectedIds.includes(id)) {
       onSelectChange(selectedIds.filter((i) => i !== id));
     } else {
@@ -154,12 +154,12 @@ export function BudgetList({
             return (
               <TableRow
                 key={item.id}
-                className={cn(selectedIds.includes(item.id) && 'bg-muted/50')}
+                className={cn(selectedIds.includes(String(item.id)) && 'bg-muted/50')}
               >
                 <TableCell>
                   <Checkbox
-                    checked={selectedIds.includes(item.id)}
-                    onCheckedChange={() => handleSelectOne(item.id)}
+                    checked={selectedIds.includes(String(item.id))}
+                    onCheckedChange={() => handleSelectOne(String(item.id))}
                     aria-label={`Selectionner ${item.name}`}
                   />
                 </TableCell>

@@ -5,11 +5,11 @@ import type { Invitation } from '@/types';
 interface InvitationListProps {
   invitations: Invitation[];
   isLoading?: boolean;
-  onAccept: (id: number) => void;
-  onReject: (id: number) => void;
+  onAccept: (id: string) => void;
+  onReject: (id: string) => void;
   onViewDetails?: (invitation: Invitation) => void;
-  acceptingId?: number | null;
-  rejectingId?: number | null;
+  acceptingId?: string | null;
+  rejectingId?: string | null;
 }
 
 export function InvitationList({

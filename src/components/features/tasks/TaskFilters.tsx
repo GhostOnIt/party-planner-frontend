@@ -56,7 +56,7 @@ export function TaskFilters({ filters, onFiltersChange, collaborators = [] }: Ta
   const handleAssigneeChange = (value: string) => {
     onFiltersChange({
       ...filters,
-      assigned_to: value === 'all' ? undefined : Number(value),
+      assigned_to: value === 'all' ? undefined : value,
     });
   };
 

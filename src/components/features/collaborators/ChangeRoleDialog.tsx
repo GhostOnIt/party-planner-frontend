@@ -19,10 +19,10 @@ interface ChangeRoleDialogProps {
   collaborator: Collaborator | null;
   eventId: string;
   onConfirm: (
-    collaboratorId: number,
-    userId: number,
+    collaboratorId: string,
+    userId: string,
     roles: CollaboratorRole[],
-    customRoleIds: number[]
+    customRoleIds: string[]
   ) => void;
   isSubmitting?: boolean;
   availableRoles?: CollaboratorRole[];
@@ -53,7 +53,7 @@ export function ChangeRoleDialog({
   );
 
   const [selectedRoles, setSelectedRoles] = useState<CollaboratorRole[]>([]);
-  const [selectedCustomRoleIds, setSelectedCustomRoleIds] = useState<number[]>([]);
+  const [selectedCustomRoleIds, setSelectedCustomRoleIds] = useState<string[]>([]);
 
   useEffect(() => {
     // Only update when dialog opens or collaborator changes
@@ -73,11 +73,10 @@ export function ChangeRoleDialog({
 
       // Set current custom role if any
       if (Array.isArray(collaborator.custom_role_ids)) {
-        setSelectedCustomRoleIds(collaborator.custom_role_ids);
+        setSelectedCustomRoleIds(collaborator.custom_role_ids.map(String));
       } else if (collaborator.custom_roles && collaborator.custom_roles.length > 0) {
         setSelectedCustomRoleIds(collaborator.custom_roles.map((r) => r.id));
       } else if (collaborator.custom_role_id) {
-        // legacy fallback
         setSelectedCustomRoleIds([collaborator.custom_role_id]);
       } else {
         setSelectedCustomRoleIds([]);
@@ -95,7 +94,7 @@ export function ChangeRoleDialog({
     }
   }, [open, collaborator, filteredRoles]);
 
-  const handleCustomRoleToggle = (roleId: number, checked: boolean) => {
+  const handleCustomRoleToggle = (roleId: string, checked: boolean) => {
     setSelectedCustomRoleIds((prev) => {
       if (checked) return [...prev, roleId];
       return prev.filter((id) => id !== roleId);
@@ -175,10 +174,11 @@ export function ChangeRoleDialog({
                       <input
                         type="checkbox"
                         id={`change-custom-role-${role.id}`}
-                        checked={selectedCustomRoleIds.includes(role.id)}
+                        checked={selectedCustomRoleIds.includes(String(role.id))}
                         onChange={() => {
-                          const nextChecked = !selectedCustomRoleIds.includes(role.id);
-                          handleCustomRoleToggle(role.id, nextChecked);
+                          const rid = String(role.id);
+                          const nextChecked = !selectedCustomRoleIds.includes(rid);
+                          handleCustomRoleToggle(rid, nextChecked);
                         }}
                         className="rounded border-gray-300"
                       />
