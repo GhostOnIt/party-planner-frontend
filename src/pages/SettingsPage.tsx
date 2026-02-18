@@ -46,7 +46,7 @@ import {
   useUploadAvatar,
   useDeleteAvatar,
 } from '@/hooks/useProfile';
-import { useNotificationSettings, useUpdateNotificationSettings } from '@/hooks/useSettings';
+import { useUpdateNotificationSettings } from '@/hooks/useSettings';
 import { NotificationPreferences } from '@/types';
 import { resolveUrl } from '@/lib/utils';
 import { EventTypesManager } from '@/components/settings/EventTypesManager';

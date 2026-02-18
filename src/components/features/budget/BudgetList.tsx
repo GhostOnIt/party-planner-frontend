@@ -25,8 +25,8 @@ import { cn } from '@/lib/utils';
 interface BudgetListProps {
   items: BudgetItem[];
   isLoading?: boolean;
-  selectedIds: number[];
-  onSelectChange: (ids: number[]) => void;
+  selectedIds: string[];
+  onSelectChange: (ids: string[]) => void;
   onEdit: (item: BudgetItem) => void;
   onDelete: (item: BudgetItem) => void;
   onMarkPaid: (item: BudgetItem) => void;
@@ -72,7 +72,7 @@ export function BudgetList({
     }
   };
 
-  const handleSelectOne = (id: number) => {
+  const handleSelectOne = (id: string) => {
     if (selectedIds.includes(id)) {
       onSelectChange(selectedIds.filter((i) => i !== id));
     } else {

@@ -49,6 +49,7 @@
     "adminDashboard": "Tableau de bord",
     "adminUsers": "Utilisateurs",
     "adminEvents": "Evenements",
+    "guest_directory": "Registre des invités",
     "adminPayments": "Paiements",
     "adminSubscriptions": "Abonnements",
     "adminPlans": "Plans",

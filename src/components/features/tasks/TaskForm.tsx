@@ -28,10 +28,10 @@ const taskFormSchema = z.object({
   description: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high']),
   due_date: z.string().optional(),
-  assigned_to_user_id: z.number().optional(),
-  estimated_cost: z.number().min(0, 'Le coût doit être positif').optional().nullable(),
+   estimated_cost: z.number().min(0, 'Le coût doit être positif').optional().nullable(),
   budget_category: z.enum(['location', 'catering', 'decoration', 'entertainment', 'photography', 'transportation', 'other']).optional().nullable(),
-});
+   assigned_to_user_id: z.union([z.string(), z.number()]).optional(),
+ });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
 
@@ -57,9 +57,9 @@ interface TaskFormProps {
   task?: Task;
   onSubmit: (data: CreateTaskFormData) => void;
   isSubmitting?: boolean;
-  collaborators?: { id: number; name: string }[];
+  collaborators?: { id: string | number; name: string }[];
   canAssign?: boolean;
-  currentUserId?: number;
+  currentUserId?: string | number;
 }
 
 export function TaskForm({
@@ -124,14 +124,16 @@ export function TaskForm({
   }, [open, task, reset]);
 
   const handleFormSubmit = (data: TaskFormValues) => {
+    const assignedTo = data.assigned_to_user_id;
+    const isUnassigned = assignedTo == null || assignedTo === '' || assignedTo === 0;
     onSubmit({
       title: data.title,
       description: data.description || undefined,
       priority: data.priority,
       due_date: data.due_date || undefined,
-      assigned_to_user_id: data.assigned_to_user_id,
-      estimated_cost: data.estimated_cost || undefined,
-      budget_category: data.budget_category || undefined,
+      assigned_to_user_id: isUnassigned ? undefined : String(assignedTo),
+      estimated_cost: data.estimated_cost ?? undefined,
+      budget_category: data.budget_category ?? undefined,
     });
   };
 

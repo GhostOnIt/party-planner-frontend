@@ -38,6 +38,7 @@ const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then(m => ({ defa
 
 // Event pages
 const EventsListPage = lazy(() => import('@/pages/events').then(m => ({ default: m.EventsListPage })));
+const GuestDirectoryPage = lazy(() => import('@/pages/GuestDirectory'));
 const CreateEventPage = lazy(() => import('@/pages/events').then(m => ({ default: m.CreateEventPage })));
 const DuplicateEventPage = lazy(() => import('@/pages/events').then(m => ({ default: m.DuplicateEventPage })));
 const EventDetailsPage = lazy(() => import('@/pages/events').then(m => ({ default: m.EventDetailsPage })));
@@ -138,6 +139,7 @@ function App() {
                 <Route path="/admin" element={<AdminDashboardPage />} />
                 <Route path="/admin/users" element={<AdminUsersPage />} />
                 <Route path="/admin/events" element={<AdminEventsPage />} />
+                <Route path="/admin/guests" element={<GuestDirectoryPage />} />
                 <Route path="/admin/events/:id" element={<EventDetailsPage />} />
                 <Route path="/admin/payments" element={<AdminPaymentsPage />} />
                 <Route path="/admin/subscriptions" element={<AdminSubscriptionsPage />} />

@@ -187,7 +187,7 @@ export function useDeletePhotos(eventId: string) {
 // Download a photo
 export function useDownloadPhoto(eventId: string) {
   return useMutation({
-    mutationFn: async ({ photoId, filename }: { photoId: number; filename: string }) => {
+    mutationFn: async ({ photoId, filename }: { photoId: string; filename: string }) => {
       try {
         const response = await api.get(
           `/events/${eventId}/photos/${photoId}/download`,
@@ -257,7 +257,7 @@ export function useSetFeaturedPhoto(eventId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (photoId: number) => {
+    mutationFn: async (photoId: string) => {
       const response = await api.post<Photo>(
         `/events/${eventId}/photos/${photoId}/set-featured`
       );

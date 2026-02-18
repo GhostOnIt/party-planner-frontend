@@ -67,27 +67,20 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
     (collaboratorsData?.data as Collaborator[] | undefined)?.map((c) => ({ id: c.user_id, name: c.user.name })) || [];
 
   // Build assignable users list (current user + owner + collaborators)
-  // Remove duplicates by using a Map
-  const assignableUsersMap = new Map<number, { id: number; name: string }>();
-  
-  // Add owner if available
+  const assignableUsersMap = new Map<string, { id: string | number; name: string }>();
   if (eventData?.user) {
-    assignableUsersMap.set(eventData.user_id, { id: eventData.user_id, name: eventData.user.name });
+    const uid = String(eventData.user_id);
+    assignableUsersMap.set(uid, { id: eventData.user_id, name: eventData.user.name });
   }
-  
-  // Add collaborators
   collaborators.forEach((c) => {
-    assignableUsersMap.set(c.id, c);
+    const key = String(c.id);
+    assignableUsersMap.set(key, { id: c.id, name: c.name });
   });
-  
-  // Convert to array and sort: current user first, then others alphabetically
   const assignableUsers = Array.from(assignableUsersMap.values()).sort((a, b) => {
-    // Put current user first
     if (currentUser) {
-      if (a.id === currentUser.id) return -1;
-      if (b.id === currentUser.id) return 1;
+      if (String(a.id) === String(currentUser.id)) return -1;
+      if (String(b.id) === String(currentUser.id)) return 1;
     }
-    // Then sort alphabetically by name
     return a.name.localeCompare(b.name);
   });
 
@@ -165,7 +158,7 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
     });
   };
 
-  const handleStatusChange = (taskId: number, status: TaskStatus) => {
+  const handleStatusChange = (taskId: string, status: TaskStatus) => {
     updateTask(
       { taskId, data: { status } },
       {
@@ -260,7 +253,7 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
             onDelete={setTaskToDelete}
             onComplete={handleComplete}
             onReopen={handleReopen}
-            onStatusChange={(task, status) => handleStatusChange(task.id, status)}
+            onStatusChange={(task, status) => handleStatusChange(String(task.id), status)}
           />
         )}
       </PermissionGuard>

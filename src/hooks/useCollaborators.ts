@@ -89,13 +89,12 @@ export function useUpdateCollaborator(eventId: string) {
       roles,
       custom_role_ids,
     }: {
-      collaboratorId: number;
-      userId?: number;
+      collaboratorId: string;
+      userId?: string;
       roles: CollaboratorRole[];
-      custom_role_ids?: number[];
+      custom_role_ids?: string[];
     }) => {
-      // Use userId for the route (backend expects user id)
-      const userIdParam = userId || collaboratorId;
+      const userIdParam = userId ?? collaboratorId;
       const response = await api.put<Collaborator>(
         `/events/${eventId}/collaborators/${userIdParam}`,
         { roles, custom_role_ids }
@@ -113,8 +112,7 @@ export function useRemoveCollaborator(eventId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userId: number) => {
-      // Backend expects user id, not collaborator id
+    mutationFn: async (userId: string) => {
       await api.delete(`/events/${eventId}/collaborators/${userId}`);
       return userId;
     },
@@ -129,8 +127,7 @@ export function useResendInvitation(eventId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userId: number) => {
-      // Backend expects user id and route is /resend (not /resend-invitation)
+    mutationFn: async (userId: string) => {
       const response = await api.post(
         `/events/${eventId}/collaborators/${userId}/resend`
       );

@@ -17,7 +17,7 @@ import type { Payment, PaymentStatus, PaymentMethod } from '@/types';
 interface PaymentHistoryProps {
   payments: Payment[];
   isLoading?: boolean;
-  onRetry?: (paymentId: number) => void;
+  onRetry?: (paymentId: string) => void;
 }
 
 const statusConfig: Record<

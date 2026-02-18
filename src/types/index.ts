@@ -1,3 +1,6 @@
+/** ID type for entities (API uses UUID strings) */
+export type EntityId = string | number;
+
 // Enums
 export type EventType = 'mariage' | 'anniversaire' | 'baby_shower' | 'soiree' | 'brunch' | 'autre';
 export type EventStatus = 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
@@ -349,10 +352,11 @@ export interface OtpVerifyRequest {
   identifier: string;
   code: string;
   type: OtpType;
+  remember_me?: boolean;
 }
 
 export interface OtpResendRequest {
-  otp_id: number;
+  otp_id: string | number;
 }
 
 export interface OtpSendResponse {
@@ -434,9 +438,9 @@ export interface CreateTaskFormData {
   description?: string;
   priority: TaskPriority;
   due_date?: string;
-  assigned_to_user_id?: number;
-  estimated_cost?: number;
-  budget_category?: BudgetCategory;
+  assigned_to_user_id?: string | null;
+  estimated_cost?: number | null;
+  budget_category?: BudgetCategory | null;
 }
 
 export interface CreateBudgetItemFormData {

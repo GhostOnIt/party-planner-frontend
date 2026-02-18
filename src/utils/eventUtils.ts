@@ -75,7 +75,7 @@ export function getProgressPercent(current: number, total: number): number {
  */
 export function transformEventToDisplayFormat(
   event: Event,
-  currentUserId?: number
+  currentUserId?: string | number
 ): DisplayEvent {
   const imageUrl =
     event.featured_photo?.thumbnail_url || event.featured_photo?.url;
@@ -120,7 +120,7 @@ export function transformEventToDisplayFormat(
       avatar: event.user?.avatar_url || undefined,
     },
     createdAt: formattedCreatedAt,
-    isCollaborator: currentUserId ? event.user_id !== currentUserId : false,
+    isCollaborator: currentUserId ? String(event.user_id) !== String(currentUserId) : false,
     pending_claim: event.pending_claim ?? false,
     claim_token: event.claim_token,
   };

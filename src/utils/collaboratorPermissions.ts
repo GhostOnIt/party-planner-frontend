@@ -218,11 +218,11 @@ export function getCollaboratorPermissions(
  */
 export function findCurrentUserCollaborator(
   collaborators: Collaborator[],
-  currentUserId: number | undefined
+  currentUserId: string | number | undefined
 ): Collaborator | null {
-  if (!currentUserId) return null;
+  if (currentUserId === undefined || currentUserId === null) return null;
 
-  return collaborators.find((c) => c.user_id === currentUserId) || null;
+  return collaborators.find((c) => String(c.user_id) === String(currentUserId)) || null;
 }
 
 /**
@@ -230,7 +230,7 @@ export function findCurrentUserCollaborator(
  */
 export function getCurrentUserPermissions(
   collaborators: Collaborator[],
-  currentUserId: number | undefined
+  currentUserId: string | number | undefined
 ): CollaboratorPermissions {
   const collaborator = findCurrentUserCollaborator(collaborators, currentUserId);
   return getCollaboratorPermissions(collaborator);
@@ -326,7 +326,7 @@ export function isCurrentUserOwner(
  */
 export function getAssignableRoles(
   collaborators: Collaborator[],
-  currentUserId: number | undefined
+  currentUserId: string | number | undefined
 ): CollaboratorRole[] {
   const permissions = getCurrentUserPermissions(collaborators, currentUserId);
 

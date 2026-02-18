@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useState, useEffect } from 'react';
-import { CalendarIcon, Image, X, Sparkles, ListTodo, Wallet, Palette, UserPlus, Users, CheckSquare, DollarSign } from 'lucide-react';
+import { CalendarIcon, Image, X, Sparkles, ListTodo, Wallet, Palette, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';

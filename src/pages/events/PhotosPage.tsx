@@ -135,7 +135,7 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
 
   const handleDeleteConfirm = () => {
     if (photoToDelete) {
-      deletePhoto(photoToDelete.id, {
+      deletePhoto(Number(photoToDelete.id), {
         onSuccess: () => {
           setPhotoToDelete(null);
           // Close lightbox if deleting current photo

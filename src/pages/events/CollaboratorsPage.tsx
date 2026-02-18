@@ -74,7 +74,7 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
   const customRoles = (rolesData?.roles || []).filter((r) => !r.is_system);
 
   // Get assignable roles for the current user
-  const assignableRoles = getAssignableRoles(collaborators as Collaborator[], user?.id);
+  const assignableRoles = getAssignableRoles(collaborators as Collaborator[], user?.id as string | undefined);
   const handleInvite = (data: InviteCollaboratorFormData) => {
     inviteCollaborator(data, {
       onSuccess: (response) => {
@@ -104,10 +104,10 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
   };
 
   const handleChangeRole = (
-    collaboratorId: number,
-    userId: number,
+    collaboratorId: string,
+    userId: string,
     roles: CollaboratorRole[],
-    customRoleIds: number[]
+    customRoleIds: string[]
   ) => {
     updateCollaborator(
       { collaboratorId, userId, roles, custom_role_ids: customRoleIds },

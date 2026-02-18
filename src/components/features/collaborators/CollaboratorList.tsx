@@ -5,7 +5,7 @@ import type { Collaborator } from '@/types';
 interface CollaboratorListProps {
   collaborators: Collaborator[];
   isLoading?: boolean;
-  currentUserId?: number;
+  currentUserId?: string | number;
   canManage?: boolean;
   onChangeRole?: (collaborator: Collaborator) => void;
   onRemove?: (collaborator: Collaborator) => void;
@@ -54,7 +54,7 @@ export function CollaboratorList({
           key={collaborator.id}
           collaborator={collaborator}
           isOwner={collaborator.role === 'owner'}
-          canManage={canManage && collaborator.user_id !== currentUserId}
+          canManage={canManage && String(collaborator.user_id) !== String(currentUserId)}
           onChangeRole={onChangeRole}
           onRemove={onRemove}
           onResendInvitation={onResendInvitation}

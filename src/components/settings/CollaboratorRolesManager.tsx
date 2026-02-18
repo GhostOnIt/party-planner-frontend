@@ -50,15 +50,15 @@ export function CollaboratorRolesManager() {
   const [roleToDelete, setRoleToDelete] = useState<SettingsRole | null>(null);
 
   const roles = rolesData?.roles || [];
-  const editingRoleId = editingRole && typeof editingRole.id === 'number' ? editingRole.id : 0;
-  const roleToDeleteId = roleToDelete && typeof roleToDelete.id === 'number' ? roleToDelete.id : 0;
+  const editingRoleId = editingRole ? String(editingRole.id) : '';
+  const roleToDeleteId = roleToDelete ? String(roleToDelete.id) : '';
   const updateMutation = useUpdateUserCustomRole(editingRoleId);
   const deleteMutation = useDeleteUserCustomRole(roleToDeleteId);
 
-  const permissionNameToId = new Map<string, number>();
+  const permissionNameToId = new Map<string, string>();
   (permissionsData?.permissions || []).forEach((module) => {
     module.permissions.forEach((p) => {
-      permissionNameToId.set(p.name, p.id);
+      permissionNameToId.set(p.name, String(p.id));
     });
   });
 
@@ -255,7 +255,7 @@ export function CollaboratorRolesManager() {
                 description: editingRole.description || '',
                 permissions: (editingRole.permissions || [])
                   .map((name) => permissionNameToId.get(name))
-                  .filter((id): id is number => typeof id === 'number'),
+                  .filter((id): id is string => typeof id === 'string'),
               }}
               permissions={permissionsData?.permissions || []}
               onSubmit={handleUpdate}

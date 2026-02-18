@@ -92,7 +92,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
   const { toast } = useToast();
 
   const [filters, setFilters] = useState<BudgetFiltersType>({ per_page: 10 });
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<BudgetItem | undefined>();
   const [itemToDelete, setItemToDelete] = useState<BudgetItem | null>(null);
@@ -168,7 +168,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
   };
 
   const handleMarkPaid = (item: BudgetItem) => {
-    markPaid(item.id, {
+    markPaid(Number(item.id), {
       onSuccess: () => {
         toast({
           title: 'Paiement enregistre',

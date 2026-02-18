@@ -55,6 +55,8 @@ const adminNavItems: NavItem[] = [
   { to: '/admin', icon: BarChart2, labelKey: 'nav.stats', end: true },
   { to: '/admin/users', icon: Users, labelKey: 'nav.adminUsers' },
   { to: '/admin/events', icon: Calendar, labelKey: 'nav.adminEvents' },
+    { to: '/admin/guests', icon: Users, labelKey: 'nav.guest_directory' },
+
   { to: '/admin/payments', icon: CreditCard, labelKey: 'nav.adminPayments' },
   { to: '/admin/subscriptions', icon: FileText, labelKey: 'nav.adminSubscriptions' },
   { to: '/admin/plans', icon: Layers, labelKey: 'nav.adminPlans' },

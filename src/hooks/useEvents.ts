@@ -47,8 +47,8 @@ export function useCreateEvent() {
   const subscribeMutation = useSubscribeToPlan();
 
   return useMutation({
-    mutationFn: async (data: CreateEventFormData & { cover_photo?: File }) => {
-      const { cover_photo, ...eventData } = data;
+    mutationFn: async (data: (CreateEventFormData & { cover_photo?: File }) | (Omit<CreateEventFormData, 'date' | 'time'> & { date?: string; time?: string; cover_photo?: File; template_id?: number | null })) => {
+      const { cover_photo, ...eventData } = data as CreateEventFormData & { cover_photo?: File };
 
       // Si une photo de couverture est fournie, utiliser FormData
       if (cover_photo) {
@@ -247,8 +247,20 @@ export function useDuplicateEvent() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (payload: DuplicateEventPayload) => {
-      const { sourceEventId, ...body } = payload;
+    mutationFn: async (payload: DuplicateEventPayload | string) => {
+      const resolved: DuplicateEventPayload =
+        typeof payload === 'string'
+          ? {
+              sourceEventId: payload,
+              title: '',
+              type: 'autre',
+              include_guests: false,
+              include_tasks: true,
+              include_budget: true,
+              include_collaborators: false,
+            }
+          : payload;
+      const { sourceEventId, ...body } = resolved;
       const response = await api.post<Event>(`/events/${sourceEventId}/duplicate`, body);
       return response.data;
     },

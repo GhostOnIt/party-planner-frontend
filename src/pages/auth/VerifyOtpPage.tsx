@@ -15,7 +15,7 @@ interface VerifyOtpLocationState {
   identifier: string;
   type: 'login';
   channel: OtpChannel;
-  otp_id: number;
+  otp_id: string | number;
   redirect?: string;
   remember_me?: boolean;
 }
@@ -34,7 +34,7 @@ export function VerifyOtpPage() {
   const state = location.state as VerifyOtpLocationState | null;
 
   const [code, setCode] = useState('');
-  const [otpId, setOtpId] = useState(state?.otp_id ?? 0);
+  const [otpId, setOtpId] = useState<string | number>(state?.otp_id ?? '');
   const [countdown, setCountdown] = useState(0);
 
   const verifyOtp = useVerifyOtp();

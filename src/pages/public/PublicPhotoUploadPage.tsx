@@ -144,13 +144,13 @@ export function PublicPhotoUploadPage() {
     );
   };
 
-  const handleSelect = (ids: number[]) => {
-    setSelectedIds(ids.map(String));
+  const handleSelect = (ids: string[]) => {
+    setSelectedIds(ids);
   };
 
   const handleSelectAll = () => {
     // Sélectionner uniquement les photos de la page actuelle
-    setSelectedIds(photos.map((p) => p.id));
+    setSelectedIds(photos.map((p) => String(p.id)));
   };
 
   const handleDeselectAll = () => {
@@ -174,7 +174,7 @@ export function PublicPhotoUploadPage() {
     if (selectedIds.length === 0) return;
 
     downloadPhotos(
-      { photoIds },
+      { photoIds: selectedIds },
       {
         onSuccess: () => {
           toast({
