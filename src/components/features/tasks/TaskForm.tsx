@@ -131,10 +131,10 @@ export function TaskForm({
       description: data.description || undefined,
       priority: data.priority,
       due_date: data.due_date || undefined,
-      assigned_to_user_id: isUnassigned ? undefined : String(assignedTo),
+       assigned_to_user_id: isUnassigned ? undefined : String(assignedTo),
       estimated_cost: data.estimated_cost ?? undefined,
       budget_category: data.budget_category ?? undefined,
-    });
+     });
   };
 
   const handleClose = () => {
@@ -209,7 +209,7 @@ export function TaskForm({
                 onValueChange={(value) =>
                   setValue(
                     'assigned_to_user_id',
-                    value === 'unassigned' ? undefined : Number(value)
+                    value === 'unassigned' || value === '' ? undefined : value
                   )
                 }
               >

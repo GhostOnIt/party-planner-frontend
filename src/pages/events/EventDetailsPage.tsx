@@ -639,41 +639,41 @@ export function EventDetailsPage() {
 
                 {/* Guest Breakdown & Dietary Restrictions */}
                 {featureAccess.guests.canAccess && (
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                     {/* Guest Breakdown */}
-                    <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
-                      <div className="px-6 py-4 border-b border-[#f3f4f6] bg-[#f9fafb]">
-                        <h3 className="font-semibold text-[#1a1a2e]">Répartition des invités</h3>
+                    <div className="bg-white rounded-xl sm:rounded-2xl border border-[#e5e7eb] overflow-hidden min-w-0">
+                      <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-[#f3f4f6] bg-[#f9fafb]">
+                        <h3 className="font-semibold text-sm sm:text-base text-[#1a1a2e]">Répartition des invités</h3>
                       </div>
-                      <div className="p-6">
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                          <div className="text-center p-4 rounded-xl bg-[#f9fafb]">
-                            <div className="w-10 h-10 rounded-full bg-[#6b7280]/10 flex items-center justify-center mx-auto mb-2">
-                              <Users className="w-5 h-5 text-[#6b7280]" />
+                      <div className="p-4 sm:p-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 2xl:grid-cols-4 gap-3 sm:gap-4">
+                          <div className="text-center p-3 sm:p-4 rounded-lg sm:rounded-xl bg-[#f9fafb] min-w-0">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#6b7280]/10 flex items-center justify-center mx-auto mb-1.5 sm:mb-2">
+                              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-[#6b7280]" />
                             </div>
-                            <p className="text-2xl font-bold text-[#1a1a2e]">{guestsTotal}</p>
-                            <p className="text-xs text-[#6b7280]">Total</p>
+                            <p className="text-lg sm:text-2xl font-bold text-[#1a1a2e] tabular-nums">{guestsTotal}</p>
+                            <p className="text-[10px] sm:text-xs text-[#6b7280]">Total</p>
                           </div>
-                          <div className="text-center p-4 rounded-xl bg-[#10B981]/5">
-                            <div className="w-10 h-10 rounded-full bg-[#10B981]/10 flex items-center justify-center mx-auto mb-2">
-                              <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+                          <div className="text-center p-3 sm:p-4 rounded-lg sm:rounded-xl bg-[#10B981]/5 min-w-0">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#10B981]/10 flex items-center justify-center mx-auto mb-1.5 sm:mb-2">
+                              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#10B981]" />
                             </div>
-                            <p className="text-2xl font-bold text-[#10B981]">{guestsConfirmed}</p>
-                            <p className="text-xs text-[#6b7280]">Confirmés</p>
+                            <p className="text-lg sm:text-2xl font-bold text-[#10B981] tabular-nums">{guestsConfirmed}</p>
+                            <p className="text-[10px] sm:text-xs text-[#6b7280]">Confirmés</p>
                           </div>
-                          <div className="text-center p-4 rounded-xl bg-[#F59E0B]/5">
-                            <div className="w-10 h-10 rounded-full bg-[#F59E0B]/10 flex items-center justify-center mx-auto mb-2">
-                              <HelpCircle className="w-5 h-5 text-[#F59E0B]" />
+                          <div className="text-center p-3 sm:p-4 rounded-lg sm:rounded-xl bg-[#F59E0B]/5 min-w-0">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#F59E0B]/10 flex items-center justify-center mx-auto mb-1.5 sm:mb-2">
+                              <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-[#F59E0B]" />
                             </div>
-                            <p className="text-2xl font-bold text-[#F59E0B]">{guestsPending}</p>
-                            <p className="text-xs text-[#6b7280]">En attente</p>
+                            <p className="text-lg sm:text-2xl font-bold text-[#F59E0B] tabular-nums">{guestsPending}</p>
+                            <p className="text-[10px] sm:text-xs text-[#6b7280]">En attente</p>
                           </div>
-                          <div className="text-center p-4 rounded-xl bg-[#EF4444]/5">
-                            <div className="w-10 h-10 rounded-full bg-[#EF4444]/10 flex items-center justify-center mx-auto mb-2">
-                              <XCircle className="w-5 h-5 text-[#EF4444]" />
+                          <div className="text-center p-3 sm:p-4 rounded-lg sm:rounded-xl bg-[#EF4444]/5 min-w-0">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#EF4444]/10 flex items-center justify-center mx-auto mb-1.5 sm:mb-2">
+                              <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-[#EF4444]" />
                             </div>
-                            <p className="text-2xl font-bold text-[#EF4444]">{guestsDeclined}</p>
-                            <p className="text-xs text-[#6b7280]">Déclinés</p>
+                            <p className="text-lg sm:text-2xl font-bold text-[#EF4444] tabular-nums">{guestsDeclined}</p>
+                            <p className="text-[10px] sm:text-xs text-[#6b7280]">Déclinés</p>
                           </div>
                         </div>
                       </div>
@@ -681,10 +681,12 @@ export function EventDetailsPage() {
 
                     {/* Dietary Restrictions */}
                     {id && (
-                      <DietaryRestrictionsCard 
-                        eventId={id} 
-                        totalGuests={guestsConfirmed} 
-                      />
+                      <div className="min-w-0">
+                        <DietaryRestrictionsCard 
+                          eventId={id} 
+                          totalGuests={guestsConfirmed} 
+                        />
+                      </div>
                     )}
                   </div>
                 )}
