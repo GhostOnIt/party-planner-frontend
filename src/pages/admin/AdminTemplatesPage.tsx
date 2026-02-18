@@ -224,7 +224,7 @@ export function AdminTemplatesPage() {
 
     if (editTemplate) {
       updateTemplate(
-        { templateId: editTemplate.id, data: formData },
+        { templateId: Number(editTemplate.id), data: formData },
         {
           onSuccess: () => {
             toast({ title: 'Template mis a jour' });

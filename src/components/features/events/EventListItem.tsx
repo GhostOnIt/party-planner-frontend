@@ -102,6 +102,11 @@ export function EventListItem({
               >
                 {event.name}
               </Link>
+              {event.pending_claim && (
+                <span className="px-2 py-0.5 bg-amber-500/20 text-amber-700 rounded-full text-xs font-medium">
+                  À récupérer
+                </span>
+              )}
             </div>
             <p className="text-xs text-[#6b7280] flex items-center gap-1">
               <MapPin className="w-3 h-3" />
@@ -168,7 +173,7 @@ export function EventListItem({
               <Eye className="w-4 h-4" />
             </button>
           )}
-          {onEdit && (
+          {!event.pending_claim && onEdit && (
             <button
               onClick={() => onEdit(event)}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#4F46E5] transition-colors"
@@ -176,7 +181,7 @@ export function EventListItem({
               <Edit className="w-4 h-4" />
             </button>
           )}
-          {onDelete && (
+          {!event.pending_claim && onDelete && (
             <button
               onClick={() => onDelete(event)}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#EF4444] transition-colors"

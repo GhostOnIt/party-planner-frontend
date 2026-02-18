@@ -106,7 +106,7 @@ export function useDeleteUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userId: number) => {
+    mutationFn: async (userId: string) => {
       await api.delete(`/admin/users/${userId}`);
     },
     onSuccess: () => {
@@ -157,7 +157,7 @@ export function useDeleteEvent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (eventId: number) => {
+    mutationFn: async (eventId: string) => {
       await api.delete(`/admin/events/${eventId}`);
     },
     onSuccess: () => {
@@ -196,7 +196,7 @@ export function useCancelSubscription() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (subscriptionId: number) => {
+    mutationFn: async (subscriptionId: string) => {
       await api.post(`/admin/subscriptions/${subscriptionId}/cancel`);
     },
     onSuccess: () => {
@@ -224,7 +224,7 @@ export function useChangePlan() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ subscriptionId, planType }: { subscriptionId: number; planType: 'starter' | 'pro' }) => {
+    mutationFn: async ({ subscriptionId, planType }: { subscriptionId: string; planType: 'starter' | 'pro' }) => {
       const response = await api.post(`/admin/subscriptions/${subscriptionId}/change-plan`, { plan_type: planType });
       return response.data;
     },
@@ -274,7 +274,7 @@ export function useAdminTemplates() {
   });
 }
 
-export function useAdminTemplate(templateId: number) {
+export function useAdminTemplate(templateId: string) {
   return useQuery({
     queryKey: ['admin', 'templates', templateId],
     queryFn: async (): Promise<EventTemplate> => {
@@ -353,7 +353,7 @@ export function useDeleteTemplate() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (templateId: number) => {
+    mutationFn: async (templateId: string) => {
       await api.delete(`/admin/templates/${templateId}`);
     },
     onSuccess: () => {
@@ -366,7 +366,7 @@ export function useToggleTemplateActive() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ templateId, isActive }: { templateId: number; isActive: boolean }) => {
+    mutationFn: async ({ templateId, isActive }: { templateId: string; isActive: boolean }) => {
       const response = await api.post(`/admin/templates/${templateId}/toggle-active`, { is_active: isActive });
       return response.data;
     },

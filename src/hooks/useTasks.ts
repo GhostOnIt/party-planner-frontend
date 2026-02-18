@@ -66,7 +66,7 @@ export function useUpdateTask(eventId: number | string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ taskId, data }: { taskId: number; data: Partial<CreateTaskFormData & { status: TaskStatus }> }) => {
+    mutationFn: async ({ taskId, data }: { taskId: number | string; data: Partial<CreateTaskFormData & { status: TaskStatus }> }) => {
       const response = await api.put<Task>(`/events/${eventId}/tasks/${taskId}`, data);
       return response.data;
     },
@@ -122,7 +122,7 @@ export function useDeleteTask(eventId: number | string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (taskId: number) => {
+    mutationFn: async (taskId: number | string) => {
       await api.delete(`/events/${eventId}/tasks/${taskId}`);
       return taskId;
     },
@@ -138,7 +138,7 @@ export function useChangeTaskStatus(eventId: number | string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ taskId, status }: { taskId: number; status: TaskStatus }) => {
+    mutationFn: async ({ taskId, status }: { taskId: number | string; status: TaskStatus }) => {
       const response = await api.put<Task>(`/events/${eventId}/tasks/${taskId}`, { status });
       return response.data;
     },
@@ -155,9 +155,9 @@ export function useCompleteTask(eventId: number | string) {
 
   return {
     ...changeStatus,
-    mutate: (taskId: number, options?: Parameters<typeof changeStatus.mutate>[1]) =>
+    mutate: (taskId: number | string, options?: Parameters<typeof changeStatus.mutate>[1]) =>
       changeStatus.mutate({ taskId, status: 'completed' }, options),
-    mutateAsync: (taskId: number) => changeStatus.mutateAsync({ taskId, status: 'completed' }),
+    mutateAsync: (taskId: number | string) => changeStatus.mutateAsync({ taskId, status: 'completed' }),
   };
 }
 
@@ -167,8 +167,8 @@ export function useReopenTask(eventId: number | string) {
 
   return {
     ...changeStatus,
-    mutate: (taskId: number, options?: Parameters<typeof changeStatus.mutate>[1]) =>
+    mutate: (taskId: number | string, options?: Parameters<typeof changeStatus.mutate>[1]) =>
       changeStatus.mutate({ taskId, status: 'todo' }, options),
-    mutateAsync: (taskId: number) => changeStatus.mutateAsync({ taskId, status: 'todo' }),
+    mutateAsync: (taskId: number | string) => changeStatus.mutateAsync({ taskId, status: 'todo' }),
   };
 }

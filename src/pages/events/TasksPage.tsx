@@ -34,7 +34,7 @@ import { PermissionGuard } from '@/components/ui/permission-guard';
 import { useTasksPermissions } from '@/hooks/usePermissions';
 import { useEvent } from '@/hooks/useEvents';
 import { useAuthStore } from '@/stores/authStore';
-import type { Task, TaskFilters as TaskFiltersType, CreateTaskFormData, TaskStatus } from '@/types';
+import type { Task, TaskFilters as TaskFiltersType, CreateTaskFormData, TaskStatus, Collaborator } from '@/types';
 
 interface TasksPageProps {
   eventId?: string;
@@ -64,30 +64,34 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
   const { user: currentUser } = useAuthStore();
   const tasks = tasksData?.data || [];
   const collaborators =
-    collaboratorsData?.data?.map((c) => ({ id: c.user_id, name: c.user.name })) || [];
+    (collaboratorsData?.data as Collaborator[] | undefined)?.map((c) => ({ id: c.user_id, name: c.user.name })) || [];
 
-  // Build assignable users list (current user + owner + collaborators)
-  // Remove duplicates by using a Map
-  const assignableUsersMap = new Map<number, { id: number; name: string }>();
-  
-  // Add owner if available
+  // Build assignable users list (owner + collaborators + current task assignee when editing)
+  const assignableUsersMap = new Map<string, { id: string | number; name: string }>();
   if (eventData?.user) {
-    assignableUsersMap.set(eventData.user_id, { id: eventData.user_id, name: eventData.user.name });
+    const uid = String(eventData.user_id);
+    assignableUsersMap.set(uid, { id: eventData.user_id, name: eventData.user.name });
   }
-  
-  // Add collaborators
   collaborators.forEach((c) => {
-    assignableUsersMap.set(c.id, c);
+    const key = String(c.id);
+    assignableUsersMap.set(key, { id: c.id, name: c.name });
   });
-  
-  // Convert to array and sort: current user first, then others alphabetically
-  const assignableUsers = Array.from(assignableUsersMap.values()).sort((a, b) => {
-    // Put current user first
-    if (currentUser) {
-      if (a.id === currentUser.id) return -1;
-      if (b.id === currentUser.id) return 1;
+  // Include the task's current assignee when editing (e.g. owner who may not be in collaborators)
+  const editingTaskAssigneeId = editingTask?.assigned_to_user_id ?? editingTask?.assigned_to;
+  if (editingTaskAssigneeId && editingTask?.assigned_user) {
+    const key = String(editingTaskAssigneeId);
+    if (!assignableUsersMap.has(key)) {
+      assignableUsersMap.set(key, {
+        id: editingTaskAssigneeId,
+        name: editingTask.assigned_user.name,
+      });
     }
-    // Then sort alphabetically by name
+  }
+  const assignableUsers = Array.from(assignableUsersMap.values()).sort((a, b) => {
+    if (currentUser) {
+      if (String(a.id) === String(currentUser.id)) return -1;
+      if (String(b.id) === String(currentUser.id)) return 1;
+    }
     return a.name.localeCompare(b.name);
   });
 
@@ -165,7 +169,7 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
     });
   };
 
-  const handleStatusChange = (taskId: number, status: TaskStatus) => {
+  const handleStatusChange = (taskId: string, status: TaskStatus) => {
     updateTask(
       { taskId, data: { status } },
       {
@@ -260,7 +264,7 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
             onDelete={setTaskToDelete}
             onComplete={handleComplete}
             onReopen={handleReopen}
-            onStatusChange={(task, status) => handleStatusChange(task.id, status)}
+            onStatusChange={(task, status) => handleStatusChange(String(task.id), status)}
           />
         )}
       </PermissionGuard>

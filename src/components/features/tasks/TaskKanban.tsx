@@ -45,7 +45,7 @@ interface TaskKanbanProps {
   onDelete: (task: Task) => void;
   onComplete: (task: Task) => void;
   onReopen: (task: Task) => void;
-  onStatusChange: (taskId: number, status: TaskStatus) => void;
+  onStatusChange: (taskId: string, status: TaskStatus) => void;
 }
 
 function SortableTaskCard({

@@ -92,7 +92,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
   const { toast } = useToast();
 
   const [filters, setFilters] = useState<BudgetFiltersType>({ per_page: 10 });
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<BudgetItem | undefined>();
   const [itemToDelete, setItemToDelete] = useState<BudgetItem | null>(null);
@@ -128,7 +128,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
   const handleFormSubmit = (data: CreateBudgetItemFormData) => {
     if (editingItem) {
       updateItem(
-        { itemId: editingItem.id, data },
+        { itemId: String(editingItem.id), data },
         {
           onSuccess: () => {
             setShowForm(false);
@@ -155,7 +155,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
 
   const handleDeleteConfirm = () => {
     if (itemToDelete) {
-      deleteItem(itemToDelete.id, {
+      deleteItem(String(itemToDelete.id), {
         onSuccess: () => {
           setItemToDelete(null);
           toast({
@@ -168,7 +168,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
   };
 
   const handleMarkPaid = (item: BudgetItem) => {
-    markPaid(item.id, {
+    markPaid(Number(item.id), {
       onSuccess: () => {
         toast({
           title: 'Paiement enregistre',
@@ -179,7 +179,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
   };
 
   const handleMarkUnpaid = (item: BudgetItem) => {
-    markUnpaid(item.id, {
+    markUnpaid(String(item.id), {
       onSuccess: () => {
         toast({
           title: 'Paiement annule',

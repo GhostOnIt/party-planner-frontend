@@ -31,7 +31,7 @@ import { resolveUrl } from '@/lib/utils';
 interface EventCardProps {
   event: Event;
   subscription?: Subscription | null;
-  currentUserId?: number;
+  currentUserId?: string | number;
   onEdit?: (event: Event) => void;
   onDuplicate?: (event: Event) => void;
   onDelete?: (event: Event) => void;
@@ -75,7 +75,7 @@ export function EventCard({
             {plan && <PlanBadge plan={plan} />}
           </div>
 
-          {currentUserId && event.user_id !== currentUserId && (
+          {currentUserId != null && String(event.user_id) !== String(currentUserId) && (
             <div className="absolute right-2 top-2">
               <Badge variant="secondary" className="flex items-center gap-1 text-xs">
                 <UserCheck className="h-3 w-3" />

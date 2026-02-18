@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
   User,
@@ -19,8 +20,7 @@ import {
   Wallet,
   ClipboardList,
   UserCog,
-  Settings,
-  DollarSign,
+  Layers,
   FileText,
   Pencil,
   Eye,
@@ -46,7 +46,7 @@ import {
   useUploadAvatar,
   useDeleteAvatar,
 } from '@/hooks/useProfile';
-import { useNotificationSettings, useUpdateNotificationSettings } from '@/hooks/useSettings';
+import { useUpdateNotificationSettings } from '@/hooks/useSettings';
 import { NotificationPreferences } from '@/types';
 import { resolveUrl } from '@/lib/utils';
 import { EventTypesManager } from '@/components/settings/EventTypesManager';
@@ -58,6 +58,11 @@ import {
   useUpdateLegalPage,
   LegalPage as LegalPageType,
 } from '@/hooks/useLegalPages';
+import {
+  useSessions,
+  useRevokeSession,
+  useRevokeOtherSessions,
+} from '@/hooks/useSessions';
 import { Badge } from '@/components/ui/badge';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import {
@@ -68,6 +73,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Table,
   TableBody,
@@ -99,9 +114,23 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 
 export function SettingsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sessions (active devices)
+  const { data: sessions, isLoading: isLoadingSessions } = useSessions();
+  const [sessionToRevoke, setSessionToRevoke] = useState<string | null>(null);
+  const [showRevokeOthersDialog, setShowRevokeOthersDialog] = useState(false);
+  const revokeSessionMutation = useRevokeSession({
+    onCurrentSessionRevoked: () => {
+      logout();
+      navigate('/login', { replace: true });
+    },
+  });
+  const revokeOthersMutation = useRevokeOtherSessions();
 
 
   // Profile mutations
@@ -111,7 +140,7 @@ export function SettingsPage() {
   const { mutate: deleteAvatar, isPending: isDeletingAvatar } = useDeleteAvatar();
 
   // Notification settings
-  const { data: notificationSettings, isLoading: isLoadingSettings } = useNotificationSettings();
+  //const { data: notificationSettings, isLoading: isLoadingSettings } = useNotificationSettings();
   const { mutate: updateNotificationSettings } = useUpdateNotificationSettings();
 
   // Legal pages (admin only)
@@ -341,7 +370,7 @@ export function SettingsPage() {
       <PageHeader title={t('settings.title')} description={t('settings.description')} />
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-8 lg:w-[1150px]' : 'grid-cols-7 lg:w-[1000px]'}`}>
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-7 lg:w-[1000px]' : 'grid-cols-6 lg:w-[850px]'}`}>
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.profile')}</span>
@@ -350,10 +379,10 @@ export function SettingsPage() {
             <Shield className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.security')}</span>
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
+          {/* <TabsTrigger value="notifications" className="flex items-center gap-2">
             <Bell className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.notifications')}</span>
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value="event-types" className="flex items-center gap-2 min-w-fit">
             <Calendar className="h-4 w-4 shrink-0" />
             <span className="hidden sm:inline whitespace-nowrap">{t('settings.eventTypes')}</span>
@@ -363,12 +392,8 @@ export function SettingsPage() {
             <span className="hidden sm:inline">{t('settings.collaboratorRoles')}</span>
           </TabsTrigger>
           <TabsTrigger value="budget-categories" className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4" />
+            <Layers className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.budgetCategories')}</span>
-          </TabsTrigger>
-          <TabsTrigger value="account" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('settings.account')}</span>
           </TabsTrigger>
           {isAdmin && (
             <TabsTrigger value="legal-pages" className="flex items-center gap-2">
@@ -463,7 +488,7 @@ export function SettingsPage() {
                       <Input
                         id="phone"
                         type="tel"
-                        placeholder="+237 6XX XXX XXX"
+                        placeholder="+242 XX XXX XX XX"
                         {...profileForm.register('phone')}
                       />
                       {profileForm.formState.errors.phone && (
@@ -488,6 +513,40 @@ export function SettingsPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Informations du compte (fusionné avec Profil) */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Informations du compte</CardTitle>
+              <CardDescription>Details de votre compte</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-sm text-muted-foreground">Email</p>
+                  <p className="font-medium">{user.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Membre depuis</p>
+                  <p className="font-medium">
+                    {new Date(user.created_at).toLocaleDateString('fr-FR', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Type de compte</p>
+                  <p className="font-medium capitalize">{user.role}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Email verifie</p>
+                  <p className="font-medium">{user.email_verified_at ? 'Oui' : 'Non'}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Security Tab */}
@@ -553,27 +612,175 @@ export function SettingsPage() {
             <CardHeader>
               <CardTitle>Sessions actives</CardTitle>
               <CardDescription>
-                Gerez vos sessions de connexion sur differents appareils
+                Gérez vos sessions de connexion sur différents appareils. Révoquez celles que vous ne reconnaissez pas.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between py-4">
-                <div className="flex items-center gap-4">
-                  <div className="rounded-full bg-primary/10 p-2">
-                    <Smartphone className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Session actuelle</p>
-                    <p className="text-sm text-muted-foreground">Connecte depuis cet appareil</p>
-                  </div>
+            <CardContent className="space-y-4">
+              {isLoadingSessions ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
-                <span className="text-sm text-green-600 font-medium">Active</span>
-              </div>
+              ) : sessions && sessions.length > 0 ? (
+                <>
+                  <div className="space-y-3">
+                    {sessions.map((session) => (
+                      <div
+                        key={session.id}
+                        className="flex items-center justify-between rounded-lg border p-4"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="rounded-full bg-primary/10 p-2">
+                            <Smartphone className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium flex items-center gap-2">
+                              {session.device}
+                              {session.is_current && (
+                                <Badge variant="secondary" className="text-xs font-normal">
+                                  Cette session
+                                </Badge>
+                              )}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {session.last_used_at
+                                ? `Dernière activité : ${formatDistanceToNow(new Date(session.last_used_at), { addSuffix: true, locale: fr })}`
+                                : `Connexion : ${format(new Date(session.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}`}
+                              {session.ip_address && ` • ${session.ip_address}`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {session.is_current ? (
+                            <span className="text-sm text-green-600 font-medium">Active</span>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSessionToRevoke(session.id)}
+                              disabled={revokeSessionMutation.isPending}
+                            >
+                              {revokeSessionMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Révoquer
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {sessions.length > 1 && (
+                    <div className="pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowRevokeOthersDialog(true)}
+                        disabled={revokeOthersMutation.isPending}
+                      >
+                        {revokeOthersMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : null}
+                        Révoquer toutes les autres sessions
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground py-4">
+                  Aucune session active.
+                </p>
+              )}
             </CardContent>
           </Card>
+
+          {/* Dialog : révoquer une session */}
+          <AlertDialog open={!!sessionToRevoke} onOpenChange={(open) => !open && setSessionToRevoke(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Révoquer cette session</AlertDialogTitle>
+                <AlertDialogDescription>
+                  L&apos;appareil concerné sera déconnecté immédiatement. Êtes-vous sûr de vouloir révoquer cette session ?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    if (sessionToRevoke) {
+                      revokeSessionMutation.mutate(sessionToRevoke, {
+                        onSuccess: (data) => {
+                          setSessionToRevoke(null);
+                          if (!data.current_session_revoked) {
+                            toast({
+                              title: 'Session révoquée',
+                              description: data.message,
+                            });
+                          }
+                        },
+                        onError: () => {
+                          setSessionToRevoke(null);
+                          toast({
+                            title: 'Erreur',
+                            description: 'Impossible de révoquer la session.',
+                            variant: 'destructive',
+                          });
+                        },
+                      });
+                    }
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Révoquer
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Dialog : révoquer toutes les autres sessions */}
+          <AlertDialog open={showRevokeOthersDialog} onOpenChange={setShowRevokeOthersDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Révoquer toutes les autres sessions</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tous les autres appareils connectés à votre compte seront déconnectés. Seule cette session restera active. Continuer ?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    revokeOthersMutation.mutate(undefined, {
+                      onSuccess: (data) => {
+                        setShowRevokeOthersDialog(false);
+                        toast({
+                          title: 'Sessions révoquées',
+                          description: data.message,
+                        });
+                      },
+                      onError: () => {
+                        setShowRevokeOthersDialog(false);
+                        toast({
+                          title: 'Erreur',
+                          description: 'Impossible de révoquer les autres sessions.',
+                          variant: 'destructive',
+                        });
+                      },
+                    });
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Révoquer les autres sessions
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </TabsContent>
 
-        {/* Notifications Tab */}
+        {/* Notifications Tab
         <TabsContent value="notifications" className="space-y-6">
           <Card>
             <CardHeader>
@@ -739,44 +946,7 @@ export function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* Account Tab */}
-        <TabsContent value="account" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informations du compte</CardTitle>
-              <CardDescription>Details de votre compte</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium">{user.email}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Membre depuis</p>
-                  <p className="font-medium">
-                    {new Date(user.created_at).toLocaleDateString('fr-FR', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Type de compte</p>
-                  <p className="font-medium capitalize">{user.role}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Email verifie</p>
-                  <p className="font-medium">{user.email_verified_at ? 'Oui' : 'Non'}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-        </TabsContent>
+        </TabsContent> */}
 
         {/* Event Types Tab */}
         <TabsContent value="event-types" className="space-y-6">
@@ -933,7 +1103,7 @@ export function SettingsPage() {
                     Modifier : {editingLegalPage && getLegalSlugLabel(editingLegalPage.slug)}
                   </DialogTitle>
                   <DialogDescription>
-                    Modifiez le contenu avec l’éditeur ci‑dessous. Le contenu est enregistré en HTML.
+                    Modifiez le contenu avec l’éditeur ci‑dessous.
                   </DialogDescription>
                 </DialogHeader>
 

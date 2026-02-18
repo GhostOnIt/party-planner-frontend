@@ -61,7 +61,7 @@ export function useAcceptInvitation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (invitationId: number) => {
+    mutationFn: async (invitationId: string) => {
       const response = await api.post(`/user/invitations/${invitationId}/accept`);
       return response.data;
     },
@@ -78,7 +78,7 @@ export function useRejectInvitation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (invitationId: number) => {
+    mutationFn: async (invitationId: string) => {
       const response = await api.post(`/user/invitations/${invitationId}/reject`);
       return response.data;
     },

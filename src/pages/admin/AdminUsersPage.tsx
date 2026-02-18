@@ -99,7 +99,7 @@ export function AdminUsersPage() {
     if (!editUser) return;
 
     updateUser(
-      { userId: editUser.id, data: { role: editRole } },
+      { userId: Number(editUser.id), data: { role: editRole } },
       {
         onSuccess: () => {
           toast({
@@ -122,7 +122,7 @@ export function AdminUsersPage() {
   const handleDelete = () => {
     if (!deleteUser) return;
 
-    deleteUserMutation(deleteUser.id, {
+    deleteUserMutation(String(deleteUser.id), {
       onSuccess: () => {
         toast({
           title: 'Utilisateur supprime',
@@ -143,7 +143,7 @@ export function AdminUsersPage() {
   const handleToggleActive = (user: AdminUser) => {
     const newStatus = !user.is_active;
     toggleActive(
-      { userId: user.id, isActive: newStatus },
+      { userId: Number(user.id), isActive: newStatus },
       {
         onSuccess: () => {
           toast({

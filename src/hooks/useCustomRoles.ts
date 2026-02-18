@@ -81,7 +81,7 @@ export function useCreateUserCustomRole() {
   });
 }
 
-export function useUpdateUserCustomRole(roleId: number) {
+export function useUpdateUserCustomRole(roleId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: Partial<CustomRoleFormData>) => {
@@ -99,7 +99,7 @@ export function useUpdateUserCustomRole(roleId: number) {
   });
 }
 
-export function useDeleteUserCustomRole(roleId: number) {
+export function useDeleteUserCustomRole(roleId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {

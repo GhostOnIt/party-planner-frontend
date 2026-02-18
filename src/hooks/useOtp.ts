@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { publicApi } from '@/api/client';
 import { useAuthStore } from '@/stores/authStore';
 import type {
@@ -29,6 +29,7 @@ export function useSendOtp() {
  */
 export function useVerifyOtp() {
   const navigate = useNavigate();
+  const location = useLocation();
   const setAuth = useAuthStore((state) => state.setAuth);
 
   return useMutation({
@@ -37,10 +38,12 @@ export function useVerifyOtp() {
       return response.data;
     },
     onSuccess: (data) => {
-      // If login OTP, set auth and navigate to dashboard
+      // If login OTP, set auth and navigate (use redirect from state when present)
       if (data.user && data.token) {
         setAuth(data.user, data.token);
-        navigate('/dashboard');
+        const state = location.state as { redirect?: string } | null;
+        const redirectTo = state?.redirect ?? '/dashboard';
+        navigate(redirectTo, { replace: true });
       }
     },
   });

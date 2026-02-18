@@ -123,6 +123,11 @@ export function EventCardGrid({
         {/* Top badges */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
+            {event.pending_claim && (
+              <span className="px-2.5 py-1 bg-amber-500/90 backdrop-blur-sm rounded-full text-xs font-medium text-white flex items-center gap-1">
+                À récupérer
+              </span>
+            )}
             {event.isCollaborator && (
               <span className="px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium text-[#1a1a2e] flex items-center gap-1">
                 <UserPlus className="w-3 h-3" />
@@ -199,35 +204,37 @@ export function EventCardGrid({
               {event.createdAt}
             </span>
           </div>
-          <div 
-            className="relative z-40" 
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setActiveMenu(!activeMenu);
-              }}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6b7280] hover:bg-[#f3f4f6] transition-colors"
+          {!event.pending_claim && (
+            <div 
+              className="relative z-40" 
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
             >
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
-            <EventActionsMenu
-              event={event}
-              isOpen={activeMenu}
-              onOpenChange={setActiveMenu}
-              onView={onView}
-              onEdit={onEdit}
-              onDuplicate={onDuplicate}
-              onDelete={onDelete}
-            />
-          </div>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setActiveMenu(!activeMenu);
+                }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6b7280] hover:bg-[#f3f4f6] transition-colors"
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
+              <EventActionsMenu
+                event={event}
+                isOpen={activeMenu}
+                onOpenChange={setActiveMenu}
+                onView={onView}
+                onEdit={onEdit}
+                onDuplicate={onDuplicate}
+                onDelete={onDelete}
+              />
+            </div>
+          )}
         </div>
       </div>
     </Link>

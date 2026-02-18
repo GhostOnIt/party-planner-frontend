@@ -81,7 +81,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
   const { toast } = useToast();
 
   const [filters, setFilters] = useState<GuestFiltersType>({ per_page: 20 });
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [editingGuest, setEditingGuest] = useState<Guest | undefined>();

@@ -68,7 +68,7 @@ export function EventsListPage() {
 
   // Create a map of eventId -> subscription for quick lookup
   const subscriptionsByEventId = useMemo(() => {
-    const map = new Map<number, Subscription>();
+    const map = new Map<string, Subscription>();
     subscriptions.forEach((sub) => {
       // Only include active subscriptions (paid status)
       const status: string = sub.payment_status || sub.status || 'pending';
@@ -82,7 +82,7 @@ export function EventsListPage() {
   // Transform events to display format
   const displayEvents: DisplayEvent[] = useMemo(() => {
     return events.map((event) =>
-      transformEventToDisplayFormat(event, user?.id)
+      transformEventToDisplayFormat(event, user?.id as string | undefined)
     );
   }, [events, user?.id]);
 
@@ -101,7 +101,7 @@ export function EventsListPage() {
   };
 
   const handleDuplicate = (event: DisplayEvent) => {
-    duplicateEvent(parseInt(event.id));
+    duplicateEvent(event.id);
   };
 
   const handleDelete = (event: DisplayEvent) => {
@@ -201,7 +201,7 @@ export function EventsListPage() {
                 <EventCardGrid
                   key={event.id}
                   event={event}
-                  subscription={subscriptionsByEventId.get(parseInt(event.id))}
+                  subscription={subscriptionsByEventId.get(event.id)}
                   onView={handleView}
                   onEdit={handleEdit}
                   onDuplicate={handleDuplicate}

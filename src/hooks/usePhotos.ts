@@ -172,7 +172,7 @@ export function useDeletePhotos(eventId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (photoIds: number[]) => {
+    mutationFn: async (photoIds: string[]) => {
       await api.post(`/events/${eventId}/photos/bulk-delete`, {
         photos: photoIds,
       });
@@ -187,7 +187,7 @@ export function useDeletePhotos(eventId: string) {
 // Download a photo
 export function useDownloadPhoto(eventId: string) {
   return useMutation({
-    mutationFn: async ({ photoId, filename }: { photoId: number; filename: string }) => {
+    mutationFn: async ({ photoId, filename }: { photoId: string; filename: string }) => {
       try {
         const response = await api.get(
           `/events/${eventId}/photos/${photoId}/download`,
@@ -232,7 +232,7 @@ export function useDownloadPhoto(eventId: string) {
 // Download multiple photos as ZIP
 export function useDownloadMultiplePhotos(eventId: string) {
   return useMutation({
-    mutationFn: async ({ photoIds }: { photoIds: number[] }) => {
+    mutationFn: async ({ photoIds }: { photoIds: string[] }) => {
       const response = await api.post(
         `/events/${eventId}/photos/bulk-download`,
         { photos: photoIds },
@@ -257,7 +257,7 @@ export function useSetFeaturedPhoto(eventId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (photoId: number) => {
+    mutationFn: async (photoId: string) => {
       const response = await api.post<Photo>(
         `/events/${eventId}/photos/${photoId}/set-featured`
       );

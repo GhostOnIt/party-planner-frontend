@@ -56,7 +56,7 @@ export function EventSubscriptionPage({ eventId }: EventSubscriptionPageProps) {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
   const [flowStep, setFlowStep] = useState<FlowStep>('select-plan');
-  const [currentPaymentId, setCurrentPaymentId] = useState<number | null>(null);
+  const [currentPaymentId, setCurrentPaymentId] = useState<string | null>(null);
   const [actionType, setActionType] = useState<'upgrade' | 'renew'>('upgrade');
 
   const { data: subscription, isLoading, error } = useEventSubscription(eventId || '');

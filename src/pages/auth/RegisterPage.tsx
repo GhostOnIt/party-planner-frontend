@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -36,7 +36,24 @@ const passwordRequirements = [
   { id: 3, label: "Un chiffre", check: (p: string) => /[0-9]/.test(p) },
 ];
 
+const REDIRECT_EMAIL_KEY = 'redirect_email';
+
+function getPrefillEmail(searchParams: URLSearchParams): string {
+  const fromUrl = searchParams.get('email');
+  if (fromUrl) return fromUrl;
+  try {
+    const stored = sessionStorage.getItem(REDIRECT_EMAIL_KEY);
+    if (stored) return stored;
+  } catch {
+    // ignore
+  }
+  return '';
+}
+
 export function RegisterPage() {
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect');
+  const prefillEmail = getPrefillEmail(searchParams);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -46,11 +63,22 @@ export function RegisterPage() {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
     setError,
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    defaultValues: { email: prefillEmail, name: '', password: '', password_confirmation: '' },
   });
+
+  const emailValue = watch('email');
+
+  // Prefill email when coming from invite/event-created-for-you
+  useEffect(() => {
+    if (prefillEmail && emailValue !== prefillEmail) {
+      setValue('email', prefillEmail);
+    }
+  }, [prefillEmail, setValue, emailValue]);
 
   const password = watch('password', '');
   const confirmPassword = watch('password_confirmation', '');
@@ -160,9 +188,11 @@ export function RegisterPage() {
                   id="email"
                   type="email"
                   placeholder="votre@email.com"
+                  value={emailValue}
                   {...register('email')}
+                  readOnly={!!prefillEmail}
                   aria-invalid={!!errors.email}
-                  className="pl-10 h-12 bg-secondary/50 border-0 focus-visible:ring-2 focus-visible:ring-primary"
+                  className={`pl-10 h-12 bg-secondary/50 border-0 focus-visible:ring-2 focus-visible:ring-primary ${prefillEmail ? 'opacity-70 cursor-not-allowed' : ''}`}
                 />
               </div>
               {errors.email && (
@@ -317,7 +347,12 @@ export function RegisterPage() {
           >
             Déjà un compte ?{" "}
             <Link
-              to="/login"
+              to={(() => {
+                if (!redirect) return '/login';
+                const params = new URLSearchParams({ redirect });
+                if (prefillEmail) params.set('email', prefillEmail);
+                return `/login?${params.toString()}`;
+              })()}
               className="text-primary hover:text-primary/80 font-semibold transition-colors"
             >
               Se connecter

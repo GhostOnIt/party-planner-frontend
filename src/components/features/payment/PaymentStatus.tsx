@@ -8,7 +8,7 @@ import { usePollPaymentStatus } from '@/hooks/usePayment';
 import type { PaymentStatus as PaymentStatusType } from '@/types';
 
 interface PaymentStatusProps {
-  paymentId: number;
+  paymentId: string | number;
   onSuccess?: () => void;
   onFailure?: () => void;
   onRetry?: () => void;

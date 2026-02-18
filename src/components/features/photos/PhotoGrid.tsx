@@ -5,8 +5,8 @@ import type { Photo } from '@/types';
 interface PhotoGridProps {
   photos: Photo[];
   isLoading?: boolean;
-  selectedIds: number[];
-  onSelectChange: (ids: number[]) => void;
+  selectedIds: string[];
+  onSelectChange: (ids: string[]) => void;
   onView: (photo: Photo) => void;
   onDelete?: (photo: Photo) => void;
   onDownload: (photo: Photo) => void;
@@ -25,12 +25,11 @@ export function PhotoGrid({
   onSetFeatured,
   selectionMode = false,
 }: PhotoGridProps) {
-  const handleSelect = (id: number) => {
-    const numId = typeof id === 'string' ? parseInt(id, 10) : id;
-    if (selectedIds.includes(numId)) {
-      onSelectChange(selectedIds.filter((i) => i !== numId));
+  const handleSelect = (id: string) => {
+    if (selectedIds.includes(id)) {
+      onSelectChange(selectedIds.filter((i) => i !== id));
     } else {
-      onSelectChange([...selectedIds, numId]);
+      onSelectChange([...selectedIds, id]);
     }
   };
 
@@ -46,13 +45,11 @@ export function PhotoGrid({
 
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-      {photos.map((photo) => {
-        const photoId = typeof photo.id === 'string' ? parseInt(photo.id, 10) : photo.id;
-        return (
+      {photos.map((photo) => (
           <PhotoCard
             key={photo.id}
             photo={photo}
-            isSelected={selectedIds.includes(photoId)}
+            isSelected={selectedIds.includes(photo.id)}
             onSelect={handleSelect}
             onView={onView}
             onDelete={onDelete}
@@ -60,8 +57,7 @@ export function PhotoGrid({
             onSetFeatured={onSetFeatured}
             selectionMode={selectionMode}
           />
-        );
-      })}
+      ))}
     </div>
   );
 }

@@ -21,13 +21,22 @@ import {
   PiggyBank,
   Sparkles,
   Ban,
+  ChevronDown,
+  Loader2,
 } from 'lucide-react';
 import { format, parseISO, differenceInDays, isPast, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import api from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,7 +50,8 @@ import {
 import { EmptyState } from '@/components/ui/empty-state';
 import { EventStatusBadge, EventTypeBadge } from '@/components/features/events';
 import { DietaryRestrictionsCard } from '@/components/features/guests';
-import { useEvent, useDeleteEvent, useDuplicateEvent, useCancelEvent } from '@/hooks/useEvents';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEvent, useDeleteEvent, useCancelEvent, useUpdateEvent } from '@/hooks/useEvents';
 import { useAuthStore } from '@/stores/authStore';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { PermissionGuard } from '@/components/ui/permission-guard';
@@ -51,8 +61,10 @@ import { BudgetPage } from './BudgetPage';
 import { PhotosPage } from './PhotosPage';
 import { CollaboratorsPage } from './CollaboratorsPage';
 import { getApiErrorMessage } from '@/api/client';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { resolveUrl } from '@/lib/utils';
+import type { EventStatus } from '@/types';
 
 // Utility functions
 const formatBudget = (amount: number | string | null | undefined): string => {
@@ -82,6 +94,9 @@ const getDaysUntilEvent = (dateStr: string): { days: number; label: string; isUr
     return { days: Math.abs(days), label: `Il y a ${Math.abs(days)} jour${Math.abs(days) > 1 ? 's' : ''}`, isUrgent: false };
   }
   if (days <= 7) {
+     if (days === 0) {
+      return { days: 0, label: "C'est aujourd'hui !", isUrgent: true };
+    }
     return { days, label: `Dans ${days} jour${days > 1 ? 's' : ''}`, isUrgent: true };
   }
   if (days <= 30) {
@@ -90,6 +105,87 @@ const getDaysUntilEvent = (dateStr: string): { days: number; label: string; isUr
   const weeks = Math.floor(days / 7);
   return { days, label: `Dans ${weeks} semaine${weeks > 1 ? 's' : ''}`, isUrgent: false };
 };
+
+/** Écran "Récupérer l'événement" – événement créé par admin, nécessite un claim */
+function EventClaimScreen({
+  event,
+  onSuccess,
+}: {
+  event: { id: string | number; title: string; claim_token: string };
+  onSuccess: () => void;
+}) {
+  const { toast } = useToast();
+  const [isClaiming, setIsClaiming] = useState(false);
+
+  const handleClaim = async () => {
+    setIsClaiming(true);
+    try {
+      await api.post<{ event_id: string | number }>(
+        `/event-creation-invitations/${event.claim_token}/claim`
+      );
+      toast({
+        title: "Événement récupéré",
+        description: "Vous avez maintenant accès à l'événement.",
+      });
+      onSuccess();
+    } catch (err: unknown) {
+      const msg = getApiErrorMessage(err);
+      toast({
+        title: "Impossible de récupérer l'événement",
+        description: msg,
+        variant: "destructive",
+      });
+    } finally {
+      setIsClaiming(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F5F7FA]">
+      <div className="max-w-2xl mx-auto px-6 py-12">
+        <Link to="/events">
+          <Button variant="ghost" size="sm" className="gap-2 mb-8">
+            <ArrowLeft className="h-4 w-4" />
+            Retour aux événements
+          </Button>
+        </Link>
+
+        <div className="bg-white rounded-2xl border border-[#e5e7eb] p-8 shadow-sm">
+          <div className="text-center space-y-6">
+            <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto">
+              <Sparkles className="w-8 h-8 text-amber-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-[#1a1a2e] mb-2">
+                Un événement vous attend
+              </h1>
+              <p className="text-[#6b7280]">
+                « {event.title} » a été créé pour vous par un administrateur. Récupérez-le pour y accéder et le gérer.
+              </p>
+            </div>
+            <Button
+              onClick={handleClaim}
+              disabled={isClaiming}
+              className="gap-2 bg-linear-to-r from-[#4F46E5] to-[#7C3AED] hover:shadow-lg"
+            >
+              {isClaiming ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Récupération…
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  Récupérer l'événement
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function EventDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -107,11 +203,20 @@ export function EventDetailsPage() {
     setSearchParams({ tab: value });
   };
 
+  const queryClient = useQueryClient();
   const { data: event, isLoading, error } = useEvent(id);
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
-  const { mutate: duplicateEvent } = useDuplicateEvent();
   const { mutate: cancelEvent, isPending: isCancelling } = useCancelEvent();
+  const { mutate: updateEvent, isPending: isUpdatingStatus } = useUpdateEvent(id!);
+  const { toast } = useToast();
   const featureAccess = useFeatureAccess(id!);
+
+  const statusOptions: { value: EventStatus; label: string }[] = [
+    { value: 'upcoming', label: 'À venir' },
+    { value: 'ongoing', label: 'En cours' },
+    { value: 'completed', label: 'Terminé' },
+    { value: 'cancelled', label: 'Annulé' },
+  ];
 
   if (isLoading) {
     return (
@@ -146,6 +251,23 @@ export function EventDetailsPage() {
     );
   }
 
+  // Événement créé par admin pour cet utilisateur : écran "Récupérer l'événement"
+  if (event.requires_claim && event.claim_token) {
+    return (
+      <EventClaimScreen
+        event={{
+          id: event.id,
+          title: event.title,
+          claim_token: event.claim_token,
+        }}
+        onSuccess={() => {
+          // Refetch : l'événement n'aura plus requires_claim
+          queryClient.invalidateQueries({ queryKey: ['events', id] });
+        }}
+      />
+    );
+  }
+
   const handleDelete = () => {
     deleteEvent(event.id);
     setShowDeleteDialog(false);
@@ -163,7 +285,9 @@ export function EventDetailsPage() {
   const guestsPending = event.guests_pending_count || 0;
   const tasksTotal = event.tasks_count || 0;
   const tasksCompleted = event.tasks_completed_count || 0;
-  const budgetTotal = event.budget || 0;
+  // Budget estimé : somme des lignes de budget, sinon budget global de l'événement
+  const budgetEstimatedRaw = event.budget_items_estimated ?? event.budget;
+  const budgetTotal = typeof budgetEstimatedRaw === 'string' ? parseFloat(budgetEstimatedRaw) : (Number(budgetEstimatedRaw) || 0);
   const budgetSpent = typeof event.budget_spent === 'string' ? parseFloat(event.budget_spent) : (event.budget_spent || 0);
 
   const guestsProgress = getProgressPercent(guestsConfirmed, guestsTotal);
@@ -240,10 +364,56 @@ export function EventDetailsPage() {
       <div className="bg-white border-b border-[#e5e7eb] sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-3">
           <div className="flex items-center justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => duplicateEvent(event.id)} className="gap-2">
-              <Copy className="h-4 w-4" />
-              Dupliquer
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  disabled={isUpdatingStatus}
+                >
+                  <EventStatusBadge status={event.status} />
+                  <ChevronDown className="h-4 w-4 opacity-70" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {statusOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => {
+                      if (option.value === event.status) return;
+                      updateEvent(
+                        { status: option.value },
+                        {
+                          onSuccess: () => {
+                            toast({
+                              title: 'Statut mis à jour',
+                              description: `L'événement est maintenant "${option.label}".`,
+                            });
+                          },
+                          onError: (err) => {
+                            toast({
+                              title: 'Impossible de modifier le statut',
+                              description: getApiErrorMessage(err),
+                              variant: 'destructive',
+                            });
+                          },
+                        }
+                      );
+                    }}
+                    disabled={option.value === event.status}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Link to={`/events/duplicate/${event.id}`}>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Copy className="h-4 w-4" />
+                Dupliquer
+              </Button>
+            </Link>
             <Link to={`/events/${event.id}/edit`}>
               <Button variant="outline" size="sm" className="gap-2">
                 <Pencil className="h-4 w-4" />
@@ -399,7 +569,7 @@ export function EventDetailsPage() {
                     </div>
                     <span className="text-lg font-bold text-[#1a1a2e]">{formatBudget(budgetTotal)}</span>
                   </div>
-                  <p className="text-sm font-medium text-[#6b7280] mb-3">Budget</p>
+                  <p className="text-sm font-medium text-[#6b7280] mb-3">Budget estimé</p>
                   <div className="space-y-2">
                     <div className="h-2 rounded-full bg-[#f3f4f6] overflow-hidden">
                       <div
@@ -428,10 +598,16 @@ export function EventDetailsPage() {
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#E91E8C]/10">
                     <Clock className="w-6 h-6 text-[#E91E8C]" />
                   </div>
-                  {countdown.days > 0 && !isPast(parseISO(event.date)) && (
-                    <span className="text-3xl font-bold text-[#1a1a2e]">
-                      {countdown.days}
-                    </span>
+                  {!isPast(parseISO(event.date)) && (
+                    countdown.days > 0 ? (
+                      <span className="text-3xl font-bold text-[#1a1a2e]">
+                        {countdown.days}
+                      </span>
+                    ) : (
+                      <span className="text-lg font-bold text-[#1a1a2e] text-right leading-tight">
+                        {countdown.label}
+                      </span>
+                    )
                   )}
                 </div>
                 <p className="text-sm font-medium text-[#6b7280] mb-1">
@@ -463,41 +639,41 @@ export function EventDetailsPage() {
 
                 {/* Guest Breakdown & Dietary Restrictions */}
                 {featureAccess.guests.canAccess && (
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                     {/* Guest Breakdown */}
-                    <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
-                      <div className="px-6 py-4 border-b border-[#f3f4f6] bg-[#f9fafb]">
-                        <h3 className="font-semibold text-[#1a1a2e]">Répartition des invités</h3>
+                    <div className="bg-white rounded-xl sm:rounded-2xl border border-[#e5e7eb] overflow-hidden min-w-0">
+                      <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-[#f3f4f6] bg-[#f9fafb]">
+                        <h3 className="font-semibold text-sm sm:text-base text-[#1a1a2e]">Répartition des invités</h3>
                       </div>
-                      <div className="p-6">
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                          <div className="text-center p-4 rounded-xl bg-[#f9fafb]">
-                            <div className="w-10 h-10 rounded-full bg-[#6b7280]/10 flex items-center justify-center mx-auto mb-2">
-                              <Users className="w-5 h-5 text-[#6b7280]" />
+                      <div className="p-4 sm:p-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 2xl:grid-cols-4 gap-3 sm:gap-4">
+                          <div className="text-center p-3 sm:p-4 rounded-lg sm:rounded-xl bg-[#f9fafb] min-w-0">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#6b7280]/10 flex items-center justify-center mx-auto mb-1.5 sm:mb-2">
+                              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-[#6b7280]" />
                             </div>
-                            <p className="text-2xl font-bold text-[#1a1a2e]">{guestsTotal}</p>
-                            <p className="text-xs text-[#6b7280]">Total</p>
+                            <p className="text-lg sm:text-2xl font-bold text-[#1a1a2e] tabular-nums">{guestsTotal}</p>
+                            <p className="text-[10px] sm:text-xs text-[#6b7280]">Total</p>
                           </div>
-                          <div className="text-center p-4 rounded-xl bg-[#10B981]/5">
-                            <div className="w-10 h-10 rounded-full bg-[#10B981]/10 flex items-center justify-center mx-auto mb-2">
-                              <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+                          <div className="text-center p-3 sm:p-4 rounded-lg sm:rounded-xl bg-[#10B981]/5 min-w-0">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#10B981]/10 flex items-center justify-center mx-auto mb-1.5 sm:mb-2">
+                              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#10B981]" />
                             </div>
-                            <p className="text-2xl font-bold text-[#10B981]">{guestsConfirmed}</p>
-                            <p className="text-xs text-[#6b7280]">Confirmés</p>
+                            <p className="text-lg sm:text-2xl font-bold text-[#10B981] tabular-nums">{guestsConfirmed}</p>
+                            <p className="text-[10px] sm:text-xs text-[#6b7280]">Confirmés</p>
                           </div>
-                          <div className="text-center p-4 rounded-xl bg-[#F59E0B]/5">
-                            <div className="w-10 h-10 rounded-full bg-[#F59E0B]/10 flex items-center justify-center mx-auto mb-2">
-                              <HelpCircle className="w-5 h-5 text-[#F59E0B]" />
+                          <div className="text-center p-3 sm:p-4 rounded-lg sm:rounded-xl bg-[#F59E0B]/5 min-w-0">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#F59E0B]/10 flex items-center justify-center mx-auto mb-1.5 sm:mb-2">
+                              <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-[#F59E0B]" />
                             </div>
-                            <p className="text-2xl font-bold text-[#F59E0B]">{guestsPending}</p>
-                            <p className="text-xs text-[#6b7280]">En attente</p>
+                            <p className="text-lg sm:text-2xl font-bold text-[#F59E0B] tabular-nums">{guestsPending}</p>
+                            <p className="text-[10px] sm:text-xs text-[#6b7280]">En attente</p>
                           </div>
-                          <div className="text-center p-4 rounded-xl bg-[#EF4444]/5">
-                            <div className="w-10 h-10 rounded-full bg-[#EF4444]/10 flex items-center justify-center mx-auto mb-2">
-                              <XCircle className="w-5 h-5 text-[#EF4444]" />
+                          <div className="text-center p-3 sm:p-4 rounded-lg sm:rounded-xl bg-[#EF4444]/5 min-w-0">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#EF4444]/10 flex items-center justify-center mx-auto mb-1.5 sm:mb-2">
+                              <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-[#EF4444]" />
                             </div>
-                            <p className="text-2xl font-bold text-[#EF4444]">{guestsDeclined}</p>
-                            <p className="text-xs text-[#6b7280]">Déclinés</p>
+                            <p className="text-lg sm:text-2xl font-bold text-[#EF4444] tabular-nums">{guestsDeclined}</p>
+                            <p className="text-[10px] sm:text-xs text-[#6b7280]">Déclinés</p>
                           </div>
                         </div>
                       </div>
@@ -505,10 +681,12 @@ export function EventDetailsPage() {
 
                     {/* Dietary Restrictions */}
                     {id && (
-                      <DietaryRestrictionsCard 
-                        eventId={id} 
-                        totalGuests={guestsConfirmed} 
-                      />
+                      <div className="min-w-0">
+                        <DietaryRestrictionsCard 
+                          eventId={id} 
+                          totalGuests={guestsConfirmed} 
+                        />
+                      </div>
                     )}
                   </div>
                 )}

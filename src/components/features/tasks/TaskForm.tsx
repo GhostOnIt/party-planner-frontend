@@ -28,10 +28,10 @@ const taskFormSchema = z.object({
   description: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high']),
   due_date: z.string().optional(),
-  assigned_to_user_id: z.number().optional(),
-  estimated_cost: z.number().min(0, 'Le coût doit être positif').optional().nullable(),
+  estimated_cost: z.number().min(0, 'Le coût doit être positif').optional(),
   budget_category: z.enum(['location', 'catering', 'decoration', 'entertainment', 'photography', 'transportation', 'other']).optional().nullable(),
-});
+   assigned_to_user_id: z.union([z.string(), z.number()]).optional(),
+ });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
 
@@ -57,9 +57,9 @@ interface TaskFormProps {
   task?: Task;
   onSubmit: (data: CreateTaskFormData) => void;
   isSubmitting?: boolean;
-  collaborators?: { id: number; name: string }[];
+  collaborators?: { id: string | number; name: string }[];
   canAssign?: boolean;
-  currentUserId?: number;
+  currentUserId?: string | number;
 }
 
 export function TaskForm({
@@ -100,12 +100,13 @@ export function TaskForm({
   useEffect(() => {
     if (open) {
       if (task) {
+        const taskAssigneeId = task.assigned_to_user_id ?? task.assigned_to ?? undefined;
         reset({
           title: task.title,
           description: task.description || '',
           priority: task.priority,
           due_date: task.due_date?.split('T')[0] || '',
-          assigned_to_user_id: task.assigned_to || undefined,
+          assigned_to_user_id: taskAssigneeId,
           estimated_cost: task.estimated_cost || undefined,
           budget_category: task.budget_category || undefined,
         });
@@ -124,15 +125,17 @@ export function TaskForm({
   }, [open, task, reset]);
 
   const handleFormSubmit = (data: TaskFormValues) => {
+    const assignedTo = data.assigned_to_user_id;
+    const isUnassigned = assignedTo == null || assignedTo === '' || assignedTo === 0;
     onSubmit({
       title: data.title,
       description: data.description || undefined,
       priority: data.priority,
       due_date: data.due_date || undefined,
-      assigned_to_user_id: data.assigned_to_user_id,
-      estimated_cost: data.estimated_cost || undefined,
-      budget_category: data.budget_category || undefined,
-    });
+       assigned_to_user_id: isUnassigned ? undefined : String(assignedTo),
+      estimated_cost: data.estimated_cost ?? undefined,
+      budget_category: data.budget_category ?? undefined,
+     });
   };
 
   const handleClose = () => {
@@ -203,11 +206,11 @@ export function TaskForm({
             <div className="space-y-2">
               <Label htmlFor="assigned_to">Assigne a</Label>
               <Select
-                value={assignedTo?.toString() || 'unassigned'}
+                value={assignedTo != null && assignedTo !== '' ? String(assignedTo) : 'unassigned'}
                 onValueChange={(value) =>
                   setValue(
                     'assigned_to_user_id',
-                    value === 'unassigned' ? undefined : Number(value)
+                    value === 'unassigned' || value === '' ? undefined : value
                   )
                 }
               >
@@ -217,7 +220,7 @@ export function TaskForm({
                 <SelectContent>
                   <SelectItem value="unassigned">Non assigne</SelectItem>
                   {collaborators.map((c) => {
-                    const isCurrentUser = currentUserId && c.id === currentUserId;
+                    const isCurrentUser = currentUserId && String(c.id) === String(currentUserId);
                     return (
                       <SelectItem key={c.id} value={c.id.toString()}>
                         {isCurrentUser ? `Moi (${c.name})` : c.name}
@@ -244,7 +247,9 @@ export function TaskForm({
                   min="0"
                   step="0.01"
                   placeholder="0"
-                  {...register('estimated_cost', { valueAsNumber: true })}
+                  {...register('estimated_cost', {
+                    setValueAs: (value) => (value === '' ? undefined : Number(value)),
+                  })}
                   aria-invalid={!!errors.estimated_cost}
                 />
                 {errors.estimated_cost && (

@@ -73,6 +73,19 @@ api.interceptors.request.use(
   }
 );
 
+// Refresh token mutex to prevent concurrent refresh requests
+let isRefreshing = false;
+let refreshSubscribers: Array<(token: string) => void> = [];
+
+function onRefreshed(token: string) {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+}
+
+function addRefreshSubscriber(cb: (token: string) => void) {
+  refreshSubscribers.push(cb);
+}
+
 // Response interceptor to handle errors (including token refresh on 401)
 api.interceptors.response.use(
   (response) => {
@@ -110,6 +123,19 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
 
+      // If a refresh is already in progress, queue this request
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          addRefreshSubscriber((newToken: string) => {
+            originalRequest.headers = originalRequest.headers ?? {};
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            resolve(api(originalRequest));
+          });
+        });
+      }
+
+      isRefreshing = true;
+
       try {
         const refreshResponse = await publicApi.post<AuthResponse>(
           '/auth/refresh',
@@ -127,12 +153,17 @@ api.interceptors.response.use(
         const setAuth = useAuthStore.getState().setAuth;
         setAuth(user, newToken);
 
+        isRefreshing = false;
+        onRefreshed(newToken);
+
         // Update Authorization header for the original request and retry it
         originalRequest.headers = originalRequest.headers ?? {};
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
         return api(originalRequest);
       } catch {
+        isRefreshing = false;
+        refreshSubscribers = [];
         // If refresh fails, fall through to global 401 handler below
       }
     }
@@ -143,14 +174,18 @@ api.interceptors.response.use(
       logout();
 
       const path = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/dashboard';
-      if (path !== '/login' && path !== '/') {
+      const isValidPath = path && path !== '/login' && path !== '/' && !path.startsWith('/register') && !path.startsWith('/verify-otp') && !path.includes('//') && !path.includes(':');
+      if (isValidPath) {
         try {
           sessionStorage.setItem('redirect_after_login', path);
         } catch {
           // ignore
         }
+        // Include ?redirect= in URL so user sees it and it persists across page changes
+        window.location.href = '/login?redirect=' + encodeURIComponent(path);
+      } else {
+        window.location.href = '/login';
       }
-      window.location.href = '/login';
     }
 
     // Handle 500+ server errors
@@ -171,10 +206,17 @@ export interface ApiError {
   status: number;
 }
 
-// Helper to extract error message from API response
+// Helper to extract error message from API response (prefer validation field messages when present)
 export const getApiErrorMessage = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
     const apiError = error.response?.data as ApiError | undefined;
+    if (apiError?.errors && typeof apiError.errors === 'object') {
+      const firstKey = Object.keys(apiError.errors)[0];
+      const firstMessages = apiError.errors[firstKey];
+      if (Array.isArray(firstMessages) && firstMessages[0]) {
+        return firstMessages[0];
+      }
+    }
     return apiError?.message || error.message || 'Une erreur est survenue';
   }
   return 'Une erreur est survenue';

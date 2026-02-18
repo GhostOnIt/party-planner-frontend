@@ -29,33 +29,44 @@ export function useCollaborators(eventId: string, filters: CollaboratorFilters =
 
       // Handle array response: [...]
       if (Array.isArray(responseData)) {
-        return { data: responseData };
+        return { data: responseData, pendingInvitations: [] };
       }
 
-      // Handle { collaborators: [...] } response
+      // Handle { collaborators, pending_invitations? } response
       if (responseData && 'collaborators' in responseData) {
-        return { data: responseData.collaborators || [] };
+        const collaborators = responseData.collaborators || [];
+        const pendingInvitations = (responseData as { pending_invitations?: unknown[] }).pending_invitations || [];
+        return { data: [...collaborators, ...pendingInvitations], pendingInvitations };
       }
 
       // Handle { data: [...] } response
       if (responseData && 'data' in responseData) {
-        return responseData;
+        const rd = responseData as { data: unknown[]; pending_invitations?: unknown[] };
+        return { data: rd.data || [], pendingInvitations: rd.pending_invitations || [] };
       }
 
       // Fallback
-      return { data: [] };
+      return { data: [], pendingInvitations: [] };
     },
     enabled: !!eventId,
   });
 }
 
-// Invite a collaborator
+// API response when inviting: either collaborator (existing user) or pending_invitation (guest)
+export interface InviteCollaboratorResponse {
+  message: string;
+  collaborator?: Collaborator;
+  pending_invitation?: { id: number; email: string; event_id: number; invited_at?: string };
+  pending?: boolean;
+}
+
+// Invite a collaborator (existing user or by email for non-registered; both get an invitation email)
 export function useInviteCollaborator(eventId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: InviteCollaboratorFormData) => {
-      const response = await api.post<Collaborator>(
+      const response = await api.post<InviteCollaboratorResponse>(
         `/events/${eventId}/collaborators`,
         data
       );
@@ -78,13 +89,12 @@ export function useUpdateCollaborator(eventId: string) {
       roles,
       custom_role_ids,
     }: {
-      collaboratorId: number;
-      userId?: number;
+      collaboratorId: string;
+      userId?: string;
       roles: CollaboratorRole[];
-      custom_role_ids?: number[];
+      custom_role_ids?: string[];
     }) => {
-      // Use userId for the route (backend expects user id)
-      const userIdParam = userId || collaboratorId;
+      const userIdParam = userId ?? collaboratorId;
       const response = await api.put<Collaborator>(
         `/events/${eventId}/collaborators/${userIdParam}`,
         { roles, custom_role_ids }
@@ -102,8 +112,7 @@ export function useRemoveCollaborator(eventId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userId: number) => {
-      // Backend expects user id, not collaborator id
+    mutationFn: async (userId: string) => {
       await api.delete(`/events/${eventId}/collaborators/${userId}`);
       return userId;
     },
@@ -118,8 +127,7 @@ export function useResendInvitation(eventId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userId: number) => {
-      // Backend expects user id and route is /resend (not /resend-invitation)
+    mutationFn: async (userId: string) => {
       const response = await api.post(
         `/events/${eventId}/collaborators/${userId}/resend`
       );

@@ -15,7 +15,7 @@ import type { PermissionModule, CustomRoleFormData } from '@/types';
 const roleSchema = z.object({
   name: z.string().min(1, 'Le nom est requis').max(100, 'Le nom est trop long'),
   description: z.string().max(500, 'La description est trop longue').optional(),
-  permissions: z.array(z.number()).min(1, 'Au moins une permission est requise'),
+  permissions: z.array(z.string()).min(1, 'Au moins une permission est requise'),
 });
 
 type RoleFormData = z.infer<typeof roleSchema>;
@@ -49,7 +49,7 @@ export function RoleForm({
     defaultValues: {
       name: initialData?.name || '',
       description: initialData?.description || '',
-      permissions: initialData?.permissions || [],
+      permissions: (initialData?.permissions || []).map(String),
     },
   });
 
@@ -65,9 +65,9 @@ export function RoleForm({
     setExpandedModules(newExpanded);
   };
 
-  const togglePermission = (permissionId: number) => {
+  const togglePermission = (permissionId: string) => {
     const currentPermissions = selectedPermissions;
-    let newPermissions: number[];
+    let newPermissions: string[];
 
     if (currentPermissions.includes(permissionId)) {
       newPermissions = currentPermissions.filter(id => id !== permissionId);
@@ -78,9 +78,9 @@ export function RoleForm({
     setValue('permissions', newPermissions);
   };
 
-  const toggleModulePermissions = (modulePermissions: number[], checked: boolean) => {
+  const toggleModulePermissions = (modulePermissions: string[], checked: boolean) => {
     const currentPermissions = selectedPermissions;
-    let newPermissions: number[];
+    let newPermissions: string[];
 
     if (checked) {
       newPermissions = [...new Set([...currentPermissions, ...modulePermissions])];
@@ -95,7 +95,7 @@ export function RoleForm({
     onSubmit({
       name: data.name,
       description: data.description,
-      permissions: data.permissions,
+      permissions: data.permissions as string[],
     });
   };
 
@@ -183,8 +183,8 @@ export function RoleForm({
                       {module.permissions.map((permission) => (
                         <div key={permission.id} className="flex items-start gap-3">
                           <Checkbox
-                            checked={selectedPermissions.includes(permission.id)}
-                            onCheckedChange={() => togglePermission(permission.id)}
+                            checked={selectedPermissions.includes(String(permission.id))}
+                            onCheckedChange={() => togglePermission(String(permission.id))}
                             className="mt-0.5"
                           />
                           <div className="flex-1">

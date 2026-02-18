@@ -24,7 +24,7 @@ export function SubscribePage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [paymentId, setPaymentId] = useState<number | null>(null);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
   const [subscriptionCreated, setSubscriptionCreated] = useState(false);
 
   const { data: plans, isLoading: isLoadingPlans } = usePlans();

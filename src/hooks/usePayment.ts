@@ -72,7 +72,7 @@ export function usePaymentStatus(paymentId: number | null, pollInterval?: number
 }
 
 // Poll payment status (real-time)
-export function usePollPaymentStatus(paymentId: number | null, enabled: boolean = true) {
+export function usePollPaymentStatus(paymentId: string | number | null, enabled: boolean = true) {
   logger.log('usePollPaymentStatus called with:', { paymentId, enabled });
 
   return useQuery({

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,22 +17,52 @@ import logo from '@/assets/logo.png';
 const loginSchema = z.object({
   email: z.string().email('Email invalide'),
   password: z.string().min(1, 'Mot de passe requis'),
+  remember: z.boolean().default(false),
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type LoginFormValues = z.input<typeof loginSchema>;
+
+const REDIRECT_EMAIL_KEY = 'redirect_email';
+
+function getPrefillEmail(searchParams: URLSearchParams): string {
+  const fromUrl = searchParams.get('email');
+  if (fromUrl) return fromUrl;
+  try {
+    const stored = sessionStorage.getItem(REDIRECT_EMAIL_KEY);
+    if (stored) return stored;
+  } catch {
+    // ignore
+  }
+  return '';
+}
 
 export function LoginPage() {
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect');
+  const prefillEmail = getPrefillEmail(searchParams);
   const [showPassword, setShowPassword] = useState(false);
   const { mutate: login, isPending, error } = useLogin();
 
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
     setError,
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    defaultValues: { email: prefillEmail, password: '', remember: false },
   });
+
+  const emailValue = watch('email');
+
+  // Prefill email when coming from invite/event-created-for-you
+  useEffect(() => {
+    if (prefillEmail && emailValue !== prefillEmail) {
+      setValue('email', prefillEmail);
+    }
+  }, [prefillEmail, setValue, emailValue]);
 
   const onSubmit = (data: LoginFormValues) => {
     login(data, {
@@ -125,9 +155,11 @@ export function LoginPage() {
                   id="email"
                   type="email"
                   placeholder="votre@email.com"
+                  value={emailValue}
                   {...register('email')}
+                  readOnly={!!prefillEmail}
                   aria-invalid={!!errors.email}
-                  className="pl-10 h-12 bg-secondary/50 border-0 focus-visible:ring-2 focus-visible:ring-primary"
+                  className={`pl-10 h-12 bg-secondary/50 border-0 focus-visible:ring-2 focus-visible:ring-primary ${prefillEmail ? 'opacity-70 cursor-not-allowed' : ''}`}
                 />
               </div>
             
@@ -165,10 +197,18 @@ export function LoginPage() {
               )}
             </div>
 
-            {/* Forgot Password */}
-            <div className="flex justify-end">
+            {/* Remember me + Forgot Password */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  {...register('remember')}
+                  className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                />
+                <span className="text-sm text-muted-foreground">Se souvenir de moi</span>
+              </label>
               <Link
-                to="/forgot-password"
+                to={prefillEmail ? `/forgot-password?email=${encodeURIComponent(prefillEmail)}` : '/forgot-password'}
                 className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
               >
                 Mot de passe oublié ?
@@ -205,7 +245,12 @@ export function LoginPage() {
           >
             Pas encore de compte ?{" "}
             <Link
-              to="/register"
+              to={(() => {
+                if (!redirect) return '/register';
+                const params = new URLSearchParams({ redirect });
+                if (prefillEmail) params.set('email', prefillEmail);
+                return `/register?${params.toString()}`;
+              })()}
               className="text-primary hover:text-primary/80 font-semibold transition-colors"
             >
               S'inscrire gratuitement

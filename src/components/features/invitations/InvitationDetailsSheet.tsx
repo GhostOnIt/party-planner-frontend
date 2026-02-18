@@ -20,8 +20,8 @@ interface InvitationDetailsSheetProps {
   invitation: Invitation;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAccept: (id: number) => void;
-  onReject: (id: number) => void;
+  onAccept: (id: string) => void;
+  onReject: (id: string) => void;
   isAccepting?: boolean;
   isRejecting?: boolean;
 }
