@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { 
   Search, Download, Send, Mail, Phone, Users, AtSign, Hash,
-  ChevronLeft, ChevronRight, FileSpreadsheet
+  ChevronLeft, ChevronRight, FileSpreadsheet, ChevronDown
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +62,8 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 const GuestDirectory = () => {
   const [search, setSearch] = useState("");
   const [eventFilter, setEventFilter] = useState("all");
+  const [eventSearchQuery, setEventSearchQuery] = useState("");
+  const [eventPopoverOpen, setEventPopoverOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -68,8 +83,17 @@ const GuestDirectory = () => {
     per_page: ITEMS_PER_PAGE,
   });
 
-  // Fetch events for filter
-  const { data: eventsData } = useEvents({ per_page: 100 }); // Fetch enough events for dropdown
+  // Fetch events for filter (combobox supports search, so we load more)
+  const { data: eventsData } = useEvents({ per_page: 500 });
+
+  const events = useMemo(() => eventsData?.data ?? [], [eventsData?.data]);
+  const filteredEvents = useMemo(() => {
+    if (!eventSearchQuery.trim()) return events;
+    const q = eventSearchQuery.toLowerCase().trim();
+    return events.filter((e) => e.title.toLowerCase().includes(q));
+  }, [events, eventSearchQuery]);
+  const displayedEvents = filteredEvents.slice(0, 5);
+  const selectedEvent = eventFilter === "all" ? null : events.find((e) => e.id.toString() === eventFilter);
 
   // Export mutation
   const { mutate: exportGuests, isPending: isExporting } = useExportGlobalGuests();
@@ -196,19 +220,44 @@ const GuestDirectory = () => {
                       className="pl-9"
                     />
                   </div>
-                  <Select value={eventFilter} onValueChange={(v) => { setEventFilter(v); setCurrentPage(1); }}>
-                    <SelectTrigger className="w-full sm:w-[200px]">
-                      <SelectValue placeholder="Événement" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tous les événements</SelectItem>
-                      {eventsData?.data.map(event => (
-                        <SelectItem key={event.id} value={event.id.toString()}>
-                          {event.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={eventPopoverOpen} onOpenChange={(open) => { setEventPopoverOpen(open); if (!open) setEventSearchQuery(""); }}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" className="w-full sm:w-[220px] justify-between font-normal">
+                        <span className="truncate">{selectedEvent ? selectedEvent.title : "Tous les événements"}</span>
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[220px] p-0" align="start">
+                      <Command shouldFilter={false}>
+                        <CommandInput placeholder="Rechercher un événement..." value={eventSearchQuery} onValueChange={setEventSearchQuery} />
+                        <CommandList className="max-h-[200px]">
+                          <CommandEmpty>Aucun événement trouvé.</CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              value="all"
+                              onSelect={() => { setEventFilter("all"); setCurrentPage(1); setEventPopoverOpen(false); }}
+                            >
+                              Tous les événements
+                            </CommandItem>
+                            {displayedEvents.map((event) => (
+                              <CommandItem
+                                key={event.id}
+                                value={event.id.toString()}
+                                onSelect={() => { setEventFilter(event.id.toString()); setCurrentPage(1); setEventPopoverOpen(false); }}
+                              >
+                                <span className="truncate">{event.title}</span>
+                              </CommandItem>
+                            ))}
+                            {filteredEvents.length > 5 && (
+                              <div className="px-2 py-1.5 text-xs text-muted-foreground border-t">
+                                {filteredEvents.length - 5} autre{filteredEvents.length - 5 > 1 ? "s" : ""} — affinez la recherche
+                              </div>
+                            )}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
                     <SelectTrigger className="w-full sm:w-[160px]">
                       <SelectValue placeholder="Statut RSVP" />

@@ -68,7 +68,7 @@ export function BudgetList({
     if (allSelected) {
       onSelectChange([]);
     } else {
-      onSelectChange(items.map((item) => item.id));
+      onSelectChange(items.map((item) => String(item.id)));
     }
   };
 
@@ -154,12 +154,12 @@ export function BudgetList({
             return (
               <TableRow
                 key={item.id}
-                className={cn(selectedIds.includes(item.id) && 'bg-muted/50')}
+                className={cn(selectedIds.includes(String(item.id)) && 'bg-muted/50')}
               >
                 <TableCell>
                   <Checkbox
-                    checked={selectedIds.includes(item.id)}
-                    onCheckedChange={() => handleSelectOne(item.id)}
+                    checked={selectedIds.includes(String(item.id))}
+                    onCheckedChange={() => handleSelectOne(String(item.id))}
                     aria-label={`Selectionner ${item.name}`}
                   />
                 </TableCell>
