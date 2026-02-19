@@ -11,6 +11,8 @@ import { getApiErrorMessage } from '@/api/client';
 import { AuthPromoPanel } from '@/components/auth/AuthPromoPanel';
 import type { OtpChannel } from '@/types';
 
+const VERIFY_OTP_STATE_KEY = 'verify_otp_state';
+
 interface VerifyOtpLocationState {
   identifier: string;
   type: 'login';
@@ -18,6 +20,36 @@ interface VerifyOtpLocationState {
   otp_id: string | number;
   redirect?: string;
   remember_me?: boolean;
+}
+
+function saveOtpStateToStorage(state: VerifyOtpLocationState): void {
+  try {
+    sessionStorage.setItem(VERIFY_OTP_STATE_KEY, JSON.stringify(state));
+  } catch {
+    // ignore
+  }
+}
+
+function loadOtpStateFromStorage(): VerifyOtpLocationState | null {
+  try {
+    const raw = sessionStorage.getItem(VERIFY_OTP_STATE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as VerifyOtpLocationState;
+    if (parsed?.identifier && parsed?.type === 'login' && parsed?.channel && parsed?.otp_id != null) {
+      return parsed;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function clearOtpStateFromStorage(): void {
+  try {
+    sessionStorage.removeItem(VERIFY_OTP_STATE_KEY);
+  } catch {
+    // ignore
+  }
 }
 
 const channelLabels: Record<OtpChannel, string> = {
@@ -31,7 +63,13 @@ const OTP_LENGTH = 4;
 export function VerifyOtpPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const state = location.state as VerifyOtpLocationState | null;
+  const locationState = location.state as VerifyOtpLocationState | null;
+
+  // Restore state from sessionStorage when location.state is lost (tab switch/reload)
+  const [restoredState] = useState<VerifyOtpLocationState | null>(() =>
+    !locationState ? loadOtpStateFromStorage() : null
+  );
+  const state = locationState ?? restoredState;
 
   const [code, setCode] = useState('');
   const [otpId, setOtpId] = useState<string | number>(state?.otp_id ?? '');
@@ -40,9 +78,24 @@ export function VerifyOtpPage() {
   const verifyOtp = useVerifyOtp();
   const resendOtp = useResendOtp();
 
-  // Redirect if no state
+  // Persist state to sessionStorage so it survives tab switch / page reload
+  useEffect(() => {
+    if (locationState) {
+      saveOtpStateToStorage(locationState);
+    }
+  }, [locationState]);
+
+  // Update persisted state when otp_id changes (e.g. after resend)
+  useEffect(() => {
+    if (state && otpId !== state.otp_id) {
+      saveOtpStateToStorage({ ...state, otp_id: otpId });
+    }
+  }, [state, otpId]);
+
+  // Redirect only if we have neither location state nor restored state
   useEffect(() => {
     if (!state) {
+      clearOtpStateFromStorage();
       navigate('/login', { replace: true });
     }
   }, [state, navigate]);
@@ -54,6 +107,13 @@ export function VerifyOtpPage() {
       return () => clearTimeout(timer);
     }
   }, [countdown]);
+
+  // Clear persisted state on successful verification
+  useEffect(() => {
+    if (verifyOtp.isSuccess) {
+      clearOtpStateFromStorage();
+    }
+  }, [verifyOtp.isSuccess]);
 
   // Auto-submit when code is complete
   useEffect(() => {
@@ -244,6 +304,7 @@ export function VerifyOtpPage() {
             <div className="text-center pt-2">
               <Link
                 to="/login"
+                onClick={() => clearOtpStateFromStorage()}
                 className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
               >
                 <ArrowLeft className="h-4 w-4" />
