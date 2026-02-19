@@ -6,6 +6,16 @@ import type { AuthResponse } from '@/types';
 // Custom event for server errors
 export const SERVER_ERROR_EVENT = 'server-connection-error';
 
+const AUTH_PAGE_PREFIXES = [
+  '/login', '/register', '/verify-otp', '/send-otp', '/otp',
+  '/forgot-password', '/reset-password', '/reset-password-otp',
+];
+
+function isOnAuthPage(): boolean {
+  const path = typeof window !== 'undefined' ? window.location.pathname : '';
+  return AUTH_PAGE_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
+}
+
 // Dispatch server error event
 const dispatchServerError = (message: string) => {
   window.dispatchEvent(new CustomEvent(SERVER_ERROR_EVENT, { detail: { message } }));
@@ -118,6 +128,17 @@ api.interceptors.response.use(
     }
 
     const originalRequest = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+    const requestUrl = originalRequest?.url || '';
+
+    // Activity logs batch is non-critical telemetry: silently reject, never trigger 401 handling
+    if (requestUrl.includes('activity-logs/batch')) {
+      return Promise.reject(error);
+    }
+
+    // On auth pages, don't trigger 401 refresh/redirect logic (user isn't logged in yet)
+    if (error.response?.status === 401 && isOnAuthPage()) {
+      return Promise.reject(error);
+    }
 
     // Handle 401 Unauthorized: try to refresh token once
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {

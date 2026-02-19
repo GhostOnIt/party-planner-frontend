@@ -16,6 +16,23 @@ const FLUSH_INTERVAL_MS = 30_000; // 30 secondes
 const MAX_BUFFER_SIZE = 100;
 const BATCH_ENDPOINT = '/activity-logs/batch';
 
+/** Pages d'authentification : on ne fait jamais de flush (évite 401 → redirect depuis OTP). */
+const AUTH_PATHS = [
+  '/login',
+  '/register',
+  '/verify-otp',
+  '/send-otp',
+  '/otp',
+  '/forgot-password',
+  '/reset-password',
+  '/reset-password-otp',
+];
+
+function isOnAuthPage(): boolean {
+  const path = typeof window !== 'undefined' ? window.location.pathname : '';
+  return AUTH_PATHS.some((p) => path === p || path.startsWith(`${p}/`));
+}
+
 class ActivityTracker {
   private buffer: ActivityEvent[] = [];
   private flushTimer: ReturnType<typeof setInterval> | null = null;
@@ -33,6 +50,7 @@ class ActivityTracker {
    */
   track(type: ActivityEventType, event: Omit<ActivityEvent, 'type' | 'session_id' | 'timestamp'>): void {
     if (!this.isEnabled) return;
+    if (isOnAuthPage()) return;
 
     this.buffer.push({
       type,
@@ -84,9 +102,21 @@ class ActivityTracker {
 
   /**
    * Envoyer le buffer au serveur.
+   * N'envoie rien si on est sur une page d'auth ou sans session (évite 401 → redirect login).
    */
   async flush(): Promise<void> {
     if (this.buffer.length === 0) return;
+
+    if (isOnAuthPage()) {
+      this.buffer = [];
+      return;
+    }
+
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      this.buffer = [];
+      return;
+    }
 
     const events = [...this.buffer];
     this.buffer = [];
@@ -169,12 +199,19 @@ class ActivityTracker {
    */
   private flushSync(): void {
     if (this.buffer.length === 0) return;
+    if (isOnAuthPage()) {
+      this.buffer = [];
+      return;
+    }
+
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      this.buffer = [];
+      return;
+    }
 
     const events = [...this.buffer];
     this.buffer = [];
-
-    const token = localStorage.getItem('auth_token');
-    if (!token) return;
 
     const baseUrl = api.defaults.baseURL || '';
     const url = `${baseUrl}${BATCH_ENDPOINT}`;
