@@ -91,7 +91,9 @@ export function EventForm({
   isSubmitting = false,
 }: EventFormProps) {
   const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
-  const [coverPhotoPreview, setCoverPhotoPreview] = useState<string | null>(null);
+  const [coverPhotoPreview, setCoverPhotoPreview] = useState<string | null>(
+    () => (event?.featured_photo?.thumbnail_url || event?.featured_photo?.url) ?? null
+  );
   const [showPhotoUploader, setShowPhotoUploader] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [includeGuests, setIncludeGuests] = useState(false);
@@ -144,10 +146,10 @@ export function EventForm({
   // Charger le template sélectionné pour l'aperçu
   const selectedTemplate = templates.find((t) => String(t.id) === String(selectedTemplateId));
 
-  // Nettoyer les URLs de preview lors du démontage
+  // Nettoyer les URLs blob lors du démontage (ne pas revoquer les URLs distantes)
   useEffect(() => {
     return () => {
-      if (coverPhotoPreview) {
+      if (coverPhotoPreview?.startsWith('blob:')) {
         URL.revokeObjectURL(coverPhotoPreview);
       }
     };
@@ -163,7 +165,7 @@ export function EventForm({
   };
 
   const handleRemovePhoto = () => {
-    if (coverPhotoPreview) {
+    if (coverPhotoPreview?.startsWith('blob:')) {
       URL.revokeObjectURL(coverPhotoPreview);
     }
     setCoverPhoto(null);

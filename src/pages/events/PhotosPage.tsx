@@ -135,17 +135,13 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
 
   const handleDeleteConfirm = () => {
     if (photoToDelete) {
-      deletePhoto(Number(photoToDelete.id), {
+      deletePhoto(photoToDelete.id, {
         onSuccess: () => {
           setPhotoToDelete(null);
           // Close lightbox if deleting current photo
           if (lightboxIndex !== null && photos[lightboxIndex]?.id === photoToDelete.id) {
             setLightboxIndex(null);
           }
-          toast({
-            title: 'Photo supprimee',
-            description: 'La photo a ete supprimee avec succes.',
-          });
         },
       });
     }

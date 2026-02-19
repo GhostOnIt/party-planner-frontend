@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
+import { useToast } from '@/hooks/use-toast';
 import type { Photo, PhotoFilters } from '@/types';
 
 // Pagination meta type
@@ -85,7 +86,7 @@ export function usePhotos(eventId: string, filters: PhotoFilters = {}) {
 }
 
 // Fetch a single photo
-export function usePhoto(eventId: string, photoId: number) {
+export function usePhoto(eventId: string, photoId: string | number) {
   return useQuery({
     queryKey: ['events', eventId, 'photos', photoId],
     queryFn: async () => {
@@ -137,7 +138,7 @@ export function useUpdatePhoto(eventId: string) {
       photoId,
       data,
     }: {
-      photoId: number;
+      photoId: string | number;
       data: { caption?: string; is_featured?: boolean };
     }) => {
       const response = await api.put<Photo>(
@@ -155,14 +156,19 @@ export function useUpdatePhoto(eventId: string) {
 // Delete a single photo
 export function useDeletePhoto(eventId: string) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (photoId: number) => {
+    mutationFn: async (photoId: string | number) => {
       await api.delete(`/events/${eventId}/photos/${photoId}`);
       return photoId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events', eventId, 'photos'] });
+      toast({
+        title: 'Photo supprimée',
+        description: 'La photo a été supprimée avec succès.',
+      });
     },
   });
 }
@@ -274,7 +280,7 @@ export function useToggleFeaturedPhoto(eventId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (photoId: number) => {
+    mutationFn: async (photoId: string | number) => {
       const response = await api.post<Photo>(
         `/events/${eventId}/photos/${photoId}/toggle-featured`
       );

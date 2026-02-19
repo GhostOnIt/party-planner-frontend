@@ -192,16 +192,39 @@ export function useCreateEvent() {
 // Update event
 export function useUpdateEvent(eventId: number | string) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (data: Partial<CreateEventFormData>) => {
-      const response = await api.put<Event>(`/events/${eventId}`, data);
+    mutationFn: async (data: Partial<CreateEventFormData> & { cover_photo?: File }) => {
+      const { cover_photo, ...eventData } = data;
+
+      if (cover_photo) {
+        const formData = new FormData();
+        Object.entries(eventData).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            if (key === 'expected_guests' && typeof value === 'number') {
+              formData.append('expected_guests_count', value.toString());
+            } else if (key !== 'template_id') {
+              formData.append(key, value.toString());
+            }
+          }
+        });
+        formData.append('cover_photo', cover_photo);
+        const response = await api.put<Event>(`/events/${eventId}`, formData);
+        return response.data;
+      }
+
+      const response = await api.put<Event>(`/events/${eventId}`, eventData);
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['events', eventId] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      toast({
+        title: 'Événement modifié',
+        description: 'Les modifications ont été enregistrées avec succès.',
+      });
     },
   });
 }
