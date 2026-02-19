@@ -538,12 +538,10 @@ export function SettingsPage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Type de compte</p>
-                  <p className="font-medium capitalize">{user.role}</p>
+                  <p className="font-medium capitalize">{user.role==="admin" ? "Administrateur" : "Utilisateur"}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Email verifie</p>
-                  <p className="font-medium">{user.email_verified_at ? 'Oui' : 'Non'}</p>
-                </div>
+      </div>
               </div>
             </CardContent>
           </Card>
