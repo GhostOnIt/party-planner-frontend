@@ -156,7 +156,7 @@ export function useMarkPaid(eventId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (itemId: number) => {
+    mutationFn: async (itemId: string) => {
       const response = await api.post<BudgetItem>(
         `/events/${eventId}/budget/items/${itemId}/mark-paid`
       );

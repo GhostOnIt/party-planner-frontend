@@ -168,7 +168,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
   };
 
   const handleMarkPaid = (item: BudgetItem) => {
-    markPaid(Number(item.id), {
+    markPaid(String(item.id), {
       onSuccess: () => {
         toast({
           title: 'Paiement enregistre',
