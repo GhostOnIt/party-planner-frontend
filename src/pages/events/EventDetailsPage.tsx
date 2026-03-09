@@ -310,6 +310,10 @@ export function EventDetailsPage() {
     typeof budgetPaidRaw === 'string'
       ? parseFloat(budgetPaidRaw)
       : Number(budgetPaidRaw || 0);
+  const budgetRemaining =
+    budgetActual > 0
+      ? Math.max(budgetActual - budgetPaid, 0)
+      : Math.max(budgetEstimated - budgetPaid, 0);
 
   const guestsProgress = guestsCapacity
     ? getProgressPercent(guestsTotal, guestsCapacity)
@@ -751,8 +755,8 @@ export function EventDetailsPage() {
                         </div>
                         <div className="text-center">
                           <p className="text-xs text-[#6b7280] mb-1">Restant</p>
-                          <p className={cn("text-lg font-bold", budgetEstimated - budgetPaid < 0 ? "text-[#EF4444]" : "text-[#10B981]")}>
-                            {formatBudget(budgetEstimated - budgetPaid)}
+                          <p className={cn("text-lg font-bold", budgetRemaining < 0 ? "text-[#EF4444]" : "text-[#10B981]")}>
+                            {formatBudget(budgetRemaining)}
                           </p>
                         </div>
                       </div>

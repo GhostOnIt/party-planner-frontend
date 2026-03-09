@@ -73,10 +73,11 @@ export function useBudgetStats(eventId: string) {
     queryKey: ['events', eventId, 'budget', 'statistics'],
     queryFn: async () => {
       try {
-        const response = await api.get<BudgetStats>(
+        const response = await api.get<{ stats: BudgetStats }>(
           `/events/${eventId}/budget/statistics`
         );
-        return response.data;
+        // L'API retourne { stats: {...}, by_category: {...} }
+        return response.data.stats;
       } catch {
         // Return default stats if API doesn't exist yet
         return {
