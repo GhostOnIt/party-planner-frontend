@@ -85,6 +85,10 @@ export interface Event {
   budget_spent?: string | number;
   /** Somme des coûts estimés des lignes de budget */
   budget_items_estimated?: string | number;
+  /** Limite d'invités autorisés par l'abonnement pour cet événement */
+  max_guests_allowed?: number;
+  /** Nombre d'invités attendus (prévisionnel) saisi par l'utilisateur */
+  expected_guests_count?: number;
 }
 
 // Guest

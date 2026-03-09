@@ -52,6 +52,7 @@ import { EventStatusBadge, EventTypeBadge } from '@/components/features/events';
 import { DietaryRestrictionsCard } from '@/components/features/guests';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEvent, useDeleteEvent, useCancelEvent, useUpdateEvent } from '@/hooks/useEvents';
+import { useBudgetStats } from '@/hooks/useBudget';
 import { useAuthStore } from '@/stores/authStore';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { PermissionGuard } from '@/components/ui/permission-guard';
@@ -205,6 +206,7 @@ export function EventDetailsPage() {
 
   const queryClient = useQueryClient();
   const { data: event, isLoading, error } = useEvent(id);
+  const { data: budgetStats } = useBudgetStats(id!);
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
   const { mutate: cancelEvent, isPending: isCancelling } = useCancelEvent();
   const { mutate: updateEvent, isPending: isUpdatingStatus } = useUpdateEvent(id!);
@@ -283,16 +285,38 @@ export function EventDetailsPage() {
   const guestsConfirmed = event.guests_confirmed_count || 0;
   const guestsDeclined = event.guests_declined_count || 0;
   const guestsPending = event.guests_pending_count || 0;
+  const guestsCapacity =
+    event.max_guests_allowed || event.expected_guests_count || guestsTotal;
   const tasksTotal = event.tasks_count || 0;
   const tasksCompleted = event.tasks_completed_count || 0;
-  // Budget estimé : somme des lignes de budget, sinon budget global de l'événement
-  const budgetEstimatedRaw = event.budget_items_estimated ?? event.budget;
-  const budgetTotal = typeof budgetEstimatedRaw === 'string' ? parseFloat(budgetEstimatedRaw) : (Number(budgetEstimatedRaw) || 0);
-  const budgetSpent = typeof event.budget_spent === 'string' ? parseFloat(event.budget_spent) : (event.budget_spent || 0);
+  // Budget : on utilise les statistiques détaillées si disponibles
+  const budgetEstimatedRaw =
+    budgetStats?.total_estimated ?? (event.budget_items_estimated ?? event.budget);
+  const budgetActualRaw = budgetStats?.total_actual ?? null;
+  const budgetPaidRaw =
+    budgetStats?.total_paid ?? (typeof event.budget_spent === 'string'
+      ? parseFloat(event.budget_spent)
+      : event.budget_spent ?? 0);
 
-  const guestsProgress = getProgressPercent(guestsConfirmed, guestsTotal);
+  const budgetEstimated =
+    typeof budgetEstimatedRaw === 'string'
+      ? parseFloat(budgetEstimatedRaw)
+      : Number(budgetEstimatedRaw) || 0;
+  const budgetActual =
+    typeof budgetActualRaw === 'string'
+      ? parseFloat(budgetActualRaw)
+      : Number(budgetActualRaw ?? 0) || 0;
+  const budgetPaid =
+    typeof budgetPaidRaw === 'string'
+      ? parseFloat(budgetPaidRaw)
+      : Number(budgetPaidRaw || 0);
+
+  const guestsProgress = guestsCapacity
+    ? getProgressPercent(guestsTotal, guestsCapacity)
+    : 0;
   const tasksProgress = getProgressPercent(tasksCompleted, tasksTotal);
-  const budgetProgress = getProgressPercent(budgetSpent, budgetTotal);
+  const budgetProgress =
+    budgetEstimated > 0 ? getProgressPercent(budgetPaid, budgetEstimated) : 0;
 
   const countdown = getDaysUntilEvent(event.date);
   const imageUrl = event.featured_photo?.url || event.featured_photo?.thumbnail_url;
@@ -517,7 +541,11 @@ export function EventDetailsPage() {
                     <div className="w-12 h-12 rounded-xl bg-[#10B981]/10 flex items-center justify-center">
                       <Users className="w-6 h-6 text-[#10B981]" />
                     </div>
-                    <span className="text-3xl font-bold text-[#1a1a2e]">{guestsTotal}</span>
+                    <span className="text-3xl font-bold text-[#1a1a2e]">
+                      {guestsCapacity
+                        ? `${guestsTotal}/${guestsCapacity}`
+                        : guestsTotal}
+                    </span>
                   </div>
                   <p className="text-sm font-medium text-[#6b7280] mb-3">Invités</p>
                   <div className="space-y-2">
@@ -567,7 +595,9 @@ export function EventDetailsPage() {
                     <div className="w-12 h-12 rounded-xl bg-[#F59E0B]/10 flex items-center justify-center">
                       <PiggyBank className="w-6 h-6 text-[#F59E0B]" />
                     </div>
-                    <span className="text-lg font-bold text-[#1a1a2e]">{formatBudget(budgetTotal)}</span>
+                    <span className="text-lg font-bold text-[#1a1a2e]">
+                      {formatBudget(budgetEstimated)}
+                    </span>
                   </div>
                   <p className="text-sm font-medium text-[#6b7280] mb-3">Budget estimé</p>
                   <div className="space-y-2">
@@ -583,10 +613,18 @@ export function EventDetailsPage() {
                       />
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className={cn("font-medium", budgetProgress > 100 ? "text-[#EF4444]" : "text-[#F59E0B]")}>
-                        {formatBudget(budgetSpent)} dépensé
+                      <span
+                        className={cn(
+                          "font-medium",
+                          budgetProgress > 100 ? "text-[#EF4444]" : "text-[#F59E0B]"
+                        )}
+                      >
+                        {formatBudget(budgetPaid)} payé
                       </span>
                       <span className="text-[#6b7280]">{budgetProgress}%</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-[#6b7280]">
+                      <span>Réel : {formatBudget(budgetActual)}</span>
                     </div>
                   </div>
                 </div>
@@ -601,7 +639,7 @@ export function EventDetailsPage() {
                   {!isPast(parseISO(event.date)) && (
                     countdown.days > 0 ? (
                       <span className="text-3xl font-bold text-[#1a1a2e]">
-                        {countdown.days}
+                        {countdown.days} jrs
                       </span>
                     ) : (
                       <span className="text-lg font-bold text-[#1a1a2e] text-right leading-tight">
@@ -692,7 +730,7 @@ export function EventDetailsPage() {
                 )}
 
                 {/* Budget Breakdown */}
-                {featureAccess.budget.canAccess && budgetTotal > 0 && (
+                {featureAccess.budget.canAccess && budgetEstimated > 0 && (
                   <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
                     <div className="px-6 py-4 border-b border-[#f3f4f6] bg-[#f9fafb]">
                       <h3 className="font-semibold text-[#1a1a2e]">Aperçu du budget</h3>
@@ -701,18 +739,20 @@ export function EventDetailsPage() {
                       <div className="grid grid-cols-3 gap-4 mb-4">
                         <div className="text-center">
                           <p className="text-xs text-[#6b7280] mb-1">Budget prévu</p>
-                          <p className="text-lg font-bold text-[#1a1a2e]">{formatBudget(budgetTotal)}</p>
+                          <p className="text-lg font-bold text-[#1a1a2e]">
+                            {formatBudget(budgetEstimated)}
+                          </p>
                         </div>
                         <div className="text-center">
-                          <p className="text-xs text-[#6b7280] mb-1">Dépensé</p>
+                          <p className="text-xs text-[#6b7280] mb-1">Payé</p>
                           <p className={cn("text-lg font-bold", budgetProgress > 100 ? "text-[#EF4444]" : "text-[#F59E0B]")}>
-                            {formatBudget(budgetSpent)}
+                            {formatBudget(budgetPaid)}
                           </p>
                         </div>
                         <div className="text-center">
                           <p className="text-xs text-[#6b7280] mb-1">Restant</p>
-                          <p className={cn("text-lg font-bold", budgetTotal - budgetSpent < 0 ? "text-[#EF4444]" : "text-[#10B981]")}>
-                            {formatBudget(budgetTotal - budgetSpent)}
+                          <p className={cn("text-lg font-bold", budgetEstimated - budgetPaid < 0 ? "text-[#EF4444]" : "text-[#10B981]")}>
+                            {formatBudget(budgetEstimated - budgetPaid)}
                           </p>
                         </div>
                       </div>
