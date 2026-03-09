@@ -187,7 +187,7 @@ export function BudgetList({
                 </TableCell>
                 <TableCell className="text-center">
                   {item.paid ? (
-                    <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500 mx-auto" />
                   ) : (
                     <X className="h-5 w-5 text-muted-foreground mx-auto" />
                   )}
