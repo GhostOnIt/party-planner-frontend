@@ -627,9 +627,6 @@ export function EventDetailsPage() {
                       </span>
                       <span className="text-[#6b7280]">{budgetProgress}%</span>
                     </div>
-                    <div className="flex items-center justify-between text-[11px] text-[#6b7280]">
-                      <span>Réel : {formatBudget(budgetActual)}</span>
-                    </div>
                   </div>
                 </div>
               )}
@@ -734,7 +731,7 @@ export function EventDetailsPage() {
                 )}
 
                 {/* Budget Breakdown */}
-                {featureAccess.budget.canAccess && budgetEstimated > 0 && (
+                {featureAccess.budget.canAccess && budgetActual > 0 && (
                   <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
                     <div className="px-6 py-4 border-b border-[#f3f4f6] bg-[#f9fafb]">
                       <h3 className="font-semibold text-[#1a1a2e]">Aperçu du budget</h3>
@@ -744,7 +741,7 @@ export function EventDetailsPage() {
                         <div className="text-center">
                           <p className="text-xs text-[#6b7280] mb-1">Budget prévu</p>
                           <p className="text-lg font-bold text-[#1a1a2e]">
-                            {formatBudget(budgetEstimated)}
+                            {formatBudget(budgetActual)}
                           </p>
                         </div>
                         <div className="text-center">
