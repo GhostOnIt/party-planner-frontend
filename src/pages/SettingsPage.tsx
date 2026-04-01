@@ -205,7 +205,7 @@ export function SettingsPage() {
       onSuccess: () => {
         toast({
           title: 'Mot de passe modifie',
-          description: 'Votre mot de passe a ete change avec succes.',
+          description: 'Votre mot de passe a été changé avec succès.',
         });
         passwordForm.reset();
       },
@@ -245,7 +245,7 @@ export function SettingsPage() {
       onSuccess: () => {
         toast({
           title: 'Avatar mis a jour',
-          description: 'Votre photo de profil a ete mise a jour.',
+          description: 'Votre photo de profil a été mise à jour.',
         });
       },
       onError: () => {
@@ -266,8 +266,8 @@ export function SettingsPage() {
     deleteAvatar(undefined, {
       onSuccess: () => {
         toast({
-          title: 'Avatar supprime',
-          description: 'Votre photo de profil a ete supprimee.',
+          title: 'Avatar supprimé',
+          description: 'Votre photo de profil a été supprimée.',
         });
       },
       onError: () => {
@@ -287,7 +287,7 @@ export function SettingsPage() {
       {
         onSuccess: () => {
           toast({
-            title: 'Parametres mis a jour',
+            title: 'Paramètres mis à jour',
             description: 'Vos preferences de notification ont ete sauvegardees.',
           });
         },
@@ -502,7 +502,7 @@ export function SettingsPage() {
                     <Label>Email</Label>
                     <Input type="email" value={user.email} disabled className="bg-muted" />
                     <p className="text-xs text-muted-foreground">
-                      L'email ne peut pas etre modifie
+                      L'email ne peut pas être modifié
                     </p>
                   </div>
                   <Button type="submit" disabled={isUpdatingProfile}>
@@ -783,7 +783,7 @@ export function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Canaux de notification</CardTitle>
-              <CardDescription>Choisissez comment vous souhaitez etre notifie</CardDescription>
+              <CardDescription>Choisissez comment vous souhaitez être notifié</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">

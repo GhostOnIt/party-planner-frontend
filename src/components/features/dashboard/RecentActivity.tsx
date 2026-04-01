@@ -36,7 +36,7 @@ export function RecentActivity({ notifications, isLoading = false }: RecentActiv
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
-            Activite recente
+            Activités récentes
           </CardTitle>
           <CardDescription>Chargement...</CardDescription>
         </CardHeader>
@@ -61,12 +61,12 @@ export function RecentActivity({ notifications, isLoading = false }: RecentActiv
         <div>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
-            Activite recente
+            Activités récentes
           </CardTitle>
           <CardDescription>
             {notifications.length > 0
-              ? `${notifications.length} activite(s) recente(s)`
-              : 'Aucune activite recente'}
+              ? `${notifications.length} activité(s) récente(s)`
+              : 'Aucune activité récente'}
           </CardDescription>
         </div>
         {notifications.length > 0 && (
@@ -83,10 +83,10 @@ export function RecentActivity({ notifications, isLoading = false }: RecentActiv
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <Bell className="h-12 w-12 text-muted-foreground/50" />
             <p className="mt-2 text-sm text-muted-foreground">
-              Aucune activite recente
+              Aucune activité récente
             </p>
             <p className="text-xs text-muted-foreground">
-              Vos notifications et alertes apparaitront ici
+              Vos notifications et alertes apparaîtront ici
             </p>
           </div>
         ) : (

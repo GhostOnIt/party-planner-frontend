@@ -41,7 +41,7 @@ export function RecentActivity() {
       <div className="bg-white rounded-xl p-5 border border-[#e5e7eb]">
         <div className="flex items-center gap-2 mb-4">
           <Activity className="w-5 h-5 text-[#1a1a2e]" />
-          <h3 className="font-semibold text-[#1a1a2e]">Activite recente</h3>
+          <h3 className="font-semibold text-[#1a1a2e]">Activités récentes</h3>
         </div>
         <p className="text-sm text-[#6b7280]">Aucune activité récente</p>
       </div>
@@ -52,7 +52,7 @@ export function RecentActivity() {
     <div className="bg-white rounded-xl p-5 border border-[#e5e7eb]">
       <div className="flex items-center gap-2 mb-4">
         <Activity className="w-5 h-5 text-[#1a1a2e]" />
-        <h3 className="font-semibold text-[#1a1a2e]">Activite recente</h3>
+        <h3 className="font-semibold text-[#1a1a2e]">Activités récentes</h3>
       </div>
 
       <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">

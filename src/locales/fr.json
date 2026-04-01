@@ -42,13 +42,13 @@
     "subscriptions": "Abonnements",
     "notifications": "Notifications",
     "profile": "Mon profil",
-    "settings": "Parametres",
+    "settings": "Paramètres",
     "logout": "Deconnexion",
     "admin": "Administration",
     "users": "Utilisateurs",
     "adminDashboard": "Tableau de bord",
     "adminUsers": "Utilisateurs",
-    "adminEvents": "Evenements",
+    "adminEvents": "Événements",
     "guest_directory": "Registre des invités",
     "adminPayments": "Paiements",
     "adminSubscriptions": "Abonnements",
@@ -74,13 +74,13 @@
     "hasAccount": "Deja un compte ?",
     "signUp": "S'inscrire",
     "signIn": "Se connecter",
-    "loginSuccess": "Connexion reussie",
+    "loginSuccess": "Connexion réussie",
     "loginError": "Email ou mot de passe incorrect",
-    "registerSuccess": "Inscription reussie",
+    "registerSuccess": "Inscription réussie",
     "passwordChanged": "Mot de passe modifie avec succes"
   },
   "events": {
-    "title": "Evenements",
+    "title": "Événements",
     "create": "Creer un evenement",
     "edit": "Modifier l'evenement",
     "delete": "Supprimer l'evenement",
@@ -112,7 +112,7 @@
     }
   },
   "guests": {
-    "title": "Invites",
+    "title": "Invités",
     "add": "Ajouter un invite",
     "edit": "Modifier l'invite",
     "import": "Importer des invites",
@@ -129,7 +129,7 @@
       "pending": "En attente",
       "accepted": "Confirme",
       "declined": "Decline",
-      "maybe": "Peut-etre"
+      "maybe": "Peut-être"
     },
     "stats": {
       "total": "Total invites",
@@ -139,7 +139,7 @@
     }
   },
   "tasks": {
-    "title": "Taches",
+    "title": "Tâches",
     "add": "Ajouter une tache",
     "edit": "Modifier la tache",
     "noTasks": "Aucune tache",
@@ -189,7 +189,7 @@
     "markAsRead": "Marquer comme lu",
     "markAllAsRead": "Tout marquer comme lu",
     "noNotifications": "Aucune notification",
-    "settings": "Parametres de notification",
+    "settings": "Paramètres de notification",
     "email": "Notifications par email",
     "push": "Notifications push",
     "types": {
@@ -208,13 +208,13 @@
     "deleteAvatar": "Supprimer la photo",
     "fullName": "Nom complet",
     "avatarHint": "JPG, PNG ou GIF. Max 2 Mo.",
-    "emailHint": "L'email ne peut pas etre modifie"
+    "emailHint": "L'email ne peut pas être modifié"
   },
   "settings": {
-    "title": "Parametres",
-    "description": "Gerez votre compte et vos preferences",
+    "title": "Paramètres",
+    "description": "Gérez votre compte et vos préférences",
     "profile": "Profil",
-    "security": "Securite",
+    "security": "Sécurité",
     "notifications": "Notifications",
     "eventTypes": "Types d'événement",
     "collaboratorRoles": "Rôles",
@@ -254,19 +254,19 @@
   },
   "dashboard": {
     "welcome": "Bienvenue",
-    "upcomingEvents": "Evenements a venir",
-    "urgentTasks": "Taches urgentes",
-    "recentActivity": "Activite recente",
+    "upcomingEvents": "Événements à venir",
+    "urgentTasks": "Tâches urgentes",
+    "recentActivity": "Activité récente",
     "stats": {
-      "events": "Evenements",
-      "guests": "Invites confirmes",
-      "tasks": "Taches en attente",
+      "events": "Événements",
+      "guests": "Invités confirmés",
+      "tasks": "Tâches en attente",
       "budget": "Budget total"
     }
   },
   "communication": {
     "title": "Communication",
-    "description": "Gerez les bannieres et sondages de la plateforme",
+    "description": "Gérez les bannières et sondages de la plateforme",
     "createSpot": "Nouveau spot",
     "editSpot": "Modifier le spot",
     "deleteSpot": "Supprimer le spot",

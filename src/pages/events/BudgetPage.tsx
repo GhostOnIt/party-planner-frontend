@@ -135,7 +135,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
             setEditingItem(undefined);
             toast({
               title: 'Depense modifiee',
-              description: 'La depense a ete modifiee avec succes.',
+              description: 'La dépense a été modifiée avec succès.',
             });
           },
         }
@@ -146,7 +146,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
           setShowForm(false);
           toast({
             title: 'Depense ajoutee',
-            description: 'La depense a ete ajoutee avec succes.',
+            description: 'La dépense a été ajoutée avec succès.',
           });
         },
       });
@@ -159,8 +159,8 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
         onSuccess: () => {
           setItemToDelete(null);
           toast({
-            title: 'Depense supprimee',
-            description: 'La depense a ete supprimee avec succes.',
+            title: 'Dépense supprimée',
+            description: 'La dépense a été supprimée avec succès.',
           });
         },
       });
