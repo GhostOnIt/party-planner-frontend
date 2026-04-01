@@ -89,6 +89,8 @@ export interface Event {
   max_guests_allowed?: number;
   /** Nombre d'invités attendus (prévisionnel) saisi par l'utilisateur */
   expected_guests_count?: number;
+  /** Abonnement éventuellement rattaché directement à cet événement */
+  subscription?: Subscription | null;
 }
 
 // Guest

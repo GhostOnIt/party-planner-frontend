@@ -324,6 +324,15 @@ export function EventDetailsPage() {
 
   const countdown = getDaysUntilEvent(event.date);
   const imageUrl = event.featured_photo?.url || event.featured_photo?.thumbnail_url;
+  const subscriptionPlan = event.subscription?.plan;
+  const eventPlanLabel =
+    (typeof subscriptionPlan === 'object' && subscriptionPlan
+      ? (subscriptionPlan as { title?: string; name?: string }).title ||
+        (subscriptionPlan as { title?: string; name?: string }).name
+      : null) ||
+    (typeof subscriptionPlan === 'string' ? subscriptionPlan : null) ||
+    event.subscription?.plan_type ||
+    null;
 
   return (
     <div className="min-h-screen bg-[#F5F7FA]">
@@ -831,6 +840,18 @@ export function EventDetailsPage() {
                         <div>
                           <p className="text-xs text-[#6b7280] mb-0.5">Invités attendus</p>
                           <p className="font-medium text-[#1a1a2e]">{event.expected_guests} personnes</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {eventPlanLabel && (
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-[#4F46E5]/10 flex items-center justify-center shrink-0">
+                          <Wallet className="w-5 h-5 text-[#4F46E5]" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-[#6b7280] mb-0.5">Plan</p>
+                          <p className="font-medium text-[#1a1a2e] capitalize">{eventPlanLabel}</p>
                         </div>
                       </div>
                     )}
