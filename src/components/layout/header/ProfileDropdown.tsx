@@ -20,6 +20,7 @@ interface ProfileDropdownProps {
     name: string
     email: string
     avatar_url?: string | null
+    role?: string
   }
   onLogout: () => void
   onProfileClick?: () => void
@@ -64,6 +65,7 @@ export function ProfileDropdown({ user, onLogout, onProfileClick, onSettingsClic
     return planType.toUpperCase()
   }
   const planName = getPlanName(subscription?.plan_type)
+  const isAdmin = user.role === 'admin'
 
   const eventsRemaining = quota?.remaining ?? 0
   const isUnlimited = quota?.is_unlimited ?? false
@@ -109,7 +111,7 @@ export function ProfileDropdown({ user, onLogout, onProfileClick, onSettingsClic
         </Avatar>
         <div className="hidden sm:block text-left">
           <p className="text-sm font-medium text-[#1a1a2e]">{user.name}</p>
-          <p className="text-xs text-[#9ca3af]">{planName}</p>
+          <p className="text-xs text-[#9ca3af]">{isAdmin ? 'Admin' : planName}</p>
         </div>
         <ChevronDown className={cn("w-4 h-4 text-[#9ca3af] transition-transform", showProfile && "rotate-180")} />
       </button>
@@ -131,10 +133,10 @@ export function ProfileDropdown({ user, onLogout, onProfileClick, onSettingsClic
             </div>
             <div className="mt-3 flex items-center gap-2">
               <span className="px-2 py-0.5 text-xs font-medium bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white rounded-full">
-                {planName}
+                {isAdmin ? 'Admin' : planName}
               </span>
               <span className="text-xs text-[#9ca3af]">
-                {isUnlimited ? "Illimité" : `${eventsRemaining} événements restants`}
+                {isAdmin ? 'Accès total' : (isUnlimited ? "Illimité" : `${eventsRemaining} événements restants`)}
               </span>
             </div>
           </div>

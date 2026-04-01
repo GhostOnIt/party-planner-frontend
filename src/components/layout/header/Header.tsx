@@ -9,6 +9,7 @@ interface HeaderProps {
     name: string
     email: string
     avatar_url?: string | null
+    role?: string
   }
   onMenuClick?: () => void
   onProfileClick?: () => void

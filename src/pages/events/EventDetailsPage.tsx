@@ -212,6 +212,7 @@ export function EventDetailsPage() {
   const { mutate: updateEvent, isPending: isUpdatingStatus } = useUpdateEvent(id!);
   const { toast } = useToast();
   const featureAccess = useFeatureAccess(id!);
+  const isAdminViewer = user?.role === 'admin';
 
   const statusOptions: { value: EventStatus; label: string }[] = [
     { value: 'upcoming', label: 'À venir' },
@@ -844,7 +845,17 @@ export function EventDetailsPage() {
                       </div>
                     )}
 
-                    {eventPlanLabel && (
+                    {isAdminViewer ? (
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-[#7C3AED]/10 flex items-center justify-center shrink-0">
+                          <UserCheck className="w-5 h-5 text-[#7C3AED]" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-[#6b7280] mb-0.5">Accès</p>
+                          <Badge className="bg-[#7C3AED] text-white border-0">Admin</Badge>
+                        </div>
+                      </div>
+                    ) : eventPlanLabel && (
                       <div className="flex items-start gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#4F46E5]/10 flex items-center justify-center shrink-0">
                           <Wallet className="w-5 h-5 text-[#4F46E5]" />
