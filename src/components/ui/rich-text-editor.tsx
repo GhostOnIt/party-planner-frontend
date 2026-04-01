@@ -1,6 +1,8 @@
 import { useEditor, EditorContent } from '@tiptap/react';
+import { DOMParser as ProseMirrorDOMParser } from '@tiptap/pm/model';
 import StarterKit from '@tiptap/starter-kit';
 import { Bold, Italic, List, ListOrdered, Heading2, Heading3 } from 'lucide-react';
+import { marked } from 'marked';
 import { cn } from '@/lib/utils';
 
 export interface RichTextEditorProps {
@@ -9,6 +11,17 @@ export interface RichTextEditorProps {
   placeholder?: string;
   className?: string;
   minHeight?: string;
+}
+
+function looksLikeMarkdown(text: string): boolean {
+  return (
+    /(^|\n)#{1,6}\s/.test(text) ||
+    /(^|\n)\s*[-*+]\s+/.test(text) ||
+    /(^|\n)\s*\d+\.\s+/.test(text) ||
+    /`{1,3}[^`]+`{1,3}/.test(text) ||
+    /\[.+?\]\(.+?\)/.test(text) ||
+    /\*\*[^*]+\*\*/.test(text)
+  );
 }
 
 export function RichTextEditor({
@@ -32,6 +45,29 @@ export function RichTextEditor({
         class:
           'prose prose-sm dark:prose-invert max-w-none min-w-0 focus:outline-none ' +
           'prose-headings:font-semibold prose-headings:text-foreground prose-p:text-foreground prose-li:text-foreground',
+      },
+      handlePaste: (view, event) => {
+        const plainText = event.clipboardData?.getData('text/plain')?.trim();
+        const htmlText = event.clipboardData?.getData('text/html');
+
+        // Let default behavior run for rich HTML pastes or plain non-markdown text.
+        if (!plainText || htmlText || !looksLikeMarkdown(plainText)) {
+          return false;
+        }
+
+        const rendered = marked.parse(plainText);
+        if (typeof rendered !== 'string') {
+          return false;
+        }
+
+        event.preventDefault();
+        const container = document.createElement('div');
+        container.innerHTML = rendered;
+
+        const parser = ProseMirrorDOMParser.fromSchema(view.state.schema);
+        const slice = parser.parseSlice(container);
+        view.dispatch(view.state.tr.replaceSelection(slice).scrollIntoView());
+        return true;
       },
     },
     onUpdate: ({ editor }) => {
