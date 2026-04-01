@@ -12,6 +12,10 @@ import { Label } from '@/components/ui/label';
 import { useAvailableRoles } from '@/hooks/useCollaborators';
 import { useCustomRoles } from '@/hooks/useCustomRoles';
 import type { Collaborator, CollaboratorRole, CustomRole } from '@/types';
+import {
+  effectiveCollaboratorRoleCount,
+  MAX_COLLABORATOR_ROLES,
+} from '@/utils/collaboratorRoles';
 
 interface ChangeRoleDialogProps {
   open: boolean;
@@ -95,15 +99,25 @@ export function ChangeRoleDialog({
   }, [open, collaborator, filteredRoles]);
 
   const handleCustomRoleToggle = (roleId: string, checked: boolean) => {
-    setSelectedCustomRoleIds((prev) => {
-      if (checked) return [...prev, roleId];
-      return prev.filter((id) => id !== roleId);
-    });
+    if (checked) {
+      const next = [...selectedCustomRoleIds, roleId];
+      if (effectiveCollaboratorRoleCount(selectedRoles, next) > MAX_COLLABORATOR_ROLES) {
+        return;
+      }
+      setSelectedCustomRoleIds(next);
+    } else {
+      setSelectedCustomRoleIds((prev) => prev.filter((id) => id !== roleId));
+    }
   };
 
   const handleRoleToggle = (roleValue: CollaboratorRole, checked: boolean) => {
     if (checked) {
-      setSelectedRoles((prev) => [...prev, roleValue]);
+      const next = [...selectedRoles, roleValue];
+      const uniqueNext = [...new Set(next)];
+      if (effectiveCollaboratorRoleCount(uniqueNext, selectedCustomRoleIds) > MAX_COLLABORATOR_ROLES) {
+        return;
+      }
+      setSelectedRoles(uniqueNext);
     } else {
       setSelectedRoles((prev) => prev.filter((role) => role !== roleValue));
     }
@@ -120,6 +134,10 @@ export function ChangeRoleDialog({
     }
   };
 
+  const roleCount = effectiveCollaboratorRoleCount(selectedRoles, selectedCustomRoleIds);
+  const hasNoSelection = selectedRoles.length === 0 && selectedCustomRoleIds.length === 0;
+  const overLimit = roleCount > MAX_COLLABORATOR_ROLES;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -133,6 +151,9 @@ export function ChangeRoleDialog({
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label>Nouveaux rôles</Label>
+            <p className="text-xs text-muted-foreground">
+              Maximum {MAX_COLLABORATOR_ROLES} rôles au total (système et personnalisés).
+            </p>
             <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
               {/* Custom roles (if any) */}
             
@@ -201,9 +222,15 @@ export function ChangeRoleDialog({
               )}
 
             </div>
-            {selectedRoles.length === 0 && selectedCustomRoleIds.length === 0 && (
+            {hasNoSelection && (
               <p className="text-sm text-destructive">
                 Sélectionnez au moins un rôle (système ou personnalisé)
+              </p>
+            )}
+            {overLimit && (
+              <p className="text-sm text-destructive">
+                Un collaborateur ne peut avoir que {MAX_COLLABORATOR_ROLES} rôles au maximum. Retirez des
+                rôles pour enregistrer.
               </p>
             )}
           </div>
@@ -215,9 +242,7 @@ export function ChangeRoleDialog({
           </Button>
           <Button
             onClick={handleConfirm}
-            disabled={
-              isSubmitting || (selectedRoles.length === 0 && selectedCustomRoleIds.length === 0)
-            }
+            disabled={isSubmitting || hasNoSelection || overLimit}
           >
             {isSubmitting ? 'Modification...' : 'Modifier'}
           </Button>

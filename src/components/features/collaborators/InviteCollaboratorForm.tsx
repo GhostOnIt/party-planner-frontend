@@ -15,6 +15,10 @@ import {
 
 import { useAvailableRoles } from '@/hooks/useCollaborators';
 import type { CustomRole, InviteCollaboratorFormData } from '@/types';
+import {
+  effectiveCollaboratorRoleCount,
+  MAX_COLLABORATOR_ROLES,
+} from '@/utils/collaboratorRoles';
 
 type InviteFormValues = {
   email: string;
@@ -63,12 +67,20 @@ export function InviteCollaboratorForm({
       custom_role_ids: z.array(z.string()).optional(),
     })
     .superRefine((data, ctx) => {
-      const rolesCount = (data.roles || []).length;
-      const customCount = (data.custom_role_ids || []).length;
-      if (rolesCount === 0 && customCount === 0) {
+      const systemRoles = data.roles || [];
+      const customIds = data.custom_role_ids || [];
+      if (systemRoles.length === 0 && customIds.length === 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'Sélectionnez au moins un rôle (système ou personnalisé)',
+          path: ['roles'],
+        });
+        return;
+      }
+      if (effectiveCollaboratorRoleCount(systemRoles, customIds) > MAX_COLLABORATOR_ROLES) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Un collaborateur ne peut avoir que ${MAX_COLLABORATOR_ROLES} rôles au maximum (système et personnalisés).`,
           path: ['roles'],
         });
       }
@@ -148,6 +160,10 @@ export function InviteCollaboratorForm({
 
           <div className="space-y-2">
             <Label>Rôles *</Label>
+            <p className="text-xs text-muted-foreground">
+              Maximum {MAX_COLLABORATOR_ROLES} rôles au total (système et personnalisés). Si vous ne choisissez
+              que des rôles personnalisés, un rôle système par défaut est ajouté côté serveur.
+            </p>
             <div className="space-y-3 max-h-56 overflow-y-auto border rounded-md p-3">
               {/* 1. Rôles système */}
               <div className="space-y-2">
@@ -162,8 +178,18 @@ export function InviteCollaboratorForm({
                       checked={selectedRoles?.includes(role.value) || false}
                       onChange={(e) => {
                         const currentRoles = selectedRoles || [];
+                        const custom = selectedCustomRoleIds || [];
                         if (e.target.checked) {
-                          setValue('roles', [...currentRoles, role.value]);
+                          const next = [...currentRoles, role.value];
+                          if (
+                            effectiveCollaboratorRoleCount(
+                              [...new Set(next)],
+                              custom
+                            ) > MAX_COLLABORATOR_ROLES
+                          ) {
+                            return;
+                          }
+                          setValue('roles', next);
                         } else {
                           setValue(
                             'roles',
@@ -207,6 +233,13 @@ export function InviteCollaboratorForm({
                               const next = isChecked
                                 ? selectedCustomRoleIds.filter((id) => id !== role.id)
                                 : [...selectedCustomRoleIds, role.id];
+                              const sys = selectedRoles || [];
+                              if (
+                                !isChecked &&
+                                effectiveCollaboratorRoleCount(sys, next) > MAX_COLLABORATOR_ROLES
+                              ) {
+                                return;
+                              }
                               setValue('custom_role_ids', next);
                             }}
                             className="rounded border-gray-300"
