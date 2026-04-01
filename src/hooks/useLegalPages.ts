@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
 
 export interface LegalPage {
-  id: number;
+  id: string;
   slug: string;
   title: string;
   content: string;
@@ -54,7 +54,7 @@ export function useAdminLegalPages() {
 }
 
 // Fetch a single legal page by ID (admin)
-export function useAdminLegalPage(id: number) {
+export function useAdminLegalPage(id: string) {
   return useQuery<LegalPage>({
     queryKey: ['admin', 'legal-page', id],
     queryFn: async () => {
@@ -70,7 +70,7 @@ export function useUpdateLegalPage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: UpdateLegalPageData }) => {
+    mutationFn: async ({ id, data }: { id: string; data: UpdateLegalPageData }) => {
       const response = await api.put(`/admin/legal-pages/${id}`, data);
       return response.data;
     },
@@ -102,7 +102,7 @@ export function useDeleteLegalPage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (id: string) => {
       const response = await api.delete(`/admin/legal-pages/${id}`);
       return response.data;
     },
