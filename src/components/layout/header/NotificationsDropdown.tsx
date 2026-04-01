@@ -2,7 +2,13 @@ import { useState, useRef, useEffect } from "react"
 import { Bell, Check, Trash2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
-import { useNotifications, useMarkAsRead, useMarkAllAsRead, useDeleteNotification } from "@/hooks/useNotifications"
+import {
+  useNotifications,
+  useMarkAsRead,
+  useMarkAllAsRead,
+  useDeleteNotification,
+  useUnreadNotificationsCount,
+} from "@/hooks/useNotifications"
 import { formatDistanceToNow } from "date-fns"
 import { fr } from "date-fns/locale"
 
@@ -12,12 +18,15 @@ export function NotificationsDropdown() {
   const notifRef = useRef<HTMLDivElement>(null)
 
   const { data: notificationsData, isLoading } = useNotifications()
+  const { data: unreadCountLive = 0 } = useUnreadNotificationsCount()
   const markAsReadMutation = useMarkAsRead()
   const markAllAsReadMutation = useMarkAllAsRead()
   const deleteNotificationMutation = useDeleteNotification()
+  const previousUnreadRef = useRef(0)
+  const canPlaySoundRef = useRef(false)
 
   const notifications = notificationsData?.data || []
-  const unreadCount = notificationsData?.unread_count || 0
+  const unreadCount = unreadCountLive || notificationsData?.unread_count || 0
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -28,6 +37,45 @@ export function NotificationsDropdown() {
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
+
+  useEffect(() => {
+    const enableSound = () => {
+      canPlaySoundRef.current = true
+    }
+
+    window.addEventListener("pointerdown", enableSound, { once: true })
+    return () => window.removeEventListener("pointerdown", enableSound)
+  }, [])
+
+  useEffect(() => {
+    const previous = previousUnreadRef.current
+    const hasNewNotification = unreadCount > previous
+
+    if (hasNewNotification && canPlaySoundRef.current) {
+      try {
+        const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+        if (AudioCtx) {
+          const audioContext = new AudioCtx()
+          const oscillator = audioContext.createOscillator()
+          const gain = audioContext.createGain()
+
+          oscillator.type = "sine"
+          oscillator.frequency.value = 880
+          gain.gain.value = 0.02
+
+          oscillator.connect(gain)
+          gain.connect(audioContext.destination)
+
+          oscillator.start()
+          oscillator.stop(audioContext.currentTime + 0.08)
+        }
+      } catch {
+        // Ignore audio restrictions/errors silently
+      }
+    }
+
+    previousUnreadRef.current = unreadCount
+  }, [unreadCount])
 
   const markAsRead = (id: string) => {
     markAsReadMutation.mutate(id)
@@ -90,7 +138,7 @@ export function NotificationsDropdown() {
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-5 h-5 px-1 bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white text-xs rounded-full flex items-center justify-center font-medium">
+          <span className="absolute -top-0.5 -right-0.5 min-w-5 h-5 px-1 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium animate-pulse shadow-sm">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -143,10 +191,11 @@ export function NotificationsDropdown() {
                       <div className="flex items-start justify-between gap-2">
                         <p
                           className={cn(
-                            "text-sm",
+                            "text-sm flex items-center gap-1.5",
                             !notif.read_at ? "font-semibold text-[#1a1a2e]" : "font-medium text-[#6b7280]",
                           )}
                         >
+                          {!notif.read_at && <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
                           {notif.title}
                         </p>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

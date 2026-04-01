@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import logo from '@/assets/logo.png';
+import { useUnreadNotificationsCount } from '@/hooks/useNotifications';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,6 +70,7 @@ export function Sidebar({ isAdmin = false, onLogout }: SidebarProps) {
   const { t } = useTranslation();
   const location = useLocation();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const { data: unreadCount = 0 } = useUnreadNotificationsCount();
 
   // Détecter si on est dans la section admin
   const isInAdminSection = location.pathname.startsWith('/admin');
@@ -121,6 +123,11 @@ export function Sidebar({ isAdmin = false, onLogout }: SidebarProps) {
             >
               <item.icon className="w-5 h-5" />
               {t(item.labelKey)}
+              {item.to === '/notifications' && unreadCount > 0 && (
+                <span className="ml-auto inline-flex min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[11px] items-center justify-center font-semibold animate-pulse">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </NavLink>
           ))}
         </div>

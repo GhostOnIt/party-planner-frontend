@@ -34,6 +34,8 @@ export function useNotifications() {
         unread_count: 0,
       };
     },
+    refetchInterval: 20000, // Refresh every 20 seconds
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -58,6 +60,7 @@ export function useUnreadNotificationsCount() {
       return 0;
     },
     refetchInterval: 30000, // Refresh every 30 seconds
+    refetchOnWindowFocus: true,
   });
 }
 
