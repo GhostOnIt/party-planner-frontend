@@ -1,4 +1,4 @@
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { Event } from '@/types';
 import { resolveUrl } from '@/lib/utils';
@@ -132,10 +132,19 @@ export function transformEventToDisplayFormat(
  * @returns EventStats object
  */
 export function calculateEventStats(events: Event[]): EventStats {
+  const today = startOfDay(new Date());
+  const isNotPastEvent = (event: Event): boolean => {
+    try {
+      return parseISO(event.date) >= today;
+    } catch {
+      return true;
+    }
+  };
+
   return {
     total: events.length,
-    upcoming: events.filter((e) => e.status === 'upcoming').length,
-    ongoing: events.filter((e) => e.status === 'ongoing').length,
+    upcoming: events.filter((e) => e.status === 'upcoming' && isNotPastEvent(e)).length,
+    ongoing: events.filter((e) => e.status === 'ongoing' && isNotPastEvent(e)).length,
     totalGuests: events.reduce(
       (acc, e) => acc + (e.guests_count || 0),
       0
