@@ -980,7 +980,7 @@ export function SettingsPage() {
         <TabsContent value="budget-categories" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Catégories de budget</CardTitle>
+              <CardTitle>Liste des budget à gérer</CardTitle>
               <CardDescription>
                 Personnalisez les catégories de budget disponibles pour vos événements
               </CardDescription>

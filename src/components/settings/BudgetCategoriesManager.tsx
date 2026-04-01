@@ -184,13 +184,7 @@ export function BudgetCategoriesManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">Catégories de budget</h3>
-          <p className="text-sm text-muted-foreground">
-            Gérez les catégories de budget disponibles pour vos événements
-          </p>
-        </div>
+      <div className="flex items-center justify-end">
         <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />
           Ajouter une catégorie
