@@ -183,11 +183,17 @@ export function EventTypesManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-end">
-        <Button onClick={handleCreate}>
-          <Plus className="mr-2 h-4 w-4" />
-          Ajouter un type
-        </Button>
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-lg font-semibold">Types d'événement</h3>
+          <Button onClick={handleCreate}>
+            <Plus className="mr-2 h-4 w-4" />
+            Ajouter un type
+          </Button>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Personnalisez les types d'événement disponibles pour votre compte
+        </p>
       </div>
 
       <div className="rounded-md border">

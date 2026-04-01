@@ -949,12 +949,6 @@ export function SettingsPage() {
         {/* Event Types Tab */}
         <TabsContent value="event-types" className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Types d'événement</CardTitle>
-              <CardDescription>
-                Personnalisez les types d'événement disponibles pour votre compte
-              </CardDescription>
-            </CardHeader>
             <CardContent>
               <EventTypesManager />
             </CardContent>
@@ -964,12 +958,6 @@ export function SettingsPage() {
         {/* Collaborator Roles Tab */}
         <TabsContent value="collaborator-roles" className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Rôles de collaborateurs</CardTitle>
-              <CardDescription>
-                Personnalisez les rôles disponibles pour inviter des collaborateurs à vos événements
-              </CardDescription>
-            </CardHeader>
             <CardContent>
               <CollaboratorRolesManager />
             </CardContent>
@@ -979,12 +967,6 @@ export function SettingsPage() {
         {/* Budget Categories Tab */}
         <TabsContent value="budget-categories" className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Liste des budget à gérer</CardTitle>
-              <CardDescription>
-                Personnalisez les catégories de budget disponibles pour vos événements
-              </CardDescription>
-            </CardHeader>
             <CardContent>
               <BudgetCategoriesManager />
             </CardContent>

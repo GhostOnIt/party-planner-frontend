@@ -146,11 +146,17 @@ export function CollaboratorRolesManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Ajouter un rôle
-        </Button>
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-lg font-semibold">Rôles de collaborateurs</h3>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Ajouter un rôle
+          </Button>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Personnalisez les rôles disponibles pour inviter des collaborateurs à vos événements
+        </p>
       </div>
 
       <div className="rounded-md border">
