@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useNavigate } from "react-router-dom"
 import { SearchInput } from "@/components/forms/search-input"
 
-type SortField = "name" | "confirmed" | "declined" | "pending" | "confirmRate"
+type SortField = "name" | "confirmed" | "declined" | "pending" | "maybe" | "confirmRate"
 type SortOrder = "asc" | "desc"
 
 interface ConfirmationsChartProps {
@@ -68,6 +68,9 @@ export function ConfirmationsChart({ filter = "7days", eventTypeFilter = "all" }
           <td className="py-3 px-3">
             <Skeleton className="h-4 w-32 mb-2" />
             <Skeleton className="h-3 w-24" />
+          </td>
+          <td className="text-center py-3 px-3">
+            <Skeleton className="h-4 w-12 mx-auto" />
           </td>
           <td className="text-center py-3 px-3">
             <Skeleton className="h-4 w-12 mx-auto" />
@@ -156,6 +159,9 @@ export function ConfirmationsChart({ filter = "7days", eventTypeFilter = "all" }
                   <th className="text-center py-3 px-3 font-medium text-[#F59E0B] cursor-pointer hover:bg-[#eef0f4] transition-colors" onClick={() => handleSort("pending")}>
                     <div className="flex items-center justify-center gap-1.5">En attente <SortIcon field="pending" /></div>
                   </th>
+                  <th className="text-center py-3 px-3 font-medium text-[#8B5CF6] cursor-pointer hover:bg-[#eef0f4] transition-colors" onClick={() => handleSort("maybe")}>
+                    <div className="flex items-center justify-center gap-1.5">Peut-être <SortIcon field="maybe" /></div>
+                  </th>
                   <th className="text-center py-3 px-3 font-medium text-[#6b7280] cursor-pointer hover:bg-[#eef0f4] transition-colors" onClick={() => handleSort("confirmRate")}>
                     <div className="flex items-center justify-center gap-1.5">Taux <SortIcon field="confirmRate" /></div>
                   </th>
@@ -185,6 +191,9 @@ export function ConfirmationsChart({ filter = "7days", eventTypeFilter = "all" }
                       </td>
                       <td className="text-center py-3 px-3">
                         <span className="font-semibold text-[#F59E0B]">{event.pending}</span>
+                      </td>
+                      <td className="text-center py-3 px-3">
+                        <span className="font-semibold text-[#8B5CF6]">{event.maybe ?? 0}</span>
                       </td>
                       <td className="text-center py-3 px-3">
                         <div className="flex flex-col items-center gap-1">
@@ -218,7 +227,7 @@ export function ConfirmationsChart({ filter = "7days", eventTypeFilter = "all" }
                   ))
                 ) : (
                   <tr className="border-t border-[#e5e7eb]">
-                    <td colSpan={5} className="py-12 text-center text-[#6b7280]">
+                    <td colSpan={6} className="py-12 text-center text-[#6b7280]">
                       <div className="flex flex-col items-center justify-center">
                           <div className="bg-gray-50 p-3 rounded-full mb-3">
                             <Calendar className="w-6 h-6 text-gray-400" />

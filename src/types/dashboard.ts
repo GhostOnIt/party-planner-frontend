@@ -36,6 +36,7 @@ export interface ConfirmationEvent {
   confirmed: number
   declined: number
   pending: number
+  maybe: number
   total: number
   confirmRate: number
 }
