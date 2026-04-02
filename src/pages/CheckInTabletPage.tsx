@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { ArrowLeft } from 'lucide-react';
 
 import api from '@/api/client';
 import { useGuests, useCheckInGuest, useUndoCheckIn } from '@/hooks/useGuests';
@@ -197,8 +198,47 @@ export default function CheckInTabletPage() {
     );
   }
 
+  const eventDetailPath = `/events/${String(invitation.event.id)}`;
+
   return (
     <div className="p-3 sm:p-4 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={() => navigate(eventDetailPath)}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Retour à l&apos;événement
+        </Button>
+      </div>
+
+      <details className="rounded-lg border bg-muted/40 px-3 py-2 text-sm">
+        <summary className="cursor-pointer font-medium text-foreground">
+          Comment ça fonctionne ?
+        </summary>
+        <ul className="mt-2 list-disc space-y-1.5 pl-5 text-muted-foreground">
+          <li>
+            Mode portier volontairement sans menu latéral : écran dédié pour aller vite le jour de l&apos;événement.
+          </li>
+          <li>
+            Le lien dans la barre d&apos;adresse (ou le QR) contient le code d&apos;un invité : il sert à charger
+            l&apos;événement. La zone « Invité scanné » correspond à cet invité ; vous pouvez valider ou annuler son
+            check-in.
+          </li>
+          <li>
+            La recherche filtre la liste des invités éligibles (RSVP accepté / en attente / peut-être, pas encore
+            check-in) pour en traiter un autre sans scanner de QR.
+          </li>
+          <li>
+            « Scanner QR » ouvre la caméra : après lecture, la page se met à jour pour l&apos;invité du QR scanné.
+          </li>
+          <li>Le check-in n&apos;est autorisé que le jour de l&apos;événement (règle serveur).</li>
+        </ul>
+      </details>
+
       <Card>
         <CardHeader className="flex-row items-start justify-between gap-3">
           <div>
