@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { useAvailableRoles } from '@/hooks/useCollaborators';
 import { useCustomRoles } from '@/hooks/useCustomRoles';
 import type { Collaborator, CollaboratorRole, CustomRole } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 import {
   effectiveCollaboratorRoleCount,
   MAX_COLLABORATOR_ROLES,
@@ -45,6 +46,7 @@ export function ChangeRoleDialog({
   const systemRoles = systemRolesData?.roles || [];
   const { data: rolesData } = useCustomRoles(eventId);
   const customRoles: CustomRole[] = (rolesData?.roles || []).filter((r) => !r.is_system);
+  const { toast } = useToast();
 
   // Filter system roles based on what the current user can assign
   // Memoize to avoid recreating on every render
@@ -102,6 +104,10 @@ export function ChangeRoleDialog({
     if (checked) {
       const next = [...selectedCustomRoleIds, roleId];
       if (effectiveCollaboratorRoleCount(selectedRoles, next) > MAX_COLLABORATOR_ROLES) {
+        toast({
+          title: 'Limite atteinte',
+          description: `Un collaborateur ne peut avoir que ${MAX_COLLABORATOR_ROLES} rôles au maximum (système et personnalisés).`,
+        });
         return;
       }
       setSelectedCustomRoleIds(next);
@@ -115,6 +121,10 @@ export function ChangeRoleDialog({
       const next = [...selectedRoles, roleValue];
       const uniqueNext = [...new Set(next)];
       if (effectiveCollaboratorRoleCount(uniqueNext, selectedCustomRoleIds) > MAX_COLLABORATOR_ROLES) {
+        toast({
+          title: 'Limite atteinte',
+          description: `Un collaborateur ne peut avoir que ${MAX_COLLABORATOR_ROLES} rôles au maximum (système et personnalisés).`,
+        });
         return;
       }
       setSelectedRoles(uniqueNext);
@@ -137,6 +147,17 @@ export function ChangeRoleDialog({
   const roleCount = effectiveCollaboratorRoleCount(selectedRoles, selectedCustomRoleIds);
   const hasNoSelection = selectedRoles.length === 0 && selectedCustomRoleIds.length === 0;
   const overLimit = roleCount > MAX_COLLABORATOR_ROLES;
+  const atMax = roleCount === MAX_COLLABORATOR_ROLES;
+
+  const wouldExceedWithSystemRole = (roleValue: CollaboratorRole) => {
+    const uniqueNext = [...new Set([...selectedRoles, roleValue])];
+    return effectiveCollaboratorRoleCount(uniqueNext, selectedCustomRoleIds) > MAX_COLLABORATOR_ROLES;
+  };
+
+  const wouldExceedWithCustomRole = (customRoleId: string) => {
+    const uniqueNext = [...new Set([...selectedCustomRoleIds, customRoleId])];
+    return effectiveCollaboratorRoleCount(selectedRoles, uniqueNext) > MAX_COLLABORATOR_ROLES;
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -169,12 +190,24 @@ export function ChangeRoleDialog({
                     onChange={(e) =>
                       handleRoleToggle(role.value as CollaboratorRole, e.target.checked)
                     }
-                    className="rounded border-gray-300"
+                    className={`rounded border-gray-300 ${
+                      role.value !== 'owner' &&
+                      !selectedRoles.includes(role.value as CollaboratorRole) &&
+                      wouldExceedWithSystemRole(role.value as CollaboratorRole)
+                        ? 'opacity-50'
+                        : ''
+                    }`}
                     disabled={role.value === 'owner'} // Owner role cannot be assigned
                   />
                   <label
                     htmlFor={`role-${role.value}`}
-                    className="text-sm font-medium cursor-pointer flex-1"
+                    className={`text-sm font-medium cursor-pointer flex-1 ${
+                      role.value !== 'owner' &&
+                      !selectedRoles.includes(role.value as CollaboratorRole) &&
+                      wouldExceedWithSystemRole(role.value as CollaboratorRole)
+                        ? 'opacity-50 cursor-not-allowed'
+                        : ''
+                    }`}
                   >
                     <div>
                       <p className="font-medium">{role.label}</p>
@@ -201,11 +234,19 @@ export function ChangeRoleDialog({
                           const nextChecked = !selectedCustomRoleIds.includes(rid);
                           handleCustomRoleToggle(rid, nextChecked);
                         }}
-                        className="rounded border-gray-300"
+                        className={`rounded border-gray-300 ${
+                          !selectedCustomRoleIds.includes(String(role.id)) && wouldExceedWithCustomRole(String(role.id))
+                            ? 'opacity-50'
+                            : ''
+                        }`}
                       />
                       <label
                         htmlFor={`change-custom-role-${role.id}`}
-                        className="text-sm font-medium cursor-pointer flex-1"
+                        className={`text-sm font-medium cursor-pointer flex-1 ${
+                          !selectedCustomRoleIds.includes(String(role.id)) && wouldExceedWithCustomRole(String(role.id))
+                            ? 'opacity-50 cursor-not-allowed'
+                            : ''
+                        }`}
                       >
                         <div>
                           <p className="font-medium">{role.name}</p>
@@ -225,6 +266,11 @@ export function ChangeRoleDialog({
             {hasNoSelection && (
               <p className="text-sm text-destructive">
                 Sélectionnez au moins un rôle (système ou personnalisé)
+              </p>
+            )}
+            {atMax && !hasNoSelection && (
+              <p className="text-sm text-muted-foreground">
+                Maximum de {MAX_COLLABORATOR_ROLES} rôles atteint. Les autres options sont indisponibles.
               </p>
             )}
             {overLimit && (

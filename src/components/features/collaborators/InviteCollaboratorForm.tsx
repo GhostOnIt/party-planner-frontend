@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 
 import { useAvailableRoles } from '@/hooks/useCollaborators';
+import { useToast } from '@/hooks/use-toast';
 import type { CustomRole, InviteCollaboratorFormData } from '@/types';
 import {
   effectiveCollaboratorRoleCount,
@@ -43,6 +44,7 @@ export function InviteCollaboratorForm({
   availableRoles = [],
   customRoles = [],
 }: InviteCollaboratorFormProps) {
+  const { toast } = useToast();
   // Fetch available roles from API
   const { data: rolesData, isLoading: isLoadingRoles } = useAvailableRoles();
   const availableRoleDefinitions = rolesData?.roles || [];
@@ -104,6 +106,19 @@ export function InviteCollaboratorForm({
 
   const selectedRoles = watch('roles');
   const selectedCustomRoleIds = watch('custom_role_ids') || [];
+
+  const roleCount = effectiveCollaboratorRoleCount(selectedRoles || [], selectedCustomRoleIds);
+  const atMax = roleCount >= MAX_COLLABORATOR_ROLES;
+
+  const wouldExceedWithSystemRole = (roleValue: string) => {
+    const uniqueNext = [...new Set([...(selectedRoles || []), roleValue])];
+    return effectiveCollaboratorRoleCount(uniqueNext, selectedCustomRoleIds) > MAX_COLLABORATOR_ROLES;
+  };
+
+  const wouldExceedWithCustomRole = (customRoleId: string) => {
+    const uniqueNext = [...new Set([...(selectedCustomRoleIds || []), customRoleId])];
+    return effectiveCollaboratorRoleCount(selectedRoles || [], uniqueNext) > MAX_COLLABORATOR_ROLES;
+  };
 
   const handleFormSubmit = (data: InviteFormValues) => {
     onSubmit({
@@ -187,6 +202,10 @@ export function InviteCollaboratorForm({
                               custom
                             ) > MAX_COLLABORATOR_ROLES
                           ) {
+                            toast({
+                              title: 'Limite atteinte',
+                              description: `Un collaborateur ne peut avoir que ${MAX_COLLABORATOR_ROLES} rôles au maximum (système et personnalisés).`,
+                            });
                             return;
                           }
                           setValue('roles', next);
@@ -197,11 +216,19 @@ export function InviteCollaboratorForm({
                           );
                         }
                       }}
-                      className="rounded border-gray-300"
+                      className={`rounded border-gray-300 ${
+                        !selectedRoles?.includes(role.value) && wouldExceedWithSystemRole(role.value)
+                          ? 'opacity-50'
+                          : ''
+                      }`}
                     />
                     <label
                       htmlFor={`role-${role.value}`}
-                      className="text-sm font-medium cursor-pointer flex-1"
+                      className={`text-sm font-medium cursor-pointer flex-1 ${
+                        !selectedRoles?.includes(role.value) && wouldExceedWithSystemRole(role.value)
+                          ? 'opacity-50 cursor-not-allowed'
+                          : ''
+                      }`}
                     >
                       <div>
                         <p className="font-medium">{role.label}</p>
@@ -238,15 +265,29 @@ export function InviteCollaboratorForm({
                                 !isChecked &&
                                 effectiveCollaboratorRoleCount(sys, next) > MAX_COLLABORATOR_ROLES
                               ) {
+                                toast({
+                                  title: 'Limite atteinte',
+                                  description: `Un collaborateur ne peut avoir que ${MAX_COLLABORATOR_ROLES} rôles au maximum (système et personnalisés).`,
+                                });
                                 return;
                               }
                               setValue('custom_role_ids', next);
                             }}
-                            className="rounded border-gray-300"
+                            className={`rounded border-gray-300 ${
+                              !selectedCustomRoleIds.includes(role.id) &&
+                              wouldExceedWithCustomRole(String(role.id))
+                                ? 'opacity-50'
+                                : ''
+                            }`}
                           />
                           <label
                             htmlFor={`custom-role-${role.id}`}
-                            className="text-sm font-medium cursor-pointer flex-1"
+                            className={`text-sm font-medium cursor-pointer flex-1 ${
+                              !selectedCustomRoleIds.includes(role.id) &&
+                              wouldExceedWithCustomRole(String(role.id))
+                                ? 'opacity-50 cursor-not-allowed'
+                                : ''
+                            }`}
                           >
                             <div>
                               <p className="font-medium">{role.name}</p>
@@ -262,6 +303,11 @@ export function InviteCollaboratorForm({
               )}
             </div>
             {errors.roles && <p className="text-sm text-destructive">{errors.roles.message}</p>}
+            {!errors.roles && atMax && (
+              <p className="text-sm text-muted-foreground">
+                Maximum de {MAX_COLLABORATOR_ROLES} rôles atteint. Les autres options sont indisponibles.
+              </p>
+            )}
           </div>
 
           <DialogFooter>
