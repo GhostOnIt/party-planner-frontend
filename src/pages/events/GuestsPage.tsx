@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Plus, Download, Users, Crown, Upload } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Plus, Download, Users, Crown, Upload, TabletSmartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -78,6 +78,7 @@ interface GuestsPageProps {
 export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
   const { id: paramEventId } = useParams<{ id: string }>();
   const eventId = propEventId || paramEventId;
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   const [filters, setFilters] = useState<GuestFiltersType>({ per_page: 20 });
@@ -155,6 +156,8 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
   const { mutate: exportGuests, isPending: isExporting } = useExportGuests(eventId!);
 
   const guests = guestsData?.data || [];
+  /** Permet d’ouvrir la page check-in tablette : même URL que le QR (token = invitation_token). */
+  const checkInBootstrapToken = guests.find((g) => g.invitation_token)?.invitation_token;
   const meta = guestsData?.meta;
   // Use stats from main response first, fallback to separate endpoint
   const stats = guestsData?.stats || separateStats;
@@ -772,6 +775,33 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
         <GuestFilters filters={filters} onFiltersChange={setFilters} />
 
         <div className="flex items-center gap-2">
+          <PermissionGuard eventId={eventId!} permissions={['guests.checkin']}>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={!checkInBootstrapToken}
+              title={
+                !checkInBootstrapToken
+                  ? 'Ajoutez au moins un invité pour ouvrir le mode check-in tablette.'
+                  : 'Page dédiée : recherche + scan QR pour le portier'
+              }
+              onClick={() => {
+                if (!checkInBootstrapToken) {
+                  toast({
+                    title: 'Aucun invité',
+                    description:
+                      'Ajoutez au moins un invité pour accéder au mode check-in tablette.',
+                  });
+                  return;
+                }
+                navigate(`/check-in/${checkInBootstrapToken}`);
+              }}
+            >
+              <TabletSmartphone className="mr-2 h-4 w-4" />
+              Check-in tablette
+            </Button>
+          </PermissionGuard>
+
           {featureAccess.guests.canExport && (
             <PermissionGuard eventId={eventId!} permissions={['guests.export']}>
               <DropdownMenu>
