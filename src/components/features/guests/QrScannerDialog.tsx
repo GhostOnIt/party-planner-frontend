@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { BrowserQRCodeReader, type IScannerControls } from '@zxing/browser';
+import { useEffect, useRef, useState } from 'react';
+import { BrowserCodeReader, BrowserQRCodeReader, type IScannerControls } from '@zxing/browser';
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -47,15 +47,6 @@ export function QrScannerDialog({
   const [error, setError] = useState<string | null>(null);
   const [manualToken, setManualToken] = useState('');
 
-  const constraints = useMemo(
-    () => ({
-      video: {
-        facingMode: { ideal: 'environment' },
-      },
-    }),
-    [],
-  );
-
   useEffect(() => {
     if (!open) return;
 
@@ -65,48 +56,80 @@ export function QrScannerDialog({
 
     let cancelled = false;
 
-    const run = async () => {
-      try {
-        if (!videoRef.current) return;
+    /** Le Dialog Radix monte le `<video>` après le premier paint : ref souvent null au premier tick. */
+    const waitForVideoElement = async (): Promise<HTMLVideoElement | null> => {
+      for (let i = 0; i < 40; i++) {
+        if (cancelled) return null;
+        if (videoRef.current) return videoRef.current;
+        await new Promise((r) => setTimeout(r, 50));
+      }
+      return videoRef.current;
+    };
 
-        // L'instance lecteur peut être réutilisée; on la recrée ici pour simplifier.
+    const run = async () => {
+      const video = await waitForVideoElement();
+      if (cancelled) return;
+      if (!video) {
+        setError(
+          'Impossible d’afficher la vidéo. Fermez puis rouvrez la fenêtre, ou utilisez le champ token ci-dessous.',
+        );
+        return;
+      }
+
+      try {
         readerRef.current = new BrowserQRCodeReader();
 
-        const controls = await readerRef.current.decodeFromConstraints(
-          constraints,
-          videoRef.current,
-          (result: { getText?: () => string } | undefined) => {
-            if (cancelled) return;
-            if (hasScannedRef.current) return;
-            const text = result?.getText?.();
-            if (!text) return;
+        const onDecode = (result: { getText?: () => string } | undefined) => {
+          if (cancelled) return;
+          if (hasScannedRef.current) return;
+          const text = result?.getText?.();
+          if (!text) return;
 
-            const token = extractTokenFromQrText(text);
-            if (!token) {
-              setError("QR détecté mais token introuvable.");
-              return;
-            }
+          const token = extractTokenFromQrText(text);
+          if (!token) {
+            setError('QR détecté mais token introuvable.');
+            return;
+          }
 
-            hasScannedRef.current = true;
-            try {
-              controlsRef.current?.stop?.();
-            } catch {
-              // ignore
-            }
+          hasScannedRef.current = true;
+          try {
+            controlsRef.current?.stop?.();
+          } catch {
+            // ignore
+          }
 
-            onTokenScanned(token);
-            // On ferme le dialog côté parent.
-            onOpenChange(false);
-          },
-        );
+          onTokenScanned(token);
+          onOpenChange(false);
+        };
+
+        let controls: IScannerControls;
+
+        // PC : pas de caméra « environment » → préférer un deviceId explicite ou une contrainte large.
+        const devices = await BrowserCodeReader.listVideoInputDevices();
+        if (cancelled) return;
+
+        if (devices.length > 0) {
+          controls = await readerRef.current.decodeFromVideoDevice(
+            devices[0].deviceId,
+            video,
+            onDecode,
+          );
+        } else {
+          controls = await readerRef.current.decodeFromConstraints({ video: true }, video, onDecode);
+        }
 
         controlsRef.current = controls;
-      } catch {
-        setError('Impossible d’accéder à la caméra (autorisation requise ?).');
+      } catch (e) {
+        const detail = e instanceof Error ? e.message : String(e);
+        const secure =
+          typeof globalThis !== 'undefined' && globalThis.isSecureContext
+            ? ''
+            : ' Utilisez HTTPS ou localhost (getUserMedia requis).';
+        setError(`Caméra inaccessible : ${detail}.${secure} Vérifiez aussi les permissions du navigateur.`);
       }
     };
 
-    run();
+    void run();
 
     return () => {
       cancelled = true;
@@ -115,8 +138,10 @@ export function QrScannerDialog({
       } catch {
         // ignore
       }
+      controlsRef.current = null;
+      readerRef.current = null;
     };
-  }, [open, constraints, onTokenScanned, onOpenChange]);
+  }, [open, onTokenScanned, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -127,7 +152,13 @@ export function QrScannerDialog({
         </DialogHeader>
 
         <div className="relative mt-2 rounded-lg overflow-hidden border bg-black">
-          <video ref={videoRef} className="w-full h-[320px] object-cover" />
+          <video
+            ref={videoRef}
+            className="w-full h-[320px] object-cover"
+            playsInline
+            muted
+            autoPlay
+          />
           <div className="absolute inset-0 pointer-events-none ring-2 ring-emerald-500/70" />
         </div>
 
