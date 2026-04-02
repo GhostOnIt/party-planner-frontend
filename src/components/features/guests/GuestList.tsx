@@ -44,7 +44,7 @@ interface GuestListProps {
   onViewInvitationDetails: (guest: Guest) => void;
   /** Nombre total d'accompagnateurs (+1) pour l'en-tête du tableau */
   companionsCount?: number;
-  /** Check-in autorisé (à partir de 24 h avant l'événement) */
+  /** Check-in autorisé uniquement le jour de l'événement */
   canCheckIn?: boolean;
 }
 
@@ -210,7 +210,7 @@ export function GuestList({
                       <DropdownMenuItem
                         onClick={() => canCheckIn && onCheckIn(guest)}
                         disabled={!canCheckIn}
-                        title={!canCheckIn ? 'Le check-in est possible à partir de 24 h avant l\'événement.' : undefined}
+                        title={!canCheckIn ? 'Le check-in est possible uniquement le jour de l\'événement.' : undefined}
                       >
                         <UserCheck className="mr-2 h-4 w-4" />
                         Check-in

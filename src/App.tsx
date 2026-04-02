@@ -34,6 +34,7 @@ const PlansPage = lazy(() => import('@/pages/PlansPage').then(m => ({ default: m
 const SubscribePage = lazy(() => import('@/pages/SubscribePage').then(m => ({ default: m.SubscribePage })));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const CheckInTabletPage = lazy(() => import('@/pages/CheckInTabletPage').then((m) => ({ default: m.default })));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
 // Event pages
@@ -116,6 +117,8 @@ function App() {
               {/* Plans page - sans MainLayout (pas de sidebar ni header) */}
               <Route path="/plans" element={<PlansPage />} />
               <Route path="/subscribe/:slug" element={<SubscribePage />} />
+              {/* Check-in tablette - sans MainLayout (meilleure perf sur mobile/tablette) */}
+              <Route path="/check-in/:token" element={<CheckInTabletPage />} />
               
               {/* Routes avec MainLayout */}
               <Route element={<MainLayout />}>

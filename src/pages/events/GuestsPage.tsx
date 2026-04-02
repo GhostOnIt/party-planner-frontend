@@ -109,7 +109,7 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
   const { data: event } = useEvent(eventId!);
   const featureAccess = useFeatureAccess(eventId!);
 
-  // Check-in autorisé à partir de 24h avant le début de l'événement (utilise can_check_in du backend si présent)
+  // Check-in autorisé uniquement le jour de l'événement (utilise can_check_in du backend si présent)
   const canCheckIn = (() => {
     if (event?.can_check_in === true) return true;
     if (event?.can_check_in === false) return false;
@@ -134,11 +134,12 @@ export function GuestsPage({ eventId: propEventId }: GuestsPageProps) {
         timeStr = timeStr.slice(0, 5);
       }
 
-      const eventDateTime = new Date(`${dateOnly}T${timeStr.length === 5 ? `${timeStr}:00` : timeStr}`);
-      if (Number.isNaN(eventDateTime.getTime())) return false;
+      // Autorisation sur la journée calendrier uniquement (minuit -> 23:59:59).
+      const eventDayStart = new Date(`${dateOnly}T00:00:00`);
+      const eventDayEnd = new Date(`${dateOnly}T23:59:59`);
+      if (Number.isNaN(eventDayStart.getTime()) || Number.isNaN(eventDayEnd.getTime())) return false;
 
-      const checkInStartTime = new Date(eventDateTime.getTime() - 24 * 60 * 60 * 1000);
-      return Date.now() >= checkInStartTime.getTime();
+      return Date.now() >= eventDayStart.getTime() && Date.now() <= eventDayEnd.getTime();
     } catch {
       return false;
     }
