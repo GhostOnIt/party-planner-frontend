@@ -5,29 +5,41 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
+function normalizeTokenSegment(segment: string): string {
+  const t = segment.trim().replace(/\u200B/g, '');
+  if (!t) return t;
+  try {
+    return t.includes('%') ? decodeURIComponent(t) : t;
+  } catch {
+    return t;
+  }
+}
+
 function extractTokenFromQrText(rawText: string): string | null {
-  const text = rawText.trim();
+  const text = rawText.trim().replace(/\u200B/g, '');
   if (!text) return null;
 
   // Si c'est une URL, on essaye d'extraire `token` depuis le dernier segment.
   try {
     const url = new URL(text);
     const tokenFromQuery = url.searchParams.get('token');
-    if (tokenFromQuery) return tokenFromQuery;
+    if (tokenFromQuery) return normalizeTokenSegment(tokenFromQuery);
 
     const segments = url.pathname.split('/').filter(Boolean);
-    return segments[segments.length - 1] ?? null;
+    const last = segments[segments.length - 1];
+    return last ? normalizeTokenSegment(last) : null;
   } catch {
     // Pas une URL: on tente une extraction naïve.
   }
 
   // Cas type `...?token=XYZ`
-  const tokenMatch = text.match(/[?&]token=([^&]+)/);
-  if (tokenMatch?.[1]) return decodeURIComponent(tokenMatch[1]);
+  const tokenMatch = /[?&]token=([^&]+)/.exec(text);
+  if (tokenMatch?.[1]) return normalizeTokenSegment(decodeURIComponent(tokenMatch[1]));
 
   // Fallback: dernier morceau séparé par / ? #
   const parts = text.split(/[/?#]/).filter(Boolean);
-  return parts[parts.length - 1] ?? null;
+  const last = parts[parts.length - 1];
+  return last ? normalizeTokenSegment(last) : null;
 }
 
 export function QrScannerDialog({
@@ -43,6 +55,12 @@ export function QrScannerDialog({
   const controlsRef = useRef<IScannerControls | null>(null);
   const readerRef = useRef<BrowserQRCodeReader | null>(null);
   const hasScannedRef = useRef(false);
+
+  /** Évite de relancer l’effet à chaque rendu parent (handler inline) ; sinon le scan est coupé en boucle. */
+  const onTokenScannedRef = useRef(onTokenScanned);
+  const onOpenChangeRef = useRef(onOpenChange);
+  onTokenScannedRef.current = onTokenScanned;
+  onOpenChangeRef.current = onOpenChange;
 
   const [error, setError] = useState<string | null>(null);
   const [manualToken, setManualToken] = useState('');
@@ -79,10 +97,17 @@ export function QrScannerDialog({
       try {
         readerRef.current = new BrowserQRCodeReader();
 
-        const onDecode = (result: { getText?: () => string } | undefined) => {
+        const onDecode = (
+          result: { getText?: () => string } | undefined,
+          _decodeError: unknown,
+          scanControls: IScannerControls,
+        ) => {
           if (cancelled) return;
           if (hasScannedRef.current) return;
-          const text = result?.getText?.();
+          const text =
+            result && typeof result.getText === 'function'
+              ? result.getText()
+              : '';
           if (!text) return;
 
           const token = extractTokenFromQrText(text);
@@ -93,13 +118,18 @@ export function QrScannerDialog({
 
           hasScannedRef.current = true;
           try {
+            scanControls.stop?.();
+          } catch {
+            // ignore
+          }
+          try {
             controlsRef.current?.stop?.();
           } catch {
             // ignore
           }
 
-          onTokenScanned(token);
-          onOpenChange(false);
+          onTokenScannedRef.current(token);
+          onOpenChangeRef.current(false);
         };
 
         let controls: IScannerControls;
@@ -141,7 +171,7 @@ export function QrScannerDialog({
       controlsRef.current = null;
       readerRef.current = null;
     };
-  }, [open, onTokenScanned, onOpenChange]);
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

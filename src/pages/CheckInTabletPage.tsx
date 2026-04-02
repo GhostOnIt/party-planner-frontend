@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 
 import api from '@/api/client';
@@ -37,6 +37,7 @@ type PublicInvitationResponse = {
 
 export default function CheckInTabletPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const { token } = useParams<{ token: string }>();
 
@@ -118,6 +119,26 @@ export default function CheckInTabletPage() {
   }, [guestsData?.data]);
 
   const lastPage = guestsData?.meta?.last_page;
+
+  const handleQrTokenScanned = useCallback(
+    (scannedToken: string) => {
+      if (!scannedToken) return;
+      if (scannedToken === token) {
+        void queryClient.invalidateQueries({ queryKey: ['public-invitation', token] });
+        void queryClient.invalidateQueries({ queryKey: ['guest-details', eventId, guestId] });
+        if (eventId) {
+          void queryClient.invalidateQueries({ queryKey: ['events', String(eventId), 'guests'] });
+        }
+        toast({
+          title: 'Même invitation',
+          description: 'Vous étiez déjà sur cet invité ; les données ont été actualisées.',
+        });
+        return;
+      }
+      navigate(`/check-in/${scannedToken}`);
+    },
+    [token, navigate, queryClient, eventId, guestId, toast],
+  );
 
   const scannedGuest = useMemo(() => {
     if (scannedGuestDetails) return scannedGuestDetails;
@@ -382,14 +403,7 @@ export default function CheckInTabletPage() {
         </CardContent>
       </Card>
 
-      <QrScannerDialog
-        open={scannerOpen}
-        onOpenChange={setScannerOpen}
-        onTokenScanned={(scannedToken) => {
-          if (!scannedToken) return;
-          navigate(`/check-in/${scannedToken}`);
-        }}
-      />
+      <QrScannerDialog open={scannerOpen} onOpenChange={setScannerOpen} onTokenScanned={handleQrTokenScanned} />
     </div>
   );
 }
