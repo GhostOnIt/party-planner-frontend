@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 
@@ -35,11 +35,19 @@ type PublicInvitationResponse = {
   already_responded: boolean;
 };
 
+type CheckInLocationState = { autoCheckInFromScan?: boolean };
+
 export default function CheckInTabletPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { token } = useParams<{ token: string }>();
+  const autoCheckInStartedForTokenRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    autoCheckInStartedForTokenRef.current = null;
+  }, [token]);
 
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -135,7 +143,7 @@ export default function CheckInTabletPage() {
         });
         return;
       }
-      navigate(`/check-in/${scannedToken}`);
+      navigate(`/check-in/${scannedToken}`, { state: { autoCheckInFromScan: true } satisfies CheckInLocationState });
     },
     [token, navigate, queryClient, eventId, guestId, toast],
   );
@@ -148,6 +156,79 @@ export default function CheckInTabletPage() {
   }, [scannedGuestDetails, guestId, guestsData?.data]);
 
   const isScannedCheckedIn = !!scannedGuest?.checked_in_at;
+
+  /** Après un scan QR réussi : enregistrer l’invité sans clic sur « Check-in » (flux portier). */
+  useEffect(() => {
+    const wantsAuto = Boolean((location.state as CheckInLocationState | null)?.autoCheckInFromScan);
+    if (!wantsAuto || !invitation || !token || !eventId) return;
+    if (autoCheckInStartedForTokenRef.current === token) return;
+
+    if (!canCheckIn) {
+      autoCheckInStartedForTokenRef.current = token;
+      toast({
+        title: 'Check-in indisponible',
+        description: "Le check-in n'est possible que le jour de l'événement.",
+        variant: 'destructive',
+      });
+      navigate(`/check-in/${token}`, { replace: true, state: {} });
+      return;
+    }
+
+    if (scannedGuestLoading) return;
+
+    const rsvpOk = ['pending', 'accepted', 'maybe'].includes(invitation.guest.rsvp_status);
+    if (!rsvpOk) {
+      autoCheckInStartedForTokenRef.current = token;
+      toast({
+        title: 'Check-in impossible',
+        description: 'RSVP incompatible (refusé ou autre statut).',
+        variant: 'destructive',
+      });
+      navigate(`/check-in/${token}`, { replace: true, state: {} });
+      return;
+    }
+
+    const g = scannedGuest ?? invitationGuestFallback(invitation);
+    if (g.checked_in_at) {
+      autoCheckInStartedForTokenRef.current = token;
+      toast({
+        title: 'Déjà enregistré',
+        description: `${g.name} est déjà en check-in.`,
+      });
+      navigate(`/check-in/${token}`, { replace: true, state: {} });
+      return;
+    }
+
+    autoCheckInStartedForTokenRef.current = token;
+    checkInGuest(String(g.id), {
+      onSuccess: () => {
+        toast({
+          title: 'Check-in effectué',
+          description: `${g.name} a été enregistré.`,
+        });
+        navigate(`/check-in/${token}`, { replace: true, state: {} });
+      },
+      onError: (error) => {
+        toast({
+          title: 'Erreur',
+          description: `Erreur lors du check-in: ${getApiErrorMessage(error)}`,
+          variant: 'destructive',
+        });
+        navigate(`/check-in/${token}`, { replace: true, state: {} });
+      },
+    });
+  }, [
+    location.state,
+    invitation,
+    token,
+    eventId,
+    canCheckIn,
+    scannedGuestLoading,
+    scannedGuest,
+    checkInGuest,
+    navigate,
+    toast,
+  ]);
 
   const handleCheckIn = (guest: Guest) => {
     if (!eventId) return;
@@ -254,7 +335,8 @@ export default function CheckInTabletPage() {
             check-in) pour en traiter un autre sans scanner de QR.
           </li>
           <li>
-            « Scanner QR » ouvre la caméra : après lecture, la page se met à jour pour l&apos;invité du QR scanné.
+            « Scanner QR » ouvre la caméra : après lecture, l&apos;invité du QR est chargé puis le check-in est
+            enregistré automatiquement (si le jour de l&apos;événement et RSVP compatible).
           </li>
           <li>Le check-in n&apos;est autorisé que le jour de l&apos;événement (règle serveur).</li>
         </ul>
@@ -411,10 +493,11 @@ export default function CheckInTabletPage() {
 function invitationGuestFallback(invitation: PublicInvitationResponse): Guest {
   // Fallback minimal Guest object. check-in endpoint only needs guest id.
   return {
-    id: invitation.guest.id,
+    id: String(invitation.guest.id),
     name: invitation.guest.name,
     email: null,
     phone: null,
+    rsvp_status: invitation.guest.rsvp_status,
     checked_in_at: null,
     plus_one: invitation.guest.plus_one ?? false,
     plus_one_name: invitation.guest.plus_one_name ?? null,
