@@ -16,6 +16,7 @@ import {
   isValidCgPhone,
   normalizeCgPhoneToInternational,
 } from '@/lib/cgPhone';
+import { isAirtelMoneyUiEnabled } from '@/lib/paymentFeatureFlags';
 import type { PaymentMethod, PlanType } from '@/types';
 
 // Plan duration in months
@@ -78,10 +79,16 @@ export function PaymentForm({
   description,
   planType,
 }: PaymentFormProps) {
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(
-    isSandbox ? 'mtn_mobile_money' : null
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(() =>
+    isSandbox || !isAirtelMoneyUiEnabled ? 'mtn_mobile_money' : null
   );
   const [autoDetectedMethod, setAutoDetectedMethod] = useState<PaymentMethod | null>(null);
+
+  useEffect(() => {
+    if (!isAirtelMoneyUiEnabled && selectedMethod === 'airtel_money') {
+      setSelectedMethod('mtn_mobile_money');
+    }
+  }, [selectedMethod]);
 
   const {
     register,
@@ -97,10 +104,13 @@ export function PaymentForm({
 
   const phoneNumber = watch('phone_number');
 
-  // Auto-detect payment method from phone number
+  // Auto-detect payment method from phone number (pas d’Airtel tant que non activé)
   useEffect(() => {
     if (phoneNumber && phoneNumber.length >= 3) {
-      const detected = getProviderFromPhone(phoneNumber);
+      let detected = getProviderFromPhone(phoneNumber);
+      if (detected === 'airtel_money' && !isAirtelMoneyUiEnabled) {
+        detected = null;
+      }
       setAutoDetectedMethod(detected);
       if (detected && !selectedMethod) {
         setSelectedMethod(detected);

@@ -101,8 +101,18 @@ export function SubscribePage() {
 
   if (isLoadingPlans) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center bg-muted/30">
-        <div className="flex flex-col items-center gap-4">
+      <div className="min-h-[60vh] bg-muted/30">
+        <div className="border-b bg-background/95 px-4 py-3">
+          <div className="mx-auto max-w-5xl">
+            <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground" asChild>
+              <Link to="/dashboard">
+                <ArrowLeft className="h-4 w-4" />
+                Retour à l&apos;application
+              </Link>
+            </Button>
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center gap-4 py-16">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">Chargement du plan…</p>
         </div>
@@ -120,12 +130,15 @@ export function SubscribePage() {
               Le plan demandé n'existe pas ou n'est plus disponible.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <Button asChild variant="outline" className="w-full sm:w-auto">
-              <Link to="/plans">
+              <Link to="/dashboard">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Retour aux plans
+                Retour à l&apos;application
               </Link>
+            </Button>
+            <Button asChild variant="ghost" className="w-full sm:w-auto">
+              <Link to="/plans">Voir les plans</Link>
             </Button>
           </CardContent>
         </Card>
@@ -137,6 +150,12 @@ export function SubscribePage() {
     return (
       <div className="min-h-[60vh] bg-muted/30 py-8 px-4">
         <div className="max-w-2xl mx-auto space-y-6">
+          <Button variant="ghost" size="sm" className="gap-2 -ml-2 h-auto px-2 text-muted-foreground" asChild>
+            <Link to="/dashboard">
+              <ArrowLeft className="h-4 w-4" />
+              Retour à l&apos;application
+            </Link>
+          </Button>
           <nav className="flex items-center gap-2 text-sm text-muted-foreground">
             <Link to="/plans" className="hover:text-foreground transition-colors">
               Plans
@@ -179,14 +198,21 @@ export function SubscribePage() {
   return (
     <div className="min-h-[60vh] bg-muted/30 py-8 px-4">
       <div className="max-w-5xl mx-auto space-y-8">
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link to="/plans" className="hover:text-foreground transition-colors">
-            Plans
-          </Link>
-          <span>/</span>
-          <span className="text-foreground font-medium">{plan.name}</span>
-        </nav>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <Button variant="ghost" size="sm" className="gap-2 -ml-2 h-auto w-fit px-2 text-muted-foreground" asChild>
+            <Link to="/dashboard">
+              <ArrowLeft className="h-4 w-4" />
+              Retour à l&apos;application
+            </Link>
+          </Button>
+          <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Link to="/plans" className="hover:text-foreground transition-colors">
+              Plans
+            </Link>
+            <span>/</span>
+            <span className="text-foreground font-medium">{plan.name}</span>
+          </nav>
+        </div>
 
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Finaliser votre abonnement</h1>

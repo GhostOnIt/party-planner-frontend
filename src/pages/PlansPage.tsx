@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Check, Crown, Gift, Building2, ArrowRight, Zap } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Check, Crown, Gift, Building2, ArrowLeft, ArrowRight, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -319,6 +320,16 @@ export function PlansPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+        <div className="border-b border-slate-100 bg-white/90 px-4 py-3">
+          <div className="container mx-auto max-w-6xl">
+            <Button variant="ghost" size="sm" className="gap-2 text-slate-600" asChild>
+              <Link to="/dashboard">
+                <ArrowLeft className="h-4 w-4" />
+                Retour à l&apos;application
+              </Link>
+            </Button>
+          </div>
+        </div>
         <section className="relative py-20 px-4">
           <div className="container mx-auto max-w-6xl">
             <Skeleton className="h-12 w-64 mx-auto mb-8" />
@@ -346,14 +357,29 @@ export function PlansPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-destructive text-xl mb-2">Erreur lors du chargement des plans.</p>
-          {process.env.NODE_ENV === 'development' && (
-            <p className="text-sm text-muted-foreground mt-2">
-              {error instanceof Error ? error.message : String(error)}
-            </p>
-          )}
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex flex-col">
+        <div className="border-b border-slate-100 bg-white/90 px-4 py-3">
+          <div className="container mx-auto max-w-6xl">
+            <Button variant="ghost" size="sm" className="gap-2 text-slate-600" asChild>
+              <Link to="/dashboard">
+                <ArrowLeft className="h-4 w-4" />
+                Retour à l&apos;application
+              </Link>
+            </Button>
+          </div>
+        </div>
+        <div className="flex flex-1 items-center justify-center p-6">
+          <div className="text-center space-y-4">
+            <p className="text-destructive text-xl">Erreur lors du chargement des plans.</p>
+            {process.env.NODE_ENV === 'development' && (
+              <p className="text-sm text-muted-foreground">
+                {error instanceof Error ? error.message : String(error)}
+              </p>
+            )}
+            <Button variant="outline" asChild>
+              <Link to="/dashboard">Retour au tableau de bord</Link>
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -361,6 +387,16 @@ export function PlansPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      <div className="border-b border-slate-100 bg-white/90 backdrop-blur-sm px-4 py-3">
+        <div className="container mx-auto max-w-6xl">
+          <Button variant="ghost" size="sm" className="gap-2 text-slate-600 hover:text-slate-900" asChild>
+            <Link to="/dashboard">
+              <ArrowLeft className="h-4 w-4" />
+              Retour à l&apos;application
+            </Link>
+          </Button>
+        </div>
+      </div>
       {/* Hero Section */}
       <section className="relative py-16 px-4 overflow-hidden">
         {/* Background decorative elements */}
