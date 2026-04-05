@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,6 +12,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useSendOtp } from '@/hooks/useOtp';
 import { getApiErrorMessage } from '@/api/client';
+import {
+  CG_PHONE_ERROR_MESSAGE,
+  CG_PHONE_FORMAT_HINT,
+  isValidCgPhone,
+  normalizeCgPhoneToInternational,
+} from '@/lib/cgPhone';
 import type { OtpChannel, OtpType } from '@/types';
 
 const sendOtpSchema = z.object({
@@ -53,15 +59,32 @@ export function SendOtpPage() {
   const {
     register,
     handleSubmit,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm<SendOtpFormValues>({
     resolver: zodResolver(sendOtpSchema),
   });
 
+  useEffect(() => {
+    clearErrors('identifier');
+  }, [channel, clearErrors]);
+
   const onSubmit = (data: SendOtpFormValues) => {
+    const trimmed = data.identifier.trim();
+    let identifier = trimmed;
+
+    if (channel === 'sms' || channel === 'whatsapp') {
+      if (!isValidCgPhone(trimmed)) {
+        setError('identifier', { type: 'manual', message: CG_PHONE_ERROR_MESSAGE });
+        return;
+      }
+      identifier = normalizeCgPhoneToInternational(trimmed) ?? trimmed;
+    }
+
     sendOtp.mutate(
       {
-        identifier: data.identifier,
+        identifier,
         type,
         channel,
       },
@@ -69,7 +92,7 @@ export function SendOtpPage() {
         onSuccess: (response) => {
           navigate('/otp', {
             state: {
-              identifier: data.identifier,
+              identifier,
               type,
               channel,
               otp_id: response.otp_id,
@@ -106,10 +129,17 @@ export function SendOtpPage() {
               <Input
                 id="identifier"
                 type={channel === 'email' ? 'email' : 'tel'}
-                placeholder={channel === 'email' ? 'votre@email.com' : '+242 XX XXX XX XX'}
+                placeholder={
+                  channel === 'email' ? 'votre@email.com' : '+242061234567 ou 00242061234567'
+                }
+                inputMode={channel === 'email' ? 'email' : 'tel'}
+                autoComplete={channel === 'email' ? 'email' : 'tel'}
                 {...register('identifier')}
                 aria-invalid={!!errors.identifier}
               />
+              {channel !== 'email' && (
+                <p className="text-xs text-muted-foreground">{CG_PHONE_FORMAT_HINT}</p>
+              )}
               {errors.identifier && (
                 <p className="text-sm text-destructive">{errors.identifier.message}</p>
               )}

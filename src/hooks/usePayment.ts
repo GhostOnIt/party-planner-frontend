@@ -167,8 +167,11 @@ const isSandbox = import.meta.env.VITE_PAYMENT_ENV === 'sandbox';
 
 // Helper to determine provider from phone number (Congo-Brazzaville)
 export function getProviderFromPhone(phone: string): PaymentMethod | null {
-  // Remove spaces, dashes, and country code
-  const cleanPhone = phone.replace(/[\s\-()]/g, '').replace(/^\+?242/, '');
+  let cleanPhone = phone.replace(/[\s\-()]/g, '');
+  if (cleanPhone.startsWith('00242')) {
+    cleanPhone = cleanPhone.slice(5);
+  }
+  cleanPhone = cleanPhone.replace(/^\+?242/, '');
 
   // In sandbox mode, MTN test numbers start with 467
   if (isSandbox && /^467/.test(cleanPhone)) {

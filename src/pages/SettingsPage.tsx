@@ -54,6 +54,12 @@ import { CollaboratorRolesManager } from '@/components/settings/CollaboratorRole
 import { BudgetCategoriesManager } from '@/components/settings/BudgetCategoriesManager';
 import { strongPasswordSchema } from '@/lib/passwordValidation';
 import {
+  CG_PHONE_ERROR_MESSAGE,
+  CG_PHONE_FORMAT_HINT,
+  isValidCgPhone,
+  normalizeCgPhoneToInternational,
+} from '@/lib/cgPhone';
+import {
   useAdminLegalPages,
   useUpdateLegalPage,
   LegalPage as LegalPageType,
@@ -95,7 +101,10 @@ import {
 // Validation schemas
 const profileSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caracteres'),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .transform((s) => s.trim())
+    .refine((s) => s === '' || isValidCgPhone(s), { message: CG_PHONE_ERROR_MESSAGE }),
 });
 
 const passwordSchema = z
@@ -183,7 +192,11 @@ export function SettingsPage() {
     .slice(0, 2);
 
   const handleProfileSubmit = (data: ProfileFormData) => {
-    updateProfile(data, {
+    const phone =
+      data.phone && data.phone.length > 0
+        ? normalizeCgPhoneToInternational(data.phone) ?? ''
+        : '';
+    updateProfile({ name: data.name, phone: phone || undefined }, {
       onSuccess: () => {
         toast({
           title: 'Profil mis a jour',
@@ -484,13 +497,16 @@ export function SettingsPage() {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Telephone</Label>
+                      <Label htmlFor="phone">Téléphone</Label>
                       <Input
                         id="phone"
                         type="tel"
-                        placeholder="+242 XX XXX XX XX"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        placeholder="+242061234567 ou 00242061234567"
                         {...profileForm.register('phone')}
                       />
+                      <p className="text-xs text-muted-foreground">{CG_PHONE_FORMAT_HINT}</p>
                       {profileForm.formState.errors.phone && (
                         <p className="text-sm text-destructive">
                           {profileForm.formState.errors.phone.message}

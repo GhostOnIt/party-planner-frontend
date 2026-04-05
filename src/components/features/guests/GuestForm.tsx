@@ -17,11 +17,20 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { Guest, CreateGuestFormData } from '@/types';
+import {
+  CG_PHONE_ERROR_MESSAGE,
+  CG_PHONE_FORMAT_HINT,
+  isValidCgPhone,
+  normalizeCgPhoneToInternational,
+} from '@/lib/cgPhone';
 
 const guestFormSchema = z.object({
   name: z.string().min(1, 'Le nom est requis').max(255),
   email: z.string().email('Email invalide').optional().or(z.literal('')),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .transform((s) => s.trim())
+    .refine((s) => s === '' || isValidCgPhone(s), { message: CG_PHONE_ERROR_MESSAGE }),
   plus_one: z.boolean().optional(),
   plus_one_name: z.string().optional(),
   dietary_restrictions: z.string().optional(),
@@ -105,10 +114,14 @@ export function GuestForm({
   }, [guest, open, reset]);
 
   const handleFormSubmit = (data: GuestFormValues) => {
+    const phoneCanon =
+      data.phone && data.phone.length > 0
+        ? normalizeCgPhoneToInternational(data.phone) ?? undefined
+        : undefined;
     onSubmit({
       name: data.name,
       email: data.email || undefined,
-      phone: data.phone || undefined,
+      phone: phoneCanon,
       plus_one: data.plus_one,
       plus_one_name: data.plus_one && data.plus_one_name ? data.plus_one_name : undefined,
       dietary_restrictions: data.dietary_restrictions || undefined,
@@ -158,14 +171,18 @@ export function GuestForm({
               {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telephone</Label>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="phone">Téléphone</Label>
               <Input
                 id="phone"
-                placeholder="+242 XX XXX XX XX"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="+242061234567 ou 00242061234567"
                 {...register('phone')}
                 aria-invalid={!!errors.phone}
               />
+              <p className="text-xs text-muted-foreground">{CG_PHONE_FORMAT_HINT}</p>
               {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
             </div>
           </div>

@@ -31,6 +31,7 @@ import {
 } from '@/hooks/useSubscription';
 import { useInitiatePayment } from '@/hooks/usePayment';
 import { getApiErrorMessage } from '@/api/client';
+import { cgPhoneToNationalDigits } from '@/lib/cgPhone';
 import type { PlanType, PaymentMethod } from '@/types';
 
 interface EventSubscriptionPageProps {
@@ -118,12 +119,11 @@ export function EventSubscriptionPage({ eventId }: EventSubscriptionPageProps) {
   const handlePaymentSubmit = (data: { phone_number: string; method: PaymentMethod }) => {
     if (!selectedPlan) return;
 
-    // Clean phone number - remove spaces, dashes, parentheses
     let cleanPhone = data.phone_number.replace(/[\s\-()]/g, '');
 
-    // Only remove country code for Congo numbers (not sandbox numbers starting with 467)
     if (!cleanPhone.startsWith('467')) {
-      cleanPhone = cleanPhone.replace(/^\+?242/, '');
+      const national = cgPhoneToNationalDigits(data.phone_number);
+      cleanPhone = national ?? cleanPhone.replace(/^\+?242/, '').replace(/^00242/, '');
     }
 
     const payload = {

@@ -10,6 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PaymentMethodSelector } from './PaymentMethodSelector';
 import { getProviderFromPhone } from '@/hooks/usePayment';
+import {
+  CG_PHONE_ERROR_MESSAGE,
+  CG_PHONE_FORMAT_HINT,
+  isValidCgPhone,
+  normalizeCgPhoneToInternational,
+} from '@/lib/cgPhone';
 import type { PaymentMethod, PlanType } from '@/types';
 
 // Plan duration in months
@@ -21,31 +27,26 @@ const planDurations: Record<PlanType, { months: number; label: string }> = {
 // Check if we're in sandbox mode (via VITE_PAYMENT_ENV variable)
 const isSandbox = import.meta.env.VITE_PAYMENT_ENV === 'sandbox';
 
-// Validate phone number (Congo format or sandbox test numbers)
+// Validate phone number (Congo +242 / 00242 + 06|05|04 + 7 chiffres, ou sandbox MTN)
 const isValidPhoneNumber = (phone: string): boolean => {
   const cleaned = phone.replace(/[\s\-\.]/g, '');
 
-  // Mode sandbox: accepter les numéros de test MTN (commencent par 467)
-  if (isSandbox) {
-    if (/^467\d{8}$/.test(cleaned)) {
-      return true;
-    }
+  if (isSandbox && /^467\d{8}$/.test(cleaned)) {
+    return true;
   }
 
-  // Mode production: format Congo (+242 ou 0 suivi de 6/4/5)
-  const normalized = cleaned.replace(/^\+?242/, '');
-  return /^0?[456]\d{7}$/.test(normalized);
+  if (!isSandbox) {
+    return isValidCgPhone(phone);
+  }
+
+  return false;
 };
 
 const paymentSchema = z.object({
   phone_number: z
     .string()
-    .min(9, 'Numero de telephone requis')
-    .refine(isValidPhoneNumber,
-      isSandbox
-        ? 'Format invalide. Utilisez 46733123450 (test) ou 0XXXXXXXX'
-        : 'Format invalide. Utilisez +2420XXXXXXXX ou 0XXXXXXXX'
-    ),
+    .min(1, 'Numéro de téléphone requis')
+    .refine(isValidPhoneNumber, isSandbox ? 'Format invalide. Utilisez 46733123450 (test).' : CG_PHONE_ERROR_MESSAGE),
 });
 
 type PaymentFormData = z.infer<typeof paymentSchema>;
@@ -111,8 +112,12 @@ export function PaymentForm({
 
   const handleFormSubmit = (data: PaymentFormData) => {
     if (!selectedMethod) return;
+    const cleanedSandbox = data.phone_number.replace(/[\s\-\.]/g, '');
+    const phone_number = isSandbox
+      ? cleanedSandbox
+      : normalizeCgPhoneToInternational(data.phone_number) ?? data.phone_number;
     onSubmit({
-      phone_number: data.phone_number,
+      phone_number,
       method: selectedMethod,
     });
   };
@@ -177,7 +182,9 @@ export function PaymentForm({
           <Input
             id="phone_number"
             type="tel"
-            placeholder={isSandbox ? '46733123450' : '06XXXXXXXX'}
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder={isSandbox ? '46733123450' : '+242061234567'}
             className="pl-10"
             {...register('phone_number')}
             disabled={isLoading}
@@ -188,8 +195,8 @@ export function PaymentForm({
         )}
         <p className="text-xs text-muted-foreground">
           {isSandbox
-            ? 'Mode test - Numero pre-rempli avec le numero de test MTN'
-            : 'Entrez le numero associe a votre compte Mobile Money'}
+            ? 'Mode test — numéro MTN sandbox prérempli.'
+            : CG_PHONE_FORMAT_HINT}
         </p>
       </div>
 
