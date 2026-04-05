@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,6 +21,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
+import { isDueDateAfterEventDate } from '@/components/features/tasks/taskDateUtils';
 import type { Task, CreateTaskFormData, TaskPriority, BudgetCategory } from '@/types';
 
 const taskFormSchema = z.object({
@@ -60,6 +63,8 @@ interface TaskFormProps {
   collaborators?: { id: string | number; name: string }[];
   canAssign?: boolean;
   currentUserId?: string | number;
+  /** Date de l'événement (API) : sert à l'avertissement échéance > jour J. */
+  eventDate?: string | null;
 }
 
 export function TaskForm({
@@ -71,6 +76,7 @@ export function TaskForm({
   collaborators = [],
   canAssign = false,
   currentUserId,
+  eventDate,
 }: TaskFormProps) {
   const {
     register,
@@ -93,8 +99,19 @@ export function TaskForm({
   });
 
   const priority = watch('priority');
+  const dueDate = watch('due_date');
   const assignedTo = watch('assigned_to_user_id');
   const budgetCategory = watch('budget_category');
+
+  const showDueAfterEventWarning = useMemo(
+    () =>
+      Boolean(
+        eventDate &&
+          dueDate &&
+          isDueDateAfterEventDate(dueDate, eventDate),
+      ),
+    [eventDate, dueDate],
+  );
 
   // Reset form when dialog opens or task changes
   useEffect(() => {
@@ -196,9 +213,21 @@ export function TaskForm({
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="due_date">Date d'echeance</Label>
               <Input id="due_date" type="date" {...register('due_date')} />
+              {showDueAfterEventWarning && (
+                <Alert
+                  className="mt-2 border-amber-500/50 bg-amber-500/5 text-foreground [&>svg]:text-amber-600"
+                >
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Échéance après le jour de l&apos;événement</AlertTitle>
+                  <AlertDescription>
+                    Vérifiez la date si cette tâche doit être faite avant la fête. Certaines tâches
+                    (nettoyage de salle, factures, etc.) peuvent légitimement être après.
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           </div>
 

@@ -279,6 +279,7 @@ export function TasksPage({ eventId: propEventId }: TasksPageProps) {
         collaborators={assignableUsers}
         canAssign={tasksPermissions.canAssign}
         currentUserId={currentUser?.id}
+        eventDate={eventData?.date}
       />
 
       {/* Delete Confirmation Dialog */}
