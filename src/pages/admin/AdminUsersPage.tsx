@@ -73,6 +73,7 @@ export function AdminUsersPage() {
   });
   const [searchInput, setSearchInput] = useState('');
   const [deleteUser, setDeleteUser] = useState<AdminUser | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
   const [editRole, setEditRole] = useState<UserRole>('user');
 
@@ -122,6 +123,7 @@ export function AdminUsersPage() {
 
   const handleDelete = () => {
     if (!deleteUser) return;
+    if (deleteConfirmation.trim().toUpperCase() !== 'SUPPRIMER') return;
 
     deleteUserMutation(String(deleteUser.id), {
       onSuccess: () => {
@@ -130,6 +132,7 @@ export function AdminUsersPage() {
           description: `${deleteUser.name} a ete supprime.`,
         });
         setDeleteUser(null);
+        setDeleteConfirmation('');
       },
       onError: (error) => {
         toast({
@@ -334,6 +337,7 @@ export function AdminUsersPage() {
                               onSelect={(event) => {
                                 event.preventDefault();
                                 setDeleteUser(user);
+                                setDeleteConfirmation('');
                               }}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
@@ -417,7 +421,15 @@ export function AdminUsersPage() {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteUser} onOpenChange={(open) => !open && setDeleteUser(null)}>
+      <AlertDialog
+        open={!!deleteUser}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteUser(null);
+            setDeleteConfirmation('');
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer l'utilisateur ?</AlertDialogTitle>
@@ -426,14 +438,26 @@ export function AdminUsersPage() {
               de {deleteUser?.name} seront egalement supprimes.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="delete-confirmation">
+              Tapez <span className="font-semibold">SUPPRIMER</span> pour confirmer
+            </Label>
+            <Input
+              id="delete-confirmation"
+              value={deleteConfirmation}
+              onChange={(event) => setDeleteConfirmation(event.target.value)}
+              placeholder="SUPPRIMER"
+              autoComplete="off"
+            />
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={isDeleting}
+              disabled={isDeleting || deleteConfirmation.trim().toUpperCase() !== 'SUPPRIMER'}
             >
-              {isDeleting ? 'Suppression...' : 'Supprimer'}
+              {isDeleting ? 'Suppression...' : 'Supprimer definitivement'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
