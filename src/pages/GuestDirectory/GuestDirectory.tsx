@@ -6,16 +6,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Popover,
   PopoverContent,
@@ -52,19 +44,11 @@ import { useToast } from "@/hooks/use-toast";
 
 const ITEMS_PER_PAGE = 20;
 
-const statusConfig: Record<string, { label: string; className: string }> = {
-  accepted: { label: "Accepté", className: "bg-green-100 text-green-800 border-green-200" },
-  pending: { label: "En attente", className: "bg-yellow-100 text-yellow-800 border-yellow-200" },
-  declined: { label: "Refusé", className: "bg-red-100 text-red-800 border-red-200" },
-  maybe: { label: "Peut-être", className: "bg-blue-100 text-blue-800 border-blue-200" },
-};
-
 const GuestDirectory = () => {
   const [search, setSearch] = useState("");
   const [eventFilter, setEventFilter] = useState("all");
   const [eventSearchQuery, setEventSearchQuery] = useState("");
   const [eventPopoverOpen, setEventPopoverOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -76,7 +60,6 @@ const GuestDirectory = () => {
   const { data: guestsData, isLoading } = useGlobalGuests({
     search,
     event_id: eventFilter,
-    rsvp_status: statusFilter,
     date_from: dateFrom,
     date_to: dateTo,
     page: currentPage,
@@ -104,7 +87,6 @@ const GuestDirectory = () => {
       filters: {
         search,
         event_id: eventFilter,
-        rsvp_status: statusFilter,
         date_from: dateFrom,
         date_to: dateTo,
       }
@@ -258,18 +240,6 @@ const GuestDirectory = () => {
                       </Command>
                     </PopoverContent>
                   </Popover>
-                  <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
-                    <SelectTrigger className="w-full sm:w-[160px]">
-                      <SelectValue placeholder="Statut RSVP" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tous les statuts</SelectItem>
-                      <SelectItem value="accepted">Accepté</SelectItem>
-                      <SelectItem value="pending">En attente</SelectItem>
-                      <SelectItem value="declined">Refusé</SelectItem>
-                      <SelectItem value="maybe">Peut-être</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
                 <div className="flex gap-2">
                   <DropdownMenu>
@@ -340,20 +310,18 @@ const GuestDirectory = () => {
                 <TableHead>Invité</TableHead>
                 <TableHead>Coordonnées</TableHead>
                 <TableHead>Événement</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Dernière interaction</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={4} className="h-24 text-center">
                     Chargement...
                   </TableCell>
                 </TableRow>
               ) : guests.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={4} className="h-24 text-center">
                     Aucun invité trouvé.
                   </TableCell>
                 </TableRow>
@@ -398,14 +366,6 @@ const GuestDirectory = () => {
                           {guest.event?.date ? format(new Date(guest.event.date), 'd MMM yyyy', { locale: fr }) : '-'}
                         </p>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={statusConfig[guest.rsvp_status]?.className || ""}>
-                        {statusConfig[guest.rsvp_status]?.label || guest.rsvp_status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {format(new Date(guest.created_at), 'd MMM yyyy', { locale: fr })}
                     </TableCell>
                   </TableRow>
                 ))
