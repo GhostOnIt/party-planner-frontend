@@ -61,6 +61,7 @@ import {
 import { PerPageSelector } from '@/components/ui/per-page-selector';
 import { PageHeader } from '@/components/layout/page-header';
 import { useToast } from '@/hooks/use-toast';
+import { getApiErrorMessage } from '@/api/client';
 import { useAdminUsers, useUpdateUser, useDeleteUser, useToggleUserActive } from '@/hooks/useAdmin';
 import type { AdminUser, AdminUserFilters, UserRole } from '@/types';
 
@@ -108,10 +109,10 @@ export function AdminUsersPage() {
           });
           setEditUser(null);
         },
-        onError: () => {
+        onError: (error) => {
           toast({
             title: 'Erreur',
-            description: 'Impossible de modifier le role.',
+            description: getApiErrorMessage(error),
             variant: 'destructive',
           });
         },
@@ -130,10 +131,10 @@ export function AdminUsersPage() {
         });
         setDeleteUser(null);
       },
-      onError: () => {
+      onError: (error) => {
         toast({
           title: 'Erreur',
-          description: 'Impossible de supprimer l\'utilisateur.',
+          description: getApiErrorMessage(error),
           variant: 'destructive',
         });
       },
@@ -151,10 +152,10 @@ export function AdminUsersPage() {
             description: `Le compte de ${user.name} a ete ${newStatus ? 'active' : 'desactive'}.`,
           });
         },
-        onError: () => {
+        onError: (error) => {
           toast({
             title: 'Erreur',
-            description: 'Impossible de modifier le statut du compte.',
+            description: getApiErrorMessage(error),
             variant: 'destructive',
           });
         },
@@ -300,7 +301,8 @@ export function AdminUsersPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                              onClick={() => {
+                              onSelect={(event) => {
+                                event.preventDefault();
                                 setEditUser(user);
                                 setEditRole(user.role);
                               }}
@@ -308,7 +310,12 @@ export function AdminUsersPage() {
                               <UserCog className="mr-2 h-4 w-4" />
                               Modifier le role
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleToggleActive(user)}>
+                            <DropdownMenuItem
+                              onSelect={(event) => {
+                                event.preventDefault();
+                                handleToggleActive(user);
+                              }}
+                            >
                               {user.is_active !== false ? (
                                 <>
                                   <Ban className="mr-2 h-4 w-4" />
@@ -324,7 +331,10 @@ export function AdminUsersPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-destructive"
-                              onClick={() => setDeleteUser(user)}
+                              onSelect={(event) => {
+                                event.preventDefault();
+                                setDeleteUser(user);
+                              }}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Supprimer
