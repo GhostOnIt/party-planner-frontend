@@ -33,6 +33,8 @@ interface InitiatePaymentData {
   amount?: number;
   currency?: string;
   description?: string;
+  /** Si absent, généré côté client à chaque tentative */
+  idempotency_key?: string;
 }
 
 // Get payment history
@@ -43,14 +45,14 @@ export function usePayments() {
       const response = await api.get('/payments');
       const data = response.data;
 
+      if (data && typeof data === 'object' && 'data' in data && Array.isArray((data as { data: unknown }).data)) {
+        return (data as { data: Payment[] }).data;
+      }
       if (Array.isArray(data)) {
         return data;
       }
-      if (data && 'data' in data) {
-        return data.data || [];
-      }
       if (data && 'payments' in data) {
-        return data.payments || [];
+        return (data as { payments: Payment[] }).payments || [];
       }
 
       return [];
@@ -96,7 +98,9 @@ export function useInitiatePayment() {
 
   return useMutation({
     mutationFn: async (data: InitiatePaymentData): Promise<PaymentInitResponse> => {
-      const { method, ...paymentData } = data;
+      const { method, idempotency_key, ...rest } = data;
+      const idempotencyKey = idempotency_key ?? crypto.randomUUID();
+      const paymentData = { ...rest, idempotency_key: idempotencyKey };
 
       // Use specific provider endpoint if method is provided
       let endpoint = '/payments/initiate';
@@ -122,7 +126,11 @@ export function useInitiateMTNPayment() {
 
   return useMutation({
     mutationFn: async (data: InitiatePaymentData): Promise<PaymentInitResponse> => {
-      const response = await api.post('/payments/mtn/initiate', data);
+      const { idempotency_key, ...rest } = data;
+      const response = await api.post('/payments/mtn/initiate', {
+        ...rest,
+        idempotency_key: idempotency_key ?? crypto.randomUUID(),
+      });
       return response.data;
     },
     onSuccess: () => {
@@ -137,7 +145,11 @@ export function useInitiateAirtelPayment() {
 
   return useMutation({
     mutationFn: async (data: InitiatePaymentData): Promise<PaymentInitResponse> => {
-      const response = await api.post('/payments/airtel/initiate', data);
+      const { idempotency_key, ...rest } = data;
+      const response = await api.post('/payments/airtel/initiate', {
+        ...rest,
+        idempotency_key: idempotency_key ?? crypto.randomUUID(),
+      });
       return response.data;
     },
     onSuccess: () => {
@@ -151,7 +163,7 @@ export function useRetryPayment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (paymentId: number): Promise<PaymentInitResponse> => {
+    mutationFn: async (paymentId: string | number): Promise<PaymentInitResponse> => {
       const response = await api.post(`/payments/${paymentId}/retry`);
       return response.data;
     },
@@ -189,4 +201,20 @@ export function getProviderFromPhone(phone: string): PaymentMethod | null {
   }
 
   return null;
+}
+
+/** Télécharge le reçu PDF (paiement complété). */
+export async function downloadPaymentReceipt(paymentId: string): Promise<void> {
+  const response = await api.get(`/payments/${paymentId}/receipt`, {
+    responseType: 'blob',
+  });
+  const blob = new Blob([response.data], { type: 'application/pdf' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `recu-paiement-${paymentId}.pdf`);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 }

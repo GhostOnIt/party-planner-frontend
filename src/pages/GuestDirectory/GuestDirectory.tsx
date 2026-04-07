@@ -204,7 +204,12 @@ const GuestDirectory = () => {
                   </div>
                   <Popover open={eventPopoverOpen} onOpenChange={(open) => { setEventPopoverOpen(open); if (!open) setEventSearchQuery(""); }}>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" role="combobox" className="w-full sm:w-[220px] justify-between font-normal">
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className="w-full sm:w-[220px] justify-between font-normal"
+                        data-tour="onboarding-guest-event-filter"
+                      >
                         <span className="truncate">{selectedEvent ? selectedEvent.title : "Tous les événements"}</span>
                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -261,6 +266,7 @@ const GuestDirectory = () => {
                     disabled={selectedIds.size === 0}
                     onClick={() => setCampaignOpen(true)}
                     className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                    data-tour="onboarding-send-message"
                   >
                     <Send className="w-4 h-4 mr-2" />
                     Envoyer un message

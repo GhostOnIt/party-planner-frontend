@@ -91,6 +91,11 @@ export interface Event {
   expected_guests_count?: number;
   /** Abonnement éventuellement rattaché directement à cet événement */
   subscription?: Subscription | null;
+  /** Droit courant sur l'événement (API détail) */
+  is_owner?: boolean;
+  role?: string;
+  can_manage?: boolean;
+  can_invite?: boolean;
 }
 
 // Guest

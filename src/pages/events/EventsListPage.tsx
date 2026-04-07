@@ -124,7 +124,7 @@ export function EventsListPage() {
         title="Mes événements"
         description="Gérez tous vos événements en un seul endroit"
         actions={
-          <Link to="/events/create">
+          <Link to="/events/create" data-tour="onboarding-create-event">
             <Button className="gap-2 bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] hover:shadow-lg hover:shadow-[#4F46E5]/25">
               <Plus className="h-4 w-4" />
               Nouvel événement

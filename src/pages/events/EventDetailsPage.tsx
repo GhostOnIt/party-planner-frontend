@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
   Pencil,
@@ -191,6 +191,7 @@ function EventClaimScreen({
 export function EventDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -366,13 +367,24 @@ export function EventDetailsPage() {
                     </Button>
                   </Link>
                 </div>
-                <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-3 mb-2 flex-wrap">
                   <EventTypeBadge type={event.type} />
                   <EventStatusBadge status={event.status} />
+                  {location.pathname.startsWith('/admin') && (
+                    <Badge className="bg-amber-500/90 text-white border-0 backdrop-blur-sm">
+                      Administration plateforme
+                    </Badge>
+                  )}
+                  {user && event.user_id === user.id && (
+                    <Badge className="bg-emerald-500/85 text-white border-0 backdrop-blur-sm">
+                      Organisateur
+                    </Badge>
+                  )}
                   {user && event.user_id !== user.id && (
                     <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm">
                       <UserCheck className="h-3 w-3 mr-1" />
                       Collaborateur
+                      {event.role && event.role !== 'none' ? ` · ${event.role}` : ''}
                     </Badge>
                   )}
                 </div>

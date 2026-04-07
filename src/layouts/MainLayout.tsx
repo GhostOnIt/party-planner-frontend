@@ -1,13 +1,17 @@
 import { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { useAuthStore } from '@/stores/authStore';
   import api from '@/api/client';
  import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
+import { OnboardingRunner } from '@/components/onboarding/OnboardingRunner';
 
 export function MainLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdminSection = location.pathname.startsWith('/admin');
    const { user, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -59,7 +63,20 @@ export function MainLayout() {
           onLogout={handleLogout}
         />
 
-        <main className="mt-16 p-4 lg:p-6">
+        <main className={cn('mt-16 p-4 lg:p-6', isAdminSection && 'bg-slate-50/80 min-h-[calc(100vh-4rem)]')}>
+          {isAdminSection && (
+            <div
+              className="mb-4 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-950"
+              role="status"
+            >
+              <strong className="font-semibold">Administration plateforme</strong>
+              <span className="text-indigo-900/90">
+                {' '}
+                — Paiements, utilisateurs et statistiques globales (hors contexte d&apos;un seul événement).
+              </span>
+            </div>
+          )}
+          <OnboardingRunner />
           <Outlet />
         </main>
       </div>

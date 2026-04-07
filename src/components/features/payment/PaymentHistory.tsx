@@ -1,6 +1,7 @@
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { CreditCard, CheckCircle2, XCircle, Clock, RefreshCw } from 'lucide-react';
+import { CreditCard, CheckCircle2, XCircle, Clock, RefreshCw, FileDown } from 'lucide-react';
+import { downloadPaymentReceipt } from '@/hooks/usePayment';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -115,7 +116,7 @@ export function PaymentHistory({
                   })}
                 </TableCell>
                 <TableCell className="font-mono text-sm">
-                  {payment.transaction_reference}
+                  {payment.transaction_reference ?? payment.id.slice(0, 8)}
                 </TableCell>
                 <TableCell>{payment.payment_method ? methodLabels[payment.payment_method] : '-'}</TableCell>
                 <TableCell className="font-medium">
@@ -128,16 +129,29 @@ export function PaymentHistory({
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {payment.status === 'failed' && onRetry && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onRetry(payment.id)}
-                    >
-                      <RefreshCw className="mr-1 h-4 w-4" />
-                      Reessayer
-                    </Button>
-                  )}
+                  <div className="flex flex-wrap items-center gap-1">
+                    {payment.status === 'completed' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        onClick={() => downloadPaymentReceipt(payment.id)}
+                      >
+                        <FileDown className="mr-1 h-4 w-4" />
+                        PDF
+                      </Button>
+                    )}
+                    {payment.status === 'failed' && onRetry && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onRetry(payment.id)}
+                      >
+                        <RefreshCw className="mr-1 h-4 w-4" />
+                        Reessayer
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             );

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Search, CreditCard, Phone } from 'lucide-react';
+import { Search, CreditCard, Phone, FileDown } from 'lucide-react';
+import { downloadPaymentReceipt } from '@/hooks/usePayment';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -131,7 +132,7 @@ export function AdminPaymentsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par reference ou telephone..."
+                placeholder="Référence, e-mail ou nom du client…"
                 className="pl-9"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
@@ -213,6 +214,7 @@ export function AdminPaymentsPage() {
                     <TableHead>Montant</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Date</TableHead>
+                    <TableHead className="w-[100px]">Reçu</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -267,6 +269,22 @@ export function AdminPaymentsPage() {
                         <span className="text-sm text-muted-foreground">
                           {format(parseISO(payment.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
                         </span>
+                      </TableCell>
+                      <TableCell>
+                        {payment.status === 'completed' ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1"
+                            onClick={() => downloadPaymentReceipt(payment.id)}
+                          >
+                            <FileDown className="h-4 w-4" />
+                            PDF
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
