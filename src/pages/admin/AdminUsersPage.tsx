@@ -314,8 +314,17 @@ export function AdminUsersPage() {
                               Modifier le role
                             </DropdownMenuItem>
                             <DropdownMenuItem
+                              disabled={user.role === 'admin'}
                               onSelect={(event) => {
                                 event.preventDefault();
+                                if (user.role === 'admin') {
+                                  toast({
+                                    title: 'Action non autorisee',
+                                    description: "Le statut d'un administrateur ne peut pas etre modifie.",
+                                    variant: 'destructive',
+                                  });
+                                  return;
+                                }
                                 handleToggleActive(user);
                               }}
                             >
