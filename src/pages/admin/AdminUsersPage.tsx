@@ -101,7 +101,7 @@ export function AdminUsersPage() {
     if (!editUser) return;
 
     updateUser(
-      { userId: Number(editUser.id), data: { role: editRole } },
+      { userId: editUser.id, data: { role: editRole } },
       {
         onSuccess: () => {
           toast({
@@ -147,7 +147,7 @@ export function AdminUsersPage() {
   const handleToggleActive = (user: AdminUser) => {
     const newStatus = !user.is_active;
     toggleActive(
-      { userId: Number(user.id), isActive: newStatus },
+      { userId: user.id, isActive: newStatus },
       {
         onSuccess: () => {
           toast({

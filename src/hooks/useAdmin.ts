@@ -91,7 +91,7 @@ export function useUpdateUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, data }: { userId: number; data: UpdateUserFormData }) => {
+    mutationFn: async ({ userId, data }: { userId: string | number; data: UpdateUserFormData }) => {
       const response = await api.put(`/admin/users/${userId}`, data);
       return response.data;
     },
@@ -120,7 +120,7 @@ export function useToggleUserActive() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, isActive }: { userId: number; isActive: boolean }) => {
+    mutationFn: async ({ userId, isActive }: { userId: string | number; isActive: boolean }) => {
       const response = await api.post(`/admin/users/${userId}/toggle-active`, { is_active: isActive });
       return response.data;
     },
