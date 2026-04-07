@@ -117,7 +117,8 @@ export function Sidebar({ isAdmin = false, onLogout }: SidebarProps) {
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors",
                   shouldBeActive
                     ? "bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white"
-                    : "text-[#6b7280] hover:bg-[#f3f4f6]"
+                    : "text-[#6b7280] hover:bg-[#f3f4f6]",
+                  isInAdminSection && "opacity-60"
                 );
               }}
             >
