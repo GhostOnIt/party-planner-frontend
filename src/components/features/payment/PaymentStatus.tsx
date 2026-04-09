@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/logger';
+import { paymentTrace } from '@/lib/paymentTrace';
 import { usePollPaymentStatus } from '@/hooks/usePayment';
 import type { PaymentStatus as PaymentStatusType } from '@/types';
 
@@ -85,20 +86,38 @@ export function PaymentStatus({
   const status = derivePollStatus(data);
   const config = statusConfig[status];
 
+  const prevStatusForTrace = useRef<string | null>(null);
+
+  useEffect(() => {
+    paymentTrace('PaymentStatus: montage / changement paymentId', { paymentId });
+    prevStatusForTrace.current = null;
+  }, [paymentId]);
+
+  useEffect(() => {
+    if (isError) return;
+    if (prevStatusForTrace.current !== status) {
+      paymentTrace('PaymentStatus: statut', { paymentId, status });
+      prevStatusForTrace.current = status;
+    }
+  }, [paymentId, status, isError]);
+
   useEffect(() => {
     if (isError) return;
     if (status === 'completed' && onSuccess && !hasCalledSuccess.current) {
       logger.log('PaymentStatus: Calling onSuccess (once)');
+      paymentTrace('PaymentStatus: completed → onSuccess (microtask)', { paymentId });
       hasCalledSuccess.current = true;
       queueMicrotask(() => onSuccess());
     } else if (status === 'failed' && onFailure && !hasCalledFailure.current) {
       logger.log('PaymentStatus: Calling onFailure (once)');
+      paymentTrace('PaymentStatus: failed → onFailure (microtask)', { paymentId });
       hasCalledFailure.current = true;
       queueMicrotask(() => onFailure());
     }
-  }, [isError, status, onSuccess, onFailure]);
+  }, [isError, status, onSuccess, onFailure, paymentId]);
 
   if (isError) {
+    paymentTrace('PaymentStatus: erreur polling', { paymentId, message: error?.message });
     logger.error('Payment polling error:', error);
     return (
       <Card className="border-2 bg-red-50">

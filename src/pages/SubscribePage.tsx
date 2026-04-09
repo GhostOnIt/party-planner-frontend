@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getApiErrorMessage } from '@/api/client';
 import type { PaymentMethod } from '@/types';
 import { cn } from '@/lib/utils';
+import { paymentTrace } from '@/lib/paymentTrace';
 
 export function SubscribePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -45,14 +46,26 @@ export function SubscribePage() {
   }, [plan, isLoadingPlans, navigate, toast]);
 
   const handlePaymentSubmit = async (data: { phone_number: string; method: PaymentMethod }) => {
-    if (!plan) return;
+    paymentTrace('SubscribePage: handlePaymentSubmit — entrée', {
+      planId: plan?.id,
+      slug,
+      method: data.method,
+    });
+    if (!plan) {
+      paymentTrace('SubscribePage: abandon — plan manquant');
+      return;
+    }
 
     try {
-      // First, create the subscription
+      paymentTrace('SubscribePage: mutateAsync subscribe (création abonnement)', { plan_id: plan.id });
       const subscriptionResult = await subscribeMutation.mutateAsync({ plan_id: plan.id });
-      
+      paymentTrace('SubscribePage: souscription OK', {
+        requires_payment: subscriptionResult.requires_payment,
+        subscriptionId: subscriptionResult.subscription?.id,
+      });
+
       if (subscriptionResult.requires_payment === false) {
-        // Trial or free plan - no payment needed
+        paymentTrace('SubscribePage: pas de paiement requis — redirection dashboard');
         toast({
           title: 'Abonnement activé',
           description: 'Votre abonnement a été activé avec succès.',
@@ -62,8 +75,8 @@ export function SubscribePage() {
       }
 
       setSubscriptionCreated(true);
+      paymentTrace('SubscribePage: setSubscriptionCreated(true), appel initiate payment');
 
-      // Then initiate payment
       const paymentResult = await initiatePaymentMutation.mutateAsync({
         amount: plan.price,
         currency: 'XAF',
@@ -73,8 +86,14 @@ export function SubscribePage() {
         subscription_id: subscriptionResult.subscription?.id,
       });
 
-      setPaymentId(paymentResult.payment?.id || null);
+      const pid = paymentResult.payment?.id || null;
+      paymentTrace('SubscribePage: initiate payment OK', { paymentId: pid });
+      setPaymentId(pid);
+      paymentTrace('SubscribePage: setPaymentId — fin (affichage PaymentStatus attendu)');
     } catch (error) {
+      paymentTrace('SubscribePage: erreur catch', {
+        message: error instanceof Error ? error.message : String(error),
+      });
       toast({
         title: 'Erreur',
         description: getApiErrorMessage(error) || 'Une erreur est survenue lors de la souscription.',

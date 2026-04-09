@@ -17,6 +17,7 @@ import {
   normalizeCgPhoneToInternational,
 } from '@/lib/cgPhone';
 import { isAirtelMoneyUiEnabled } from '@/lib/paymentFeatureFlags';
+import { paymentTrace } from '@/lib/paymentTrace';
 import type { PaymentMethod, PlanType } from '@/types';
 
 // Plan duration in months
@@ -121,11 +122,25 @@ export function PaymentForm({
   }, [phoneNumber, selectedMethod]);
 
   const handleFormSubmit = (data: PaymentFormData) => {
-    if (!selectedMethod) return;
+    paymentTrace('PaymentForm: submit (avant validation interne)', {
+      amount,
+      currency,
+      planType,
+      hasMethod: !!selectedMethod,
+    });
+    if (!selectedMethod) {
+      paymentTrace('PaymentForm: abandon — aucune méthode sélectionnée');
+      return;
+    }
     const cleanedSandbox = data.phone_number.replace(/[\s\-\.]/g, '');
     const phone_number = isSandbox
       ? cleanedSandbox
       : normalizeCgPhoneToInternational(data.phone_number) ?? data.phone_number;
+    paymentTrace('PaymentForm: appel onSubmit parent', {
+      method: selectedMethod,
+      phoneLen: phone_number.length,
+      isSandbox,
+    });
     onSubmit({
       phone_number,
       method: selectedMethod,

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
 import { logger } from '@/lib/logger';
+import { paymentTrace } from '@/lib/paymentTrace';
 import type { Payment, PaymentMethod, PaymentStatus, PlanType } from '@/types';
 
 // Response types
@@ -121,8 +122,18 @@ export function useInitiatePayment() {
       }
 
       logger.log('Payment request:', { endpoint, data: paymentData });
+      paymentTrace('useInitiatePayment: POST', { endpoint, subscription_id: paymentData.subscription_id });
       const response = await api.post(endpoint, paymentData);
+      paymentTrace('useInitiatePayment: réponse OK', {
+        paymentId: response.data?.payment?.id,
+        provider: response.data?.provider,
+      });
       return response.data;
+    },
+    onError: (err) => {
+      paymentTrace('useInitiatePayment: erreur mutation', {
+        message: err instanceof Error ? err.message : String(err),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
