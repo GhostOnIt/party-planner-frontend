@@ -265,7 +265,7 @@ export function SubscribePage() {
                     <h4 className="font-medium text-sm text-foreground">Inclus dans ce plan</h4>
                     <ul className="space-y-2.5">
                       {limitsEntries.map(([key, value]) => (
-                        <li key={key} className="flex items-center gap-2.5 text-sm">
+                        <li key={`limit-${key}`} className="flex items-center gap-2.5 text-sm">
                           <Check className="h-4 w-4 shrink-0 text-primary" />
                           <span>
                             {formatLimitValue(value as number)}{' '}
@@ -274,7 +274,7 @@ export function SubscribePage() {
                         </li>
                       ))}
                       {enabledFeatures.map(([key]) => (
-                        <li key={key} className="flex items-center gap-2.5 text-sm">
+                        <li key={`feature-${key}`} className="flex items-center gap-2.5 text-sm">
                           <Check className="h-4 w-4 shrink-0 text-primary" />
                           <span>{PLAN_FEATURE_LABELS[key] ?? key.replace(/\./g, ' ')}</span>
                         </li>
