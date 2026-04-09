@@ -48,15 +48,16 @@ export function OnboardingRunner() {
 
   return (
     <>
-      <AlertDialog
-        open={firstEventOpen}
-        onOpenChange={(o) => {
-          if (!o) {
-            localStorage.setItem(k('first_event'), '1');
-            setFirstEventOpen(false);
-          }
-        }}
-      >
+      {firstEventOpen && (
+        <AlertDialog
+          open={firstEventOpen}
+          onOpenChange={(o) => {
+            if (!o) {
+              localStorage.setItem(k('first_event'), '1');
+              setFirstEventOpen(false);
+            }
+          }}
+        >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Premier événement</AlertDialogTitle>
@@ -85,16 +86,18 @@ export function OnboardingRunner() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      )}
 
-      <AlertDialog
-        open={guestOpen}
-        onOpenChange={(o) => {
-          if (!o) {
-            localStorage.setItem(k('guest_onboarding'), '1');
-            setGuestOpen(false);
-          }
-        }}
-      >
+      {guestOpen && (
+        <AlertDialog
+          open={guestOpen}
+          onOpenChange={(o) => {
+            if (!o) {
+              localStorage.setItem(k('guest_onboarding'), '1');
+              setGuestOpen(false);
+            }
+          }}
+        >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Annuaire invités et envois</AlertDialogTitle>
@@ -128,6 +131,7 @@ export function OnboardingRunner() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      )}
     </>
   );
 }
