@@ -239,10 +239,12 @@ export function useSubscribeToPlan() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user', 'subscription'] });
-      queryClient.invalidateQueries({ queryKey: ['user', 'quota'] });
-      queryClient.invalidateQueries({ queryKey: ['user', 'entitlements'] });
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      queueMicrotask(() => {
+        queryClient.invalidateQueries({ queryKey: ['user', 'subscription'] });
+        queryClient.invalidateQueries({ queryKey: ['user', 'quota'] });
+        queryClient.invalidateQueries({ queryKey: ['user', 'entitlements'] });
+        queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      });
     },
   });
 }

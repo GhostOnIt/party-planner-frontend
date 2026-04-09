@@ -27,6 +27,8 @@ export function SubscribePage() {
   const { toast } = useToast();
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const [subscriptionCreated, setSubscriptionCreated] = useState(false);
+  /** Évite le clignotement du bouton entre subscribe et initiate (isPending repasse à false) — cause typique de removeChild/insertBefore avec Radix. */
+  const [paymentFlowBusy, setPaymentFlowBusy] = useState(false);
 
   const { data: plans, isLoading: isLoadingPlans } = usePlans();
   const plan = plans?.find(p => p.slug === slug && p.is_active && !p.is_trial);
@@ -56,6 +58,7 @@ export function SubscribePage() {
       return;
     }
 
+    setPaymentFlowBusy(true);
     try {
       paymentTrace('SubscribePage: mutateAsync subscribe (création abonnement)', { plan_id: plan.id });
       const subscriptionResult = await subscribeMutation.mutateAsync({ plan_id: plan.id });
@@ -99,6 +102,8 @@ export function SubscribePage() {
         description: getApiErrorMessage(error) || 'Une erreur est survenue lors de la souscription.',
         variant: 'destructive',
       });
+    } finally {
+      setPaymentFlowBusy(false);
     }
   };
 
@@ -345,7 +350,7 @@ export function SubscribePage() {
                   amount={plan.price}
                   currency="XAF"
                   onSubmit={handlePaymentSubmit}
-                  isLoading={subscribeMutation.isPending || initiatePaymentMutation.isPending}
+                  isLoading={paymentFlowBusy}
                   description={`Abonnement ${plan.name} - ${plan.duration_label}`}
                 />
 
