@@ -14,6 +14,25 @@ interface PaymentStatusProps {
   onRetry?: () => void;
 }
 
+function derivePollStatus(data: {
+  is_completed: boolean;
+  is_failed: boolean;
+  is_pending: boolean;
+  payment?: { status?: string };
+} | undefined): PaymentStatusType {
+  if (!data) return 'pending';
+  if (data.is_completed) return 'completed';
+  if (data.is_failed) return 'failed';
+  if (data.is_pending) return 'pending';
+
+  const paymentStatus = data.payment?.status;
+  if (paymentStatus === 'success' || paymentStatus === 'completed') return 'completed';
+  if (paymentStatus === 'failed' || paymentStatus === 'error') return 'failed';
+  if (paymentStatus === 'refunded') return 'refunded';
+
+  return 'pending';
+}
+
 const statusConfig: Record<
   PaymentStatusType,
   { icon: typeof CheckCircle2; color: string; bgColor: string; label: string; description: string }
@@ -60,7 +79,25 @@ export function PaymentStatus({
     true
   );
 
-  // Handle polling error
+  const hasCalledSuccess = useRef(false);
+  const hasCalledFailure = useRef(false);
+
+  const status = derivePollStatus(data);
+  const config = statusConfig[status];
+
+  useEffect(() => {
+    if (isError) return;
+    if (status === 'completed' && onSuccess && !hasCalledSuccess.current) {
+      logger.log('PaymentStatus: Calling onSuccess (once)');
+      hasCalledSuccess.current = true;
+      onSuccess();
+    } else if (status === 'failed' && onFailure && !hasCalledFailure.current) {
+      logger.log('PaymentStatus: Calling onFailure (once)');
+      hasCalledFailure.current = true;
+      onFailure();
+    }
+  }, [isError, status, onSuccess, onFailure]);
+
   if (isError) {
     logger.error('Payment polling error:', error);
     return (
@@ -84,31 +121,8 @@ export function PaymentStatus({
     );
   }
 
-  // Debug log
   logger.log('PaymentStatus polling data:', data);
 
-  // Derive status from poll response flags
-  const getStatus = (): PaymentStatusType => {
-    if (!data) return 'pending';
-    if (data.is_completed) return 'completed';
-    if (data.is_failed) return 'failed';
-    if (data.is_pending) return 'pending';
-
-    // Fallback to payment status if available
-    const paymentStatus = data.payment?.status as string | undefined;
-
-    // Map backend status to frontend status (backend might use different names)
-    if (paymentStatus === 'success' || paymentStatus === 'completed') return 'completed';
-    if (paymentStatus === 'failed' || paymentStatus === 'error') return 'failed';
-    if (paymentStatus === 'refunded') return 'refunded';
-
-    return 'pending';
-  };
-
-  const status = getStatus();
-  const config = statusConfig[status];
-
-  // Safety check - if config is undefined, use pending as fallback
   if (!config) {
     console.error('Invalid payment status:', status);
     return (
@@ -123,24 +137,6 @@ export function PaymentStatus({
 
   const Icon = config.icon;
 
-  // Use ref to prevent calling callbacks multiple times
-  const hasCalledSuccess = useRef(false);
-  const hasCalledFailure = useRef(false);
-
-  // Trigger callbacks on status change (only once)
-  useEffect(() => {
-    if (status === 'completed' && onSuccess && !hasCalledSuccess.current) {
-      logger.log('PaymentStatus: Calling onSuccess (once)');
-      hasCalledSuccess.current = true;
-      onSuccess();
-    } else if (status === 'failed' && onFailure && !hasCalledFailure.current) {
-      logger.log('PaymentStatus: Calling onFailure (once)');
-      hasCalledFailure.current = true;
-      onFailure();
-    }
-  }, [status, onSuccess, onFailure]);
-
-  // Stop polling when status is final
   const isFinalStatus = status === 'completed' || status === 'failed' || status === 'refunded';
 
   return (
