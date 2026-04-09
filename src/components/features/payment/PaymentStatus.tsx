@@ -90,11 +90,11 @@ export function PaymentStatus({
     if (status === 'completed' && onSuccess && !hasCalledSuccess.current) {
       logger.log('PaymentStatus: Calling onSuccess (once)');
       hasCalledSuccess.current = true;
-      onSuccess();
+      queueMicrotask(() => onSuccess());
     } else if (status === 'failed' && onFailure && !hasCalledFailure.current) {
       logger.log('PaymentStatus: Calling onFailure (once)');
       hasCalledFailure.current = true;
-      onFailure();
+      queueMicrotask(() => onFailure());
     }
   }, [isError, status, onSuccess, onFailure]);
 

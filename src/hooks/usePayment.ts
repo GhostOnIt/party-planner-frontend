@@ -86,7 +86,17 @@ export function usePollPaymentStatus(paymentId: string | number | null, enabled:
       return response.data;
     },
     enabled: !!paymentId && enabled,
-    refetchInterval: 3000, // Poll every 3 seconds
+    /** Arrête le poll dès statut final pour éviter des re-renders concurrents (toast / navigation / dialog). */
+    refetchInterval: (query) => {
+      const data = query.state.data as PaymentPollResponse | undefined;
+      if (!data) return 3000;
+      if (data.is_completed || data.is_failed) return false;
+      const ps = data.payment?.status;
+      if (ps === 'completed' || ps === 'failed' || ps === 'refunded') {
+        return false;
+      }
+      return 3000;
+    },
     refetchIntervalInBackground: false,
     retry: 3,
   });

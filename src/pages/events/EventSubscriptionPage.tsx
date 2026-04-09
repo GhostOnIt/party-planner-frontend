@@ -180,15 +180,17 @@ export function EventSubscriptionPage({ eventId }: EventSubscriptionPageProps) {
     console.log('Subscription mutation data:', mutationData);
 
     const onSuccess = () => {
-      setFlowStep('success');
-      toast({
-        title: 'Abonnement active',
-        description: `Votre plan ${selectedPlan} est maintenant actif.`,
+      queueMicrotask(() => {
+        setFlowStep('success');
+        toast({
+          title: 'Abonnement active',
+          description: `Votre plan ${selectedPlan} est maintenant actif.`,
+        });
+        setTimeout(() => {
+          setShowPaymentModal(false);
+          resetFlow();
+        }, 2000);
       });
-      setTimeout(() => {
-        setShowPaymentModal(false);
-        resetFlow();
-      }, 2000);
     };
 
     const onError = (error: unknown) => {
