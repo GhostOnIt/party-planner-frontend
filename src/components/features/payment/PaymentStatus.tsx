@@ -82,6 +82,7 @@ export function PaymentStatus({
 
   const hasCalledSuccess = useRef(false);
   const hasCalledFailure = useRef(false);
+  const isMountedRef = useRef(true);
 
   const status = derivePollStatus(data);
   const config = statusConfig[status];
@@ -91,7 +92,16 @@ export function PaymentStatus({
   useEffect(() => {
     paymentTrace('PaymentStatus: montage / changement paymentId', { paymentId });
     prevStatusForTrace.current = null;
+    hasCalledSuccess.current = false;
+    hasCalledFailure.current = false;
   }, [paymentId]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (isError) return;
@@ -105,14 +115,18 @@ export function PaymentStatus({
     if (isError) return;
     if (status === 'completed' && onSuccess && !hasCalledSuccess.current) {
       logger.log('PaymentStatus: Calling onSuccess (once)');
-      paymentTrace('PaymentStatus: completed → onSuccess (microtask)', { paymentId });
+      paymentTrace('PaymentStatus: completed → onSuccess', { paymentId });
       hasCalledSuccess.current = true;
-      queueMicrotask(() => onSuccess());
+      if (isMountedRef.current) {
+        onSuccess();
+      }
     } else if (status === 'failed' && onFailure && !hasCalledFailure.current) {
       logger.log('PaymentStatus: Calling onFailure (once)');
-      paymentTrace('PaymentStatus: failed → onFailure (microtask)', { paymentId });
+      paymentTrace('PaymentStatus: failed → onFailure', { paymentId });
       hasCalledFailure.current = true;
-      queueMicrotask(() => onFailure());
+      if (isMountedRef.current) {
+        onFailure();
+      }
     }
   }, [isError, status, onSuccess, onFailure, paymentId]);
 

@@ -109,12 +109,6 @@ export function SubscribePage() {
 
   const handlePaymentSuccess = () => {
     navigate('/dashboard', { replace: true });
-    queueMicrotask(() => {
-      toast({
-        title: 'Paiement réussi',
-        description: 'Votre abonnement a été activé avec succès.',
-      });
-    });
   };
 
   const handlePaymentFailure = () => {
