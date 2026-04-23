@@ -15,7 +15,6 @@ import {
 } from '@/hooks/useAdminPlans';
 import { useSubscribeToPlan } from '@/hooks/useSubscription';
 import { useInitiatePayment } from '@/hooks/usePayment';
-import { useToast } from '@/hooks/use-toast';
 import { getApiErrorMessage } from '@/api/client';
 import type { PaymentMethod } from '@/types';
 import { cn } from '@/lib/utils';
@@ -24,9 +23,9 @@ import { paymentTrace } from '@/lib/paymentTrace';
 export function SubscribePage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const [subscriptionCreated, setSubscriptionCreated] = useState(false);
+  const [inlineError, setInlineError] = useState<string | null>(null);
   /** Évite le clignotement du bouton entre subscribe et initiate (isPending repasse à false) — cause typique de removeChild/insertBefore avec Radix. */
   const [paymentFlowBusy, setPaymentFlowBusy] = useState(false);
 
@@ -38,16 +37,12 @@ export function SubscribePage() {
 
   useEffect(() => {
     if (!isLoadingPlans && !plan) {
-      toast({
-        title: 'Plan introuvable',
-        description: 'Le plan demandé n\'existe pas ou n\'est plus disponible.',
-        variant: 'destructive',
-      });
       navigate('/plans');
     }
-  }, [plan, isLoadingPlans, navigate, toast]);
+  }, [plan, isLoadingPlans, navigate]);
 
   const handlePaymentSubmit = async (data: { phone_number: string; method: PaymentMethod }) => {
+    setInlineError(null);
     paymentTrace('SubscribePage: handlePaymentSubmit — entrée', {
       planId: plan?.id,
       slug,
@@ -69,10 +64,6 @@ export function SubscribePage() {
 
       if (subscriptionResult.requires_payment === false) {
         paymentTrace('SubscribePage: pas de paiement requis — redirection dashboard');
-        toast({
-          title: 'Abonnement activé',
-          description: 'Votre abonnement a été activé avec succès.',
-        });
         navigate('/dashboard');
         return;
       }
@@ -97,11 +88,7 @@ export function SubscribePage() {
       paymentTrace('SubscribePage: erreur catch', {
         message: error instanceof Error ? error.message : String(error),
       });
-      toast({
-        title: 'Erreur',
-        description: getApiErrorMessage(error) || 'Une erreur est survenue lors de la souscription.',
-        variant: 'destructive',
-      });
+      setInlineError(getApiErrorMessage(error) || 'Une erreur est survenue lors de la souscription.');
     } finally {
       setPaymentFlowBusy(false);
     }
@@ -112,11 +99,7 @@ export function SubscribePage() {
   };
 
   const handlePaymentFailure = () => {
-    toast({
-      title: 'Paiement échoué',
-      description: 'Le paiement n\'a pas pu être effectué. Veuillez réessayer.',
-      variant: 'destructive',
-    });
+    setInlineError('Le paiement n\'a pas pu être effectué. Veuillez réessayer.');
   };
 
   if (isLoadingPlans) {
@@ -330,6 +313,13 @@ export function SubscribePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {inlineError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{inlineError}</AlertDescription>
+                  </Alert>
+                )}
+
                 {subscriptionCreated && (
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
