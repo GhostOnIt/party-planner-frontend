@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { TrialBanner } from "./trial-banner"
+import { NonRenewalBanner } from "./non-renewal-banner"
 import { PromoCard } from "./promo-card"
+import { useCurrentSubscription } from "@/hooks/useSubscription"
 import { useAvailableTrial } from "@/hooks/useAdminPlans"
 import type { CommunicationSpot } from "@/types/communication"
 
@@ -36,7 +38,7 @@ interface BannersCarouselProps {
 
 const AUTO_PLAY_INTERVAL = 5000 // 5 secondes
 
-type SlideType = "trial" | "promo" | `spot-${string}`
+type SlideType = "non_renewal" | "trial" | "promo" | `spot-${string}`
 
 export function BannersCarousel({
   spots = [],
@@ -46,8 +48,9 @@ export function BannersCarousel({
   showPromo = false,
   onPromoDismiss,
   promoCardProps,
-}: BannersCarouselProps) {
+}: Readonly<BannersCarouselProps>) {
   const { data: trialData, isLoading: isLoadingTrial } = useAvailableTrial()
+  const { data: currentSubscriptionData } = useCurrentSubscription()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isHovered, setIsHovered] = useState(false)
   const [trialVisible, setTrialVisible] = useState(true)
@@ -62,6 +65,10 @@ export function BannersCarousel({
 
   // Vérifier si la promo legacy est disponible
   const hasLegacyPromo = showPromo && promoCardProps
+  const lifecyclePhase = currentSubscriptionData?.lifecycle?.phase
+  const hasNonRenewalBanner = ['renewal_due', 'renewal_last_day', 'grace_period', 'archived', 'expired'].includes(
+    lifecyclePhase ?? ''
+  )
 
   // Filtrer les spots non dismissés
   const activeSpots = useMemo(() => {
@@ -71,6 +78,7 @@ export function BannersCarousel({
   // Créer un tableau des slides disponibles
   const availableSlides = useMemo(() => {
     const slides: SlideType[] = []
+    if (hasNonRenewalBanner) slides.push("non_renewal")
     if (hasTrial) slides.push("trial")
     // Add dynamic spots
     activeSpots.forEach(spot => {
@@ -81,7 +89,7 @@ export function BannersCarousel({
       slides.push("promo")
     }
     return slides
-  }, [hasTrial, activeSpots, hasLegacyPromo])
+  }, [hasTrial, activeSpots, hasLegacyPromo, hasNonRenewalBanner])
 
   const totalSlides = availableSlides.length
 
@@ -179,15 +187,31 @@ export function BannersCarousel({
   }
 
   return (
-    <div
+    <section
       className="relative mb-6"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onFocus={() => setIsHovered(true)}
+      onBlur={() => setIsHovered(false)}
+      aria-label="Carrousel de bannières"
     >
       {/* Carrousel container - hauteur fixe pour un centrage constant */}
       <div className="relative overflow-hidden rounded-2xl min-h-[200px]">
         {/* Slides container - grid avec tous les slides dans la même cellule, centrés verticalement */}
         <div className="grid min-h-[200px] *:col-start-1 *:row-start-1">
+          {/* Trial Banner */}
+          {hasNonRenewalBanner && (
+            <div
+              className={`flex items-center transition-opacity duration-500 ease-in-out [&>div]:rounded-2xl [&>div]:w-full ${
+                currentSlide === "non_renewal"
+                  ? "opacity-100 pointer-events-auto z-10"
+                  : "opacity-0 pointer-events-none z-0"
+              }`}
+            >
+              <NonRenewalBanner />
+            </div>
+          )}
+
           {/* Trial Banner */}
           {hasTrial && (
             <div
@@ -264,9 +288,9 @@ export function BannersCarousel({
         {/* Dots indicators - seulement si plus d'un slide */}
         {totalSlides > 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-30 px-3 py-1.5 rounded-full bg-black/20 backdrop-blur-sm">
-            {availableSlides.map((_, index) => (
+            {availableSlides.map((slide, index) => (
               <button
-                key={index}
+                key={`dot-${slide}`}
                 onClick={() => setCurrentIndex(index)}
                 className={`h-2 rounded-full transition-all ${
                   index === currentIndex
@@ -279,6 +303,6 @@ export function BannersCarousel({
           </div>
         )}
       </div>
-    </div>
+    </section>
   )
 }

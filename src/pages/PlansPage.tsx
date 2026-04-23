@@ -58,7 +58,7 @@ function getPlanStyle(plan: Plan, isPopular: boolean) {
     };
   }
 
-  if (planName.includes('agence') || planName.includes('entreprise')) {
+  if (planName.includes('business') || planName.includes('agence') || planName.includes('entreprise')) {
     return {
       icon: Building2,
       primaryColor: 'from-[#E91E8C] to-[#C2185B]',
@@ -114,6 +114,11 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
   }
 
   const handleSelectPlan = () => {
+    if (plan.features?.['sales.contact_required']) {
+      globalThis.location.href = 'mailto:contact@party-planner.cg?subject=Demande%20devis%20Plan%20Business';
+      return;
+    }
+
     if (plan.is_trial && hasActiveAccountSubscription) {
       toast({
         title: 'Essai non disponible',
@@ -155,6 +160,7 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
 
   const getCtaText = () => {
     if (isSubscribing) return 'Traitement...';
+    if (plan.features?.['sales.contact_required']) return 'Demander un devis';
     if (plan.is_trial) return "Activer l'essai gratuit";
     if (plan.price === 0) return 'Commencer';
     return `Choisir ${plan.name}`;
@@ -165,6 +171,32 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
     cardHoverClass = 'md:scale-105 border-[#4F46E5] shadow-2xl shadow-[#4F46E5]/10 ring-2 ring-[#4F46E5]/20';
   } else if (isHovered) {
     cardHoverClass = 'border-slate-300 shadow-xl';
+  }
+
+  let pricingContent = (
+    <>
+      <span className="text-4xl font-bold text-slate-900">
+        {plan.price.toLocaleString('fr-FR')}
+      </span>
+      <span className="text-base text-slate-600">FCFA</span>
+      <span className="text-xs text-slate-500">{plan.duration_label}</span>
+    </>
+  );
+
+  if (plan.features?.['sales.contact_required']) {
+    pricingContent = (
+      <>
+        <span className="text-4xl font-bold text-slate-900">Sur devis</span>
+        <span className="text-xs text-slate-500 ml-1.5">{plan.duration_label}</span>
+      </>
+    );
+  } else if (plan.price === 0) {
+    pricingContent = (
+      <>
+        <span className="text-4xl font-bold text-slate-900">Gratuit</span>
+        <span className="text-xs text-slate-500 ml-1.5">{plan.duration_label}</span>
+      </>
+    );
   }
 
   return (
@@ -227,20 +259,7 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
         {/* Pricing */}
         <div className="mb-5">
           <div className="flex items-baseline gap-1.5">
-            {plan.price === 0 ? (
-              <>
-                <span className="text-4xl font-bold text-slate-900">Gratuit</span>
-                <span className="text-xs text-slate-500 ml-1.5">{plan.duration_label}</span>
-              </>
-            ) : (
-              <>
-                <span className="text-4xl font-bold text-slate-900">
-                  {plan.price.toLocaleString('fr-FR')}
-                </span>
-                <span className="text-base text-slate-600">FCFA</span>
-                <span className="text-xs text-slate-500">{plan.duration_label}</span>
-              </>
-            )}
+            {pricingContent}
           </div>
         </div>
 
@@ -337,7 +356,7 @@ export function PlansPage() {
   const [hoveredPlan, setHoveredPlan] = useState<number | null>(null);
 
   // Ensure plans is always an array
-  const plans = Array.isArray(plansData) ? plansData : [];
+  const plans = Array.isArray(plansData) ? plansData.filter((plan) => !plan.is_trial) : [];
 
   if (isLoading) {
     return (

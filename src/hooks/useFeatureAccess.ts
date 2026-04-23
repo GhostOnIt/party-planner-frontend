@@ -33,9 +33,18 @@ export function useFeatureAccess(eventId: string) {
     // Les admins ont accès à toutes les fonctionnalités
     if (isAdmin) return true;
     if (!entitlements) return false;
-    return (
-      entitlements.features[featureKey as keyof typeof entitlements.features] ?? false
-    );
+    const restricted = entitlements.restrictions?.read_only ?? false;
+    const featureEnabled = entitlements.features[featureKey as keyof typeof entitlements.features] ?? false;
+    if (!featureEnabled) return false;
+
+    if (!restricted) return true;
+
+    // En période de grâce / archivage, on conserve majoritairement la lecture.
+    if (featureKey === 'guests.manage' || featureKey === 'tasks.enabled' || featureKey === 'budget.enabled') {
+      return true;
+    }
+
+    return false;
   };
 
   // Helper pour obtenir une limite

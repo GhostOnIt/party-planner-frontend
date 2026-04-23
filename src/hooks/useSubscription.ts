@@ -45,7 +45,7 @@ export function useEventSubscription(eventId: string | number) {
           return data.data || null;
         }
         if (data && 'id' in data) {
-          return data as Subscription;
+          return data;
         }
 
         return null;
@@ -192,6 +192,14 @@ export interface CurrentSubscriptionResponse {
     can_create: boolean;
   };
   has_subscription: boolean;
+  lifecycle?: {
+    phase: 'no_subscription' | 'active' | 'renewal_due' | 'renewal_last_day' | 'grace_period' | 'archived' | 'expired';
+    days_to_expiry: number | null;
+    grace_days_elapsed: number | null;
+    archive_in_days: number | null;
+    is_restricted: boolean;
+    is_archived: boolean;
+  };
 }
 
 export function useCurrentSubscription() {
@@ -286,10 +294,21 @@ export interface EntitlementsResponse {
     'branding.custom': boolean;
     'support.whatsapp_priority': boolean;
     'multi_client.enabled': boolean;
+    'checkin.tablet': boolean;
+    'sales.contact_required': boolean;
     [key: string]: boolean;
   };
   is_active: boolean;
   is_trial: boolean;
+  lifecycle?: {
+    phase: string;
+    days_to_expiry: number | null;
+    grace_days_elapsed: number | null;
+    archive_in_days: number | null;
+    is_restricted: boolean;
+    is_archived: boolean;
+  };
+  restrictions?: Record<string, boolean>;
 }
 
 // Get user's entitlements (limits and features from account-level subscription)

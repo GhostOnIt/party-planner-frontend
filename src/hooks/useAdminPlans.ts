@@ -53,6 +53,8 @@ export interface PlanFeatures {
   'branding.custom'?: boolean;
   'support.whatsapp_priority'?: boolean;
   'multi_client.enabled'?: boolean;
+  'checkin.tablet'?: boolean;
+  'sales.contact_required'?: boolean;
   [key: string]: boolean | undefined;
 }
 
@@ -236,6 +238,8 @@ export const PLAN_FEATURE_LABELS: Record<string, string> = {
   'branding.custom': 'Branding personnalisé',
   'support.whatsapp_priority': 'Support WhatsApp prioritaire',
   'multi_client.enabled': 'Multi-clients',
+  'checkin.tablet': 'Check-in tablette',
+  'sales.contact_required': 'Contact commercial requis',
 };
 
 export const PLAN_LIMIT_LABELS: Record<string, string> = {
