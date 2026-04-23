@@ -1,6 +1,6 @@
 {
   "buildCommand": "pnpm build",
-  "installCommand": "pnpm install",
+  "installCommand": "pnpm install --frozen-lockfile --allow-build=esbuild",
   "framework": "vite",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
