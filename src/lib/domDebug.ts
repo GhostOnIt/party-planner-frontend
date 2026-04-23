@@ -69,7 +69,7 @@ export function setupDomDebugging(): void {
     refChild: Node | null
   ): T {
     try {
-      return nativeInsertBefore.call(this, newChild, refChild);
+      return nativeInsertBefore.call(this, newChild, refChild) as T;
     } catch (error) {
       pushEvent("dom:insertBefore:error", {
         error: error instanceof Error ? error.message : String(error),
@@ -85,7 +85,7 @@ export function setupDomDebugging(): void {
   const nativeRemoveChild = Node.prototype.removeChild;
   Node.prototype.removeChild = function patchedRemoveChild<T extends Node>(child: T): T {
     try {
-      return nativeRemoveChild.call(this, child);
+      return nativeRemoveChild.call(this, child) as T;
     } catch (error) {
       pushEvent("dom:removeChild:error", {
         error: error instanceof Error ? error.message : String(error),
