@@ -1,3 +1,5 @@
+import { pushDomDebugEvent } from '@/lib/domDebug';
+
 /**
  * Trace console pour le flux paiement (prod ou dev).
  *
@@ -23,12 +25,14 @@ function readTraceFlag(): boolean {
 }
 
 let loggedBanner = false;
-
 export function isPaymentTraceEnabled(): boolean {
   return readTraceFlag();
 }
 
 export function paymentTrace(step: string, detail?: unknown): void {
+  // Forward breadcrumbs to DOM debug collector when available.
+  pushDomDebugEvent('payment:trace', { step, detail });
+
   if (!readTraceFlag()) {
     return;
   }

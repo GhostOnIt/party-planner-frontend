@@ -4,6 +4,9 @@ import './index.css'
 import './i18n'
 import App from './App.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { setupDomDebugging } from './lib/domDebug'
+
+setupDomDebugging()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

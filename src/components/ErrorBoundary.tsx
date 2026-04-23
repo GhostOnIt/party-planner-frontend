@@ -12,6 +12,7 @@ interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
+  domDebugDump: string | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -19,10 +20,11 @@ export class ErrorBoundary extends Component<Props, State> {
     hasError: false,
     error: null,
     errorInfo: null,
+    domDebugDump: null,
   };
 
   public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error, errorInfo: null };
+    return { hasError: true, error, errorInfo: null, domDebugDump: null };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -35,11 +37,23 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('Component Stack:', errorInfo.componentStack);
     console.error('='.repeat(50));
 
-    this.setState({ errorInfo });
+    let domDebugDump: string | null = null;
+    if (typeof window !== 'undefined') {
+      const events = (window as Window & { __PP_DOM_DEBUG_EVENTS__?: unknown }).__PP_DOM_DEBUG_EVENTS__;
+      if (Array.isArray(events) && events.length > 0) {
+        try {
+          domDebugDump = JSON.stringify(events, null, 2);
+        } catch {
+          domDebugDump = 'Unable to stringify DOM debug events';
+        }
+      }
+    }
+
+    this.setState({ errorInfo, domDebugDump });
   }
 
   private handleReset = () => {
-    this.setState({ hasError: false, error: null, errorInfo: null });
+    this.setState({ hasError: false, error: null, errorInfo: null, domDebugDump: null });
   };
 
   private handleGoHome = () => {
@@ -77,6 +91,17 @@ export class ErrorBoundary extends Component<Props, State> {
                   </summary>
                   <pre className="mt-2 max-h-48 overflow-auto rounded-lg bg-muted p-3 text-xs">
                     {this.state.error.stack}
+                  </pre>
+                </details>
+              )}
+
+              {this.state.domDebugDump && (
+                <details className="text-sm">
+                  <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                    Voir les evenements DOM debug
+                  </summary>
+                  <pre className="mt-2 max-h-48 overflow-auto rounded-lg bg-muted p-3 text-xs whitespace-pre-wrap break-words">
+                    {this.state.domDebugDump}
                   </pre>
                 </details>
               )}
