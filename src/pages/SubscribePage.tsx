@@ -100,6 +100,7 @@ export function SubscribePage() {
 
   const handlePaymentFailure = () => {
     setInlineError('Le paiement n\'a pas pu être effectué. Veuillez réessayer.');
+    setPaymentId(null);
   };
 
   if (isLoadingPlans) {
@@ -145,40 +146,6 @@ export function SubscribePage() {
             </Button>
           </CardContent>
         </Card>
-      </div>
-    );
-  }
-
-  if (paymentId) {
-    return (
-      <div className="min-h-[60vh] bg-muted/30 py-8 px-4">
-        <div className="max-w-2xl mx-auto space-y-6">
-          <Button variant="ghost" size="sm" className="gap-2 -ml-2 h-auto px-2 text-muted-foreground" asChild>
-            <Link to="/dashboard">
-              <ArrowLeft className="h-4 w-4" />
-              Retour à l&apos;application
-            </Link>
-          </Button>
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Link to="/plans" className="hover:text-foreground transition-colors">
-              Plans
-            </Link>
-            <span>/</span>
-            <span className="text-foreground">Paiement en cours</span>
-          </nav>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Paiement en cours</h1>
-            <p className="mt-1 text-muted-foreground">
-              Suivez le statut de votre paiement. Vous recevrez une notification une fois celui-ci
-              validé.
-            </p>
-          </div>
-          <PaymentStatus
-            paymentId={paymentId}
-            onSuccess={handlePaymentSuccess}
-            onFailure={handlePaymentFailure}
-          />
-        </div>
       </div>
     );
   }
@@ -289,7 +256,7 @@ export function SubscribePage() {
                 <Button variant="outline" className="w-full" asChild>
                   <Link to="/plans">
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Changer de plan
+                    {paymentId ? 'Voir les plans' : 'Changer de plan'}
                   </Link>
                 </Button>
               </CardContent>
@@ -304,12 +271,13 @@ export function SubscribePage() {
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                     2
                   </span>
-                  <span className="text-sm font-medium">Étape 2</span>
+                  <span className="text-sm font-medium">{paymentId ? 'Suivi' : 'Étape 2'}</span>
                 </div>
-                <CardTitle>Paiement</CardTitle>
+                <CardTitle>{paymentId ? 'Paiement en cours' : 'Paiement'}</CardTitle>
                 <CardDescription>
-                  Saisissez votre numéro de téléphone pour recevoir la demande de paiement Mobile
-                  Money (MTN ou Airtel).
+                  {paymentId
+                    ? 'Suivez le statut de votre paiement en temps réel.'
+                    : 'Saisissez votre numéro de téléphone pour recevoir la demande de paiement Mobile Money (MTN ou Airtel).'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -330,13 +298,21 @@ export function SubscribePage() {
                   </Alert>
                 )}
 
-                <PaymentForm
-                  amount={plan.price}
-                  currency="XAF"
-                  onSubmit={handlePaymentSubmit}
-                  isLoading={paymentFlowBusy}
-                  description={`Abonnement ${plan.name} - ${plan.duration_label}`}
-                />
+                {paymentId ? (
+                  <PaymentStatus
+                    paymentId={paymentId}
+                    onSuccess={handlePaymentSuccess}
+                    onFailure={handlePaymentFailure}
+                  />
+                ) : (
+                  <PaymentForm
+                    amount={plan.price}
+                    currency="XAF"
+                    onSubmit={handlePaymentSubmit}
+                    isLoading={paymentFlowBusy}
+                    description={`Abonnement ${plan.name} - ${plan.duration_label}`}
+                  />
+                )}
 
                 <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t">
                   <ShieldCheck className="h-4 w-4 shrink-0" />
