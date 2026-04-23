@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Loader2, ArrowLeft, Check, AlertCircle, Crown, ShieldCheck, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,8 @@ export function SubscribePage() {
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const [subscriptionCreated, setSubscriptionCreated] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
+  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
+  const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Évite le clignotement du bouton entre subscribe et initiate (isPending repasse à false) — cause typique de removeChild/insertBefore avec Radix. */
   const [paymentFlowBusy, setPaymentFlowBusy] = useState(false);
 
@@ -40,6 +42,22 @@ export function SubscribePage() {
       navigate('/plans');
     }
   }, [plan, isLoadingPlans, navigate]);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) {
+        globalThis.clearTimeout(redirectTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (redirectCountdown === null || redirectCountdown <= 0) return;
+    const timer = globalThis.setTimeout(() => {
+      setRedirectCountdown((prev) => (prev && prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => globalThis.clearTimeout(timer);
+  }, [redirectCountdown]);
 
   const handlePaymentSubmit = async (data: { phone_number: string; method: PaymentMethod }) => {
     setInlineError(null);
@@ -95,10 +113,20 @@ export function SubscribePage() {
   };
 
   const handlePaymentSuccess = () => {
-    navigate('/dashboard', { replace: true });
+    if (redirectTimeoutRef.current) return;
+    setInlineError(null);
+    setRedirectCountdown(3);
+    redirectTimeoutRef.current = globalThis.setTimeout(() => {
+      navigate('/dashboard', { replace: true });
+    }, 3000);
   };
 
   const handlePaymentFailure = () => {
+    if (redirectTimeoutRef.current) {
+      globalThis.clearTimeout(redirectTimeoutRef.current);
+      redirectTimeoutRef.current = null;
+    }
+    setRedirectCountdown(null);
     setInlineError('Le paiement n\'a pas pu être effectué. Veuillez réessayer.');
     setPaymentId(null);
   };
@@ -303,6 +331,11 @@ export function SubscribePage() {
                     paymentId={paymentId}
                     onSuccess={handlePaymentSuccess}
                     onFailure={handlePaymentFailure}
+                    completedMessage={
+                      redirectCountdown === null
+                        ? 'Paiement confirmé, redirection...'
+                        : `Paiement confirmé, redirection vers le dashboard dans ${Math.max(redirectCountdown, 0)}s...`
+                    }
                   />
                 ) : (
                   <PaymentForm

@@ -277,9 +277,15 @@ export interface Payment {
   transaction_reference: string | null;
   status: PaymentStatus;
   metadata: Record<string, unknown> | null;
+  service_label?: string | null;
   created_at: string;
   updated_at: string;
   subscription?: Subscription & {
+    plan?: {
+      id: string;
+      name: string;
+      slug?: string;
+    };
     user?: User;
     event?: Event & {
       user?: User;

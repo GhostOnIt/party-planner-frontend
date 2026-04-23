@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { X, Sparkles, CheckCircle2, ArrowRight, Gift } from "lucide-react"
 import { useAvailableTrial, formatLimitValue } from "@/hooks/useAdminPlans"
-import { useSubscribeToPlan } from "@/hooks/useSubscription"
+import { useCurrentSubscription, useSubscribeToPlan } from "@/hooks/useSubscription"
 import { useToast } from "@/hooks/use-toast"
 
 interface TrialBannerProps {
@@ -12,8 +12,9 @@ interface TrialBannerProps {
 export function TrialBanner({
   onDismiss,
   dismissible = true,
-}: TrialBannerProps) {
+}: Readonly<TrialBannerProps>) {
   const { data: trialData, isLoading } = useAvailableTrial()
+  const { data: currentSubscription } = useCurrentSubscription()
   const subscribeMutation = useSubscribeToPlan()
   const { toast } = useToast()
   const [isVisible, setIsVisible] = useState(true)
@@ -35,7 +36,7 @@ export function TrialBanner({
         description: `Votre essai gratuit de ${trialData.data.duration_label} a été activé avec succès.`,
       })
       // Refresh the page to show updated subscription
-      window.location.reload()
+      globalThis.location.reload()
     } catch (error: unknown) {
       toast({
         title: 'Erreur',
@@ -57,6 +58,10 @@ export function TrialBanner({
 
   // No trial available (already used or doesn't exist)
   if (!trialData?.available || !trialData.data) {
+    return null
+  }
+
+  if (currentSubscription?.has_subscription) {
     return null
   }
 
@@ -119,8 +124,8 @@ export function TrialBanner({
           </p>
 
           <div className="flex flex-wrap gap-x-4 gap-y-2">
-            {features.map((feature, index) => (
-              <div key={index} className="flex items-center gap-1.5 text-white/90">
+            {features.map((feature) => (
+              <div key={feature} className="flex items-center gap-1.5 text-white/90">
                 <CheckCircle2 className="w-4 h-4 text-emerald-300" />
                 <span className="text-sm">{feature}</span>
               </div>

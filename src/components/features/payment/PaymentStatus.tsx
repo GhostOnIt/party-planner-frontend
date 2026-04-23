@@ -13,6 +13,7 @@ interface PaymentStatusProps {
   onSuccess?: () => void;
   onFailure?: () => void;
   onRetry?: () => void;
+  completedMessage?: string;
 }
 
 function derivePollStatus(data: {
@@ -73,7 +74,8 @@ export function PaymentStatus({
   onSuccess,
   onFailure,
   onRetry,
-}: PaymentStatusProps) {
+  completedMessage,
+}: Readonly<PaymentStatusProps>) {
   const { data, error, isError } = usePollPaymentStatus(
     paymentId,
     // Stop polling if completed or failed
@@ -210,7 +212,7 @@ export function PaymentStatus({
 
         {status === 'completed' && (
           <div className="mt-4 text-sm text-green-600">
-            Vous pouvez fermer cette fenetre
+            {completedMessage ?? 'Vous pouvez fermer cette fenetre'}
           </div>
         )}
       </CardContent>

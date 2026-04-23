@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Check, Crown, Gift, Building2, ArrowLeft, ArrowRight, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,9 +13,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { usePlans, PLAN_FEATURE_LABELS, formatLimitValue } from '@/hooks/useAdminPlans';
-import { useSubscribeToPlan } from '@/hooks/useSubscription';
+import { useCurrentSubscription, useSubscribeToPlan } from '@/hooks/useSubscription';
 import type { Plan } from '@/hooks/useAdminPlans';
-import { useNavigate } from 'react-router-dom';
 
 // Helper to get feature display text
 function getFeatureText(featureKey: string, plan: Plan): string {
@@ -83,10 +82,12 @@ interface PricingCardProps {
   onMouseLeave: () => void;
 }
 
-function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }: PricingCardProps) {
+function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }: Readonly<PricingCardProps>) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { mutate: subscribeToPlan, isPending: isSubscribing } = useSubscribeToPlan();
+  const { data: currentSubscription } = useCurrentSubscription();
+  const hasActiveAccountSubscription = Boolean(currentSubscription?.has_subscription);
 
   // Get enabled features (only those that have a label, to hide deprecated ones like planning.enabled, support.dedicated, assistance.human)
   const enabledFeatures = Object.entries(plan.features || {})
@@ -113,6 +114,15 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
   }
 
   const handleSelectPlan = () => {
+    if (plan.is_trial && hasActiveAccountSubscription) {
+      toast({
+        title: 'Essai non disponible',
+        description: 'Votre compte dispose déjà d’un abonnement actif.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (plan.is_trial && plan.price === 0) {
       // Trial plan - subscribe directly (no payment needed)
       subscribeToPlan(
@@ -150,17 +160,20 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
     return `Choisir ${plan.name}`;
   };
 
+  let cardHoverClass = 'shadow-lg';
+  if (isPopular) {
+    cardHoverClass = 'md:scale-105 border-[#4F46E5] shadow-2xl shadow-[#4F46E5]/10 ring-2 ring-[#4F46E5]/20';
+  } else if (isHovered) {
+    cardHoverClass = 'border-slate-300 shadow-xl';
+  }
+
   return (
     <Card
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       className={cn(
         'relative bg-white border-slate-200 overflow-hidden transition-all duration-300',
-        isPopular
-          ? 'md:scale-105 border-[#4F46E5] shadow-2xl shadow-[#4F46E5]/10 ring-2 ring-[#4F46E5]/20'
-          : isHovered
-            ? 'border-slate-300 shadow-xl'
-            : 'shadow-lg'
+        cardHoverClass
       )}
     >
       {/* Badge for popular plan */}
@@ -248,16 +261,25 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
           className={cn(
             'w-full mb-5 group transition-all duration-300',
             isPopular
-              ? cn('bg-gradient-to-r text-white shadow-lg hover:shadow-xl', planStyle.primaryColor, 'hover:opacity-90')
+              ? cn(
+                  'bg-gradient-to-r text-white shadow-lg hover:shadow-xl',
+                  planStyle.primaryColor,
+                  'hover:opacity-90'
+                )
               : 'bg-slate-900 text-white hover:bg-slate-800'
           )}
           size="default"
           onClick={handleSelectPlan}
-          disabled={isSubscribing}
+          disabled={isSubscribing || (plan.is_trial && hasActiveAccountSubscription)}
         >
           {getCtaText()}
           <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
         </Button>
+        {plan.is_trial && hasActiveAccountSubscription && (
+          <p className="mb-5 text-xs text-muted-foreground">
+            Essai indisponible: un abonnement actif est déjà associé à ce compte.
+          </p>
+        )}
 
         {/* Features List */}
         <div className="space-y-2.5">
@@ -475,7 +497,7 @@ export function PlansPage() {
           <Accordion type="single" collapsible className="w-full space-y-4">
             {faqs.map((faq, index) => (
               <AccordionItem
-                key={index}
+                key={faq.question}
                 value={`item-${index}`}
                 className="border border-slate-200 rounded-lg bg-white shadow-sm px-6 data-[state=open]:shadow-md data-[state=open]:border-[#4F46E5]/30"
               >

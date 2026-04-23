@@ -56,11 +56,22 @@ const formatCurrency = (amount: number) => {
   return `${amount.toLocaleString('fr-FR')} FCFA`;
 };
 
+const getServiceLabel = (payment: Payment): string => {
+  if (payment.service_label) return payment.service_label;
+  if (payment.subscription?.event?.title) {
+    return `Service événement ${payment.subscription.event.title}`;
+  }
+  if (payment.subscription?.plan?.name) {
+    return `Abonnement ${payment.subscription.plan.name}`;
+  }
+  return 'Abonnement';
+};
+
 export function PaymentHistory({
   payments,
   isLoading = false,
   onRetry,
-}: PaymentHistoryProps) {
+}: Readonly<PaymentHistoryProps>) {
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -96,6 +107,7 @@ export function PaymentHistory({
         <TableHeader>
           <TableRow>
             <TableHead>Date</TableHead>
+            <TableHead>Plan/Service</TableHead>
             <TableHead>Reference</TableHead>
             <TableHead>Methode</TableHead>
             <TableHead>Montant</TableHead>
@@ -115,6 +127,7 @@ export function PaymentHistory({
                     locale: fr,
                   })}
                 </TableCell>
+                <TableCell>{getServiceLabel(payment)}</TableCell>
                 <TableCell className="font-mono text-sm">
                   {payment.transaction_reference ?? payment.id.slice(0, 8)}
                 </TableCell>
