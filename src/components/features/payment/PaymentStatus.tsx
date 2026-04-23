@@ -11,7 +11,7 @@ import type { PaymentStatus as PaymentStatusType } from '@/types';
 interface PaymentStatusProps {
   paymentId: string | number;
   onSuccess?: () => void;
-  onFailure?: () => void;
+  onFailure?: (reason?: string) => void;
   onRetry?: () => void;
   completedMessage?: string;
 }
@@ -33,6 +33,14 @@ function derivePollStatus(data: {
   if (paymentStatus === 'refunded') return 'refunded';
 
   return 'pending';
+}
+
+function deriveFailureMessage(data: {
+  status_info?: { failure_reason_message?: string | null; message?: string };
+} | undefined): string {
+  return data?.status_info?.failure_reason_message
+    ?? data?.status_info?.message
+    ?? 'Le paiement n\'a pas pu etre effectue';
 }
 
 const statusConfig: Record<
@@ -87,6 +95,7 @@ export function PaymentStatus({
   const isMountedRef = useRef(true);
 
   const status = derivePollStatus(data);
+  const failureMessage = deriveFailureMessage(data);
   const config = statusConfig[status];
 
   const prevStatusForTrace = useRef<string | null>(null);
@@ -127,10 +136,10 @@ export function PaymentStatus({
       paymentTrace('PaymentStatus: failed → onFailure', { paymentId });
       hasCalledFailure.current = true;
       if (isMountedRef.current) {
-        onFailure();
+        onFailure(failureMessage);
       }
     }
-  }, [isError, status, onSuccess, onFailure, paymentId]);
+  }, [isError, status, onSuccess, onFailure, paymentId, failureMessage]);
 
   if (isError) {
     paymentTrace('PaymentStatus: erreur polling', { paymentId, message: error?.message });
@@ -194,7 +203,9 @@ export function PaymentStatus({
           {config.label}
         </h3>
 
-        <p className="mt-2 text-muted-foreground">{config.description}</p>
+        <p className="mt-2 text-muted-foreground">
+          {status === 'failed' ? failureMessage : config.description}
+        </p>
 
         {status === 'pending' && (
           <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">

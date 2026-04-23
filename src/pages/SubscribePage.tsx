@@ -121,13 +121,13 @@ export function SubscribePage() {
     }, 3000);
   };
 
-  const handlePaymentFailure = () => {
+  const handlePaymentFailure = (reason?: string) => {
     if (redirectTimeoutRef.current) {
       globalThis.clearTimeout(redirectTimeoutRef.current);
       redirectTimeoutRef.current = null;
     }
     setRedirectCountdown(null);
-    setInlineError('Le paiement n\'a pas pu être effectué. Veuillez réessayer.');
+    setInlineError(reason ?? 'Le paiement n\'a pas pu être effectué. Veuillez réessayer.');
     setPaymentId(null);
   };
 

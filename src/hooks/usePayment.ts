@@ -17,6 +17,12 @@ interface PaymentPollResponse {
   is_completed: boolean;
   is_failed: boolean;
   is_pending: boolean;
+  status_info?: {
+    status?: PaymentStatus;
+    message?: string;
+    failure_reason?: string | null;
+    failure_reason_message?: string | null;
+  };
 }
 
 interface PaymentStatusResponse {
