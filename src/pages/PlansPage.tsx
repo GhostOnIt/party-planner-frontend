@@ -357,6 +357,7 @@ export function PlansPage() {
 
   // Ensure plans is always an array
   const plans = Array.isArray(plansData) ? plansData.filter((plan) => !plan.is_trial) : [];
+  const hasPopularFromApi = plans.some((plan) => plan.is_popular);
 
   if (isLoading) {
     return (
@@ -482,9 +483,12 @@ export function PlansPage() {
               <p className="text-muted-foreground text-lg">Aucun plan disponible pour le moment.</p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
               {plans.map((plan) => {
-                const isPopular = plan.is_popular ?? false;
+                // Priorité au flag backend ; fallback sur PRO si aucun plan n'est marqué populaire.
+                const isPopular = hasPopularFromApi
+                  ? (plan.is_popular ?? false)
+                  : plan.slug === 'pro';
                 return (
                   <PricingCard
                     key={plan.id}
