@@ -79,6 +79,9 @@ export function useMyQuoteRequests() {
       const response = await api.get('/quote-requests/mine');
       return response.data.data ?? [];
     },
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000,
   });
 }
 
@@ -141,6 +144,7 @@ export function useAssignQuoteRequest() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'quote-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['quote-requests', 'mine'] });
     },
   });
 }
@@ -155,6 +159,7 @@ export function useAddQuoteNote() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'quote-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['quote-requests', 'mine'] });
     },
   });
 }
