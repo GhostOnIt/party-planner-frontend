@@ -127,13 +127,88 @@ export function AdminQuoteRequestsPage() {
     }
   };
 
+  const formatDateTime = (value?: string | null) => {
+    if (!value) return '—';
+    return new Date(value).toLocaleString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const getCurrentStageIndex = (request: QuoteRequest) => {
+    return stages.findIndex((stage) => stage.id === request.current_stage_id);
+  };
+
+  const moveToNextStage = (request: QuoteRequest) => {
+    const currentIndex = getCurrentStageIndex(request);
+    if (currentIndex < 0 || currentIndex >= stages.length - 1) {
+      toast({ title: 'Dernière étape atteinte' });
+      return;
+    }
+
+    const nextStage = stages[currentIndex + 1];
+    updateStage(
+      { quoteRequestId: request.id, stageId: nextStage.id },
+      {
+        onSuccess: () =>
+          toast({
+            title: `Étape mise à jour`,
+            description: `Passage vers: ${nextStage.name}`,
+          }),
+      }
+    );
+  };
+
   const renderDetailContent = (request: QuoteRequest) => (
     <div className="space-y-4">
-      <div>
-        <p className="font-semibold">{request.company_name}</p>
-        <p className="text-sm text-muted-foreground">{request.contact_name}</p>
-        <p className="text-sm text-muted-foreground">{request.contact_email}</p>
-        <p className="text-sm text-muted-foreground">{request.contact_phone}</p>
+      <div className="rounded-lg border bg-muted/30 p-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="font-semibold">{request.company_name}</p>
+            <p className="text-sm text-muted-foreground">{request.contact_name}</p>
+            <p className="text-sm text-muted-foreground">{request.contact_email}</p>
+            <p className="text-sm text-muted-foreground">{request.contact_phone}</p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <Badge variant="outline">{request.tracking_code}</Badge>
+            <Badge>{request.current_stage?.name ?? 'Sans étape'}</Badge>
+            <Badge variant={request.status === 'closed' ? 'secondary' : 'default'}>
+              {request.status === 'closed' ? 'Clôturée' : 'Ouverte'}
+            </Badge>
+          </div>
+        </div>
+        <p className="mt-3 text-sm">{request.business_needs}</p>
+      </div>
+
+      <div className="space-y-2 rounded-lg border p-3">
+        <div className="flex items-center justify-between">
+          <Label>Progression de la demande</Label>
+          <Button size="sm" onClick={() => moveToNextStage(request)}>
+            Faire avancer
+          </Button>
+        </div>
+        <div className="space-y-2">
+          {stages.map((stage, index) => {
+            const currentIndex = getCurrentStageIndex(request);
+            const isReached = currentIndex >= 0 && index <= currentIndex;
+            const isCurrent = stage.id === request.current_stage_id;
+            return (
+              <div key={stage.id} className="flex items-center gap-2">
+                <span
+                  className={`inline-block h-2.5 w-2.5 rounded-full ${
+                    isCurrent ? 'bg-primary' : isReached ? 'bg-emerald-500' : 'bg-muted-foreground/30'
+                  }`}
+                />
+                <span className={isCurrent ? 'font-semibold text-primary' : 'text-sm text-muted-foreground'}>
+                  {stage.name}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -195,6 +270,30 @@ export function AdminQuoteRequestsPage() {
               {stage.name}
             </Button>
           ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Timeline de suivi</Label>
+        <div className="rounded-lg border p-3">
+          {request.activities && request.activities.length > 0 ? (
+            <div className="space-y-3">
+              {[...request.activities]
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .slice(0, 8)
+                .map((activity) => (
+                  <div key={activity.id} className="flex gap-2">
+                    <span className="mt-1 inline-block h-2 w-2 rounded-full bg-primary" />
+                    <div>
+                      <p className="text-sm font-medium">{activity.message ?? activity.activity_type}</p>
+                      <p className="text-xs text-muted-foreground">{formatDateTime(activity.created_at)}</p>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Aucun historique pour le moment.</p>
+          )}
         </div>
       </div>
 

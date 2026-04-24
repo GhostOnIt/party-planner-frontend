@@ -147,6 +147,30 @@ export function SubscriptionsPage() {
     });
   };
 
+  const formatTrackingDate = (value?: string | null) => {
+    if (!value) return '—';
+    return new Date(value).toLocaleString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const activityLabel = (activityType: string, fallback?: string | null) => {
+    if (fallback) return fallback;
+    const labels: Record<string, string> = {
+      created: 'Demande enregistrée',
+      stage_changed: 'Étape mise à jour',
+      assigned: 'Demande assignée',
+      note_added: 'Note interne ajoutée',
+      call_scheduled: 'Call planifié',
+      outcome_updated: 'Issue commerciale mise à jour',
+    };
+    return labels[activityType] ?? activityType;
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -270,12 +294,39 @@ export function SubscriptionsPage() {
                     return (
                       <div key={item.id} className="rounded-lg border p-4">
                         <div className="flex items-start justify-between gap-4">
-                          <div>
+                          <div className="flex-1">
                             <p className="font-semibold">{item.company_name}</p>
                             <p className="text-sm text-muted-foreground">
                               Code: {item.tracking_code} - Étape: {item.current_stage?.name ?? 'N/A'}
                             </p>
                             <p className="mt-2 text-sm">{item.business_needs}</p>
+
+                            <div className="mt-4 rounded-md border bg-muted/20 p-3">
+                              <p className="text-sm font-medium">Suivi de la demande</p>
+                              <div className="mt-2 space-y-3">
+                                {(item.activities ?? [])
+                                  .slice()
+                                  .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                                  .map((activity) => (
+                                    <div key={activity.id} className="flex gap-2">
+                                      <span className="mt-1 inline-block h-2.5 w-2.5 rounded-full bg-primary" />
+                                      <div>
+                                        <p className="text-sm font-medium">
+                                          {activityLabel(activity.activity_type, activity.message)}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                          {formatTrackingDate(activity.created_at)}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                {(item.activities ?? []).length === 0 && (
+                                  <p className="text-sm text-muted-foreground">
+                                    Votre demande est en cours de prise en charge.
+                                  </p>
+                                )}
+                              </div>
+                            </div>
                           </div>
                           <img src={qrUrl} alt="QR de suivi" className="h-[100px] w-[100px] rounded border" />
                         </div>
