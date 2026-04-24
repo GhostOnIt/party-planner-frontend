@@ -186,7 +186,7 @@ export function useUpdateQuoteOutcome() {
       outcomeNote,
     }: {
       quoteRequestId: string;
-      outcome: 'offer_sent' | 'won' | 'lost';
+      outcome: 'won' | 'lost';
       outcomeNote?: string;
     }) => {
       const response = await api.patch(`/admin/quote-requests/${quoteRequestId}/outcome`, {

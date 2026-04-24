@@ -142,6 +142,18 @@ export function AdminQuoteRequestsPage() {
     return stages.findIndex((stage) => stage.id === request.current_stage_id);
   };
 
+  const getProgressInfo = (request: QuoteRequest) => {
+    const currentIndex = getCurrentStageIndex(request);
+    const total = stages.length > 0 ? stages.length : 1;
+    const normalizedIndex = currentIndex < 0 ? 0 : currentIndex;
+    const percentage = Math.round(((normalizedIndex + 1) / total) * 100);
+    const currentStageName = currentIndex >= 0 ? stages[normalizedIndex]?.name ?? 'N/A' : 'En attente de traitement';
+    const nextStageName =
+      normalizedIndex < stages.length - 1 ? stages[normalizedIndex + 1]?.name ?? null : null;
+
+    return { currentStageName, nextStageName, percentage };
+  };
+
   const moveToNextStage = (request: QuoteRequest) => {
     const currentIndex = getCurrentStageIndex(request);
     if (currentIndex < 0 || currentIndex >= stages.length - 1) {
@@ -164,6 +176,25 @@ export function AdminQuoteRequestsPage() {
 
   const renderDetailContent = (request: QuoteRequest) => (
     <div className="space-y-4">
+      {(() => {
+        const progress = getProgressInfo(request);
+        return (
+          <div className="rounded-lg border bg-primary/5 p-3">
+            <p className="text-sm font-semibold">État actuel: {progress.currentStageName}</p>
+            <p className="text-sm text-muted-foreground">
+              Prochain état: {progress.nextStageName ?? 'Aucun (demande finalisée)'}
+            </p>
+            <p className="mt-1 text-sm font-medium">Avancement: {progress.percentage}%</p>
+            <div className="mt-2 h-2 w-full rounded-full bg-muted">
+              <div
+                className="h-2 rounded-full bg-primary transition-all"
+                style={{ width: `${progress.percentage}%` }}
+              />
+            </div>
+          </div>
+        );
+      })()}
+
       <div className="rounded-lg border bg-muted/30 p-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -186,7 +217,11 @@ export function AdminQuoteRequestsPage() {
       <div className="space-y-2 rounded-lg border p-3">
         <div className="flex items-center justify-between">
           <Label>Progression de la demande</Label>
-          <Button size="sm" onClick={() => moveToNextStage(request)}>
+          <Button
+            size="sm"
+            onClick={() => moveToNextStage(request)}
+            disabled={getProgressInfo(request).nextStageName === null}
+          >
             Faire avancer
           </Button>
         </div>
@@ -357,7 +392,6 @@ export function AdminQuoteRequestsPage() {
         />
         <div className="flex flex-wrap gap-2">
           {[
-            { value: 'offer_sent', label: 'Offre envoyée' },
             { value: 'won', label: 'Gagnée' },
             { value: 'lost', label: 'Perdue' },
           ].map((item) => (
@@ -370,7 +404,7 @@ export function AdminQuoteRequestsPage() {
                 setOutcome(
                   {
                     quoteRequestId: request.id,
-                    outcome: item.value as 'offer_sent' | 'won' | 'lost',
+                    outcome: item.value as 'won' | 'lost',
                     outcomeNote: outcomeNote || undefined,
                   },
                   {

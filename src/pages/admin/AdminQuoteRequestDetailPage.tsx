@@ -200,7 +200,6 @@ export function AdminQuoteRequestDetailPage() {
             />
             <div className="flex flex-wrap gap-2">
               {[
-                { value: 'offer_sent', label: 'Offre envoyée' },
                 { value: 'won', label: 'Gagnée' },
                 { value: 'lost', label: 'Perdue' },
               ].map((item) => (
@@ -213,7 +212,7 @@ export function AdminQuoteRequestDetailPage() {
                     setOutcome(
                       {
                         quoteRequestId: selectedRequest.id,
-                        outcome: item.value as 'offer_sent' | 'won' | 'lost',
+                        outcome: item.value as 'won' | 'lost',
                         outcomeNote: outcomeNote || undefined,
                       },
                       { onSuccess: () => toast({ title: `Issue: ${item.label}` }) }
