@@ -60,6 +60,11 @@ export function AdminQuoteRequestsPage() {
     return map;
   }, [stages, requests]);
 
+  const requestsWithoutStage = useMemo(
+    () => requests.filter((request: QuoteRequest) => !request.current_stage_id || !stages.some((s) => s.id === request.current_stage_id)),
+    [requests, stages]
+  );
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -144,6 +149,30 @@ export function AdminQuoteRequestsPage() {
                 </CardContent>
               </Card>
             ))}
+            {requestsWithoutStage.length > 0 && (
+              <Card className="w-[320px] shrink-0 border-dashed">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Sans étape ({requestsWithoutStage.length})</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {requestsWithoutStage.map((request) => (
+                    <button
+                      key={request.id}
+                      type="button"
+                      onClick={() => setSelectedId(request.id)}
+                      className="w-full rounded-lg border p-3 text-left transition hover:border-primary"
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="font-semibold">{request.company_name}</p>
+                        <Badge variant="outline">{request.tracking_code}</Badge>
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground">{request.contact_name}</p>
+                      <p className="mt-2 line-clamp-2 text-sm">{request.business_needs}</p>
+                    </button>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
 
