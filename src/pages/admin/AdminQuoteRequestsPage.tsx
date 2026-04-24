@@ -8,6 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminUsers } from '@/hooks/useAdmin';
 import {
@@ -26,6 +33,10 @@ export function AdminQuoteRequestsPage() {
   const { toast } = useToast();
   const [isMobile, setIsMobile] = useState(globalThis.innerWidth < 1024);
   const [search, setSearch] = useState('');
+  const [stageFilter, setStageFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [bulkAdminId, setBulkAdminId] = useState<string>('none');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [note, setNote] = useState('');
@@ -42,10 +53,22 @@ export function AdminQuoteRequestsPage() {
   const { data: adminUsersData } = useAdminUsers({ per_page: 100, role: 'admin' });
   const adminUsers = adminUsersData?.data ?? [];
 
-  const requests = data?.data?.data ?? [];
+  const requests = useMemo(() => data?.data?.data ?? [], [data]);
+  const filteredRequests = useMemo(() => {
+    return requests.filter((request: QuoteRequest) => {
+      const stageOk = stageFilter === 'all' || request.current_stage_id === stageFilter;
+      const statusOk = statusFilter === 'all' || request.status === statusFilter;
+      return stageOk && statusOk;
+    });
+  }, [requests, stageFilter, statusFilter]);
+
+  const selectedIndex = useMemo(
+    () => filteredRequests.findIndex((request: QuoteRequest) => request.id === selectedId),
+    [filteredRequests, selectedId]
+  );
   const selectedRequest = useMemo(
-    () => requests.find((request: QuoteRequest) => request.id === selectedId) ?? null,
-    [requests, selectedId]
+    () => filteredRequests.find((request: QuoteRequest) => request.id === selectedId) ?? null,
+    [filteredRequests, selectedId]
   );
 
   useEffect(() => {
@@ -61,6 +84,47 @@ export function AdminQuoteRequestsPage() {
     }
     setSelectedId(requestId);
     setIsDetailOpen(true);
+  };
+
+  const toggleSelection = (requestId: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(requestId) ? prev.filter((id) => id !== requestId) : [...prev, requestId]
+    );
+  };
+
+  const applyBulkAssign = () => {
+    if (selectedIds.length === 0) {
+      toast({ title: 'Sélection vide', description: 'Choisis au moins une demande.' });
+      return;
+    }
+
+    const assignedAdminId = bulkAdminId === 'none' ? null : bulkAdminId;
+    selectedIds.forEach((requestId) => {
+      assignQuoteRequest({ quoteRequestId: requestId, assignedAdminId });
+    });
+    toast({ title: 'Assignation groupée lancée', description: `${selectedIds.length} demande(s) mises à jour.` });
+    setSelectedIds([]);
+  };
+
+  const getPriority = (request: QuoteRequest): 'haute' | 'moyenne' | 'basse' => {
+    const createdAt = request.created_at ? new Date(request.created_at).getTime() : Date.now();
+    const ageInDays = (Date.now() - createdAt) / (1000 * 60 * 60 * 24);
+    if (request.call_scheduled_at) return 'basse';
+    if (ageInDays > 7) return 'haute';
+    if (ageInDays > 3) return 'moyenne';
+    return 'basse';
+  };
+
+  const goToAdjacentRequest = (direction: 'prev' | 'next') => {
+    if (selectedIndex < 0) return;
+    const newIndex = direction === 'next' ? selectedIndex + 1 : selectedIndex - 1;
+    const target = filteredRequests[newIndex];
+    if (target) {
+      setSelectedId(target.id);
+      setNote('');
+      setOutcomeNote('');
+      setCallDateTime('');
+    }
   };
 
   const renderDetailContent = (request: QuoteRequest) => (
@@ -230,36 +294,99 @@ export function AdminQuoteRequestsPage() {
         title="Demandes Business"
         description="Liste des demandes et traitement rapide"
         actions={
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher (code, société, email)"
-            className="w-[320px]"
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher (code, société, email)"
+              className="w-[260px]"
+            />
+            <Select value={stageFilter} onValueChange={setStageFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Étape" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes les étapes</SelectItem>
+                {stages.map((stage) => (
+                  <SelectItem key={stage.id} value={stage.id}>
+                    {stage.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="open">Ouvertes</SelectItem>
+                <SelectItem value="closed">Clôturées</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={bulkAdminId} onValueChange={setBulkAdminId}>
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="Assignation groupée" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Retirer assignation</SelectItem>
+                {adminUsers.map((admin) => (
+                  <SelectItem key={admin.id} value={String(admin.id)}>
+                    {admin.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={applyBulkAssign}>
+              Assigner la sélection ({selectedIds.length})
+            </Button>
+          </div>
         }
       />
 
       <div className="grid gap-4">
-        {requests.length === 0 ? (
+        {filteredRequests.length === 0 ? (
           <Card>
             <CardContent className="py-10 text-center text-muted-foreground">
               Aucune demande trouvée.
             </CardContent>
           </Card>
         ) : (
-          requests.map((request: QuoteRequest) => (
-            <Card key={request.id} className="cursor-pointer transition hover:border-primary/40" onClick={() => openRequest(request.id)}>
+          filteredRequests.map((request: QuoteRequest) => (
+            <Card key={request.id} className="cursor-pointer transition hover:border-primary/40">
               <CardContent className="p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold">{request.company_name}</p>
-                    <p className="text-sm text-muted-foreground">{request.contact_name} - {request.contact_email}</p>
-                    <p className="mt-2 line-clamp-2 text-sm">{request.business_needs}</p>
+                  <div className="flex flex-1 items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(request.id)}
+                      onChange={() => toggleSelection(request.id)}
+                      className="mt-1 h-4 w-4"
+                      onClick={(event) => event.stopPropagation()}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => openRequest(request.id)}
+                      className="text-left"
+                    >
+                      <p className="font-semibold">{request.company_name}</p>
+                      <p className="text-sm text-muted-foreground">{request.contact_name} - {request.contact_email}</p>
+                      <p className="mt-2 line-clamp-2 text-sm">{request.business_needs}</p>
+                    </button>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
+                  <button
+                    type="button"
+                    className="flex flex-col items-end gap-2 text-right"
+                    onClick={() => openRequest(request.id)}
+                  >
                     <Badge variant="outline">{request.tracking_code}</Badge>
                     <Badge>{request.current_stage?.name ?? 'Sans étape'}</Badge>
-                  </div>
+                    <Badge
+                      variant={getPriority(request) === 'haute' ? 'destructive' : 'secondary'}
+                    >
+                      Priorité {getPriority(request)}
+                    </Badge>
+                  </button>
                 </div>
               </CardContent>
             </Card>
@@ -271,6 +398,24 @@ export function AdminQuoteRequestsPage() {
         <SheetContent side="right" className="w-[560px] overflow-y-auto sm:max-w-none">
           <SheetHeader>
             <SheetTitle>Détail demande</SheetTitle>
+            <div className="mt-2 flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToAdjacentRequest('prev')}
+                disabled={selectedIndex <= 0}
+              >
+                Précédente
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToAdjacentRequest('next')}
+                disabled={selectedIndex < 0 || selectedIndex >= filteredRequests.length - 1}
+              >
+                Suivante
+              </Button>
+            </div>
           </SheetHeader>
           <div className="mt-4">
             {selectedRequest ? renderDetailContent(selectedRequest) : <p className="text-sm text-muted-foreground">Aucune demande sélectionnée.</p>}
@@ -282,7 +427,7 @@ export function AdminQuoteRequestsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-sm text-muted-foreground">
-              Astuce: clique une ligne pour ouvrir le panneau de détail à droite.
+              Astuce: utilise “Précédente/Suivante” dans le panneau droit pour traiter rapidement les demandes.
             </CardTitle>
           </CardHeader>
           <CardContent />
