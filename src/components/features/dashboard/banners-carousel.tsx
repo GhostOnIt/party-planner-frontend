@@ -4,6 +4,7 @@ import { TrialBanner } from "./trial-banner"
 import { NonRenewalBanner } from "./non-renewal-banner"
 import { PromoCard } from "./promo-card"
 import { useCurrentSubscription } from "@/hooks/useSubscription"
+import { useAuthStore } from "@/stores/authStore"
 import { useAvailableTrial } from "@/hooks/useAdminPlans"
 import type { CommunicationSpot } from "@/types/communication"
 
@@ -49,6 +50,8 @@ export function BannersCarousel({
   onPromoDismiss,
   promoCardProps,
 }: Readonly<BannersCarouselProps>) {
+  const { user } = useAuthStore()
+  const isAdmin = user?.role === 'admin'
   const { data: trialData, isLoading: isLoadingTrial } = useAvailableTrial()
   const { data: currentSubscriptionData } = useCurrentSubscription()
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -59,9 +62,10 @@ export function BannersCarousel({
 
   // Vérifier si le trial est disponible
   const hasTrial = useMemo(() => {
+    if (isAdmin) return false
     if (isLoadingTrial) return false
     return trialData?.available && trialData?.data && trialVisible
-  }, [trialData, isLoadingTrial, trialVisible])
+  }, [trialData, isLoadingTrial, trialVisible, isAdmin])
 
   // Vérifier si la promo legacy est disponible
   const hasLegacyPromo = showPromo && promoCardProps
