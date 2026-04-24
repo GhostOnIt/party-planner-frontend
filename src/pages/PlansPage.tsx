@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { usePlans, PLAN_FEATURE_LABELS, formatLimitValue } from '@/hooks/useAdminPlans';
 import { useCurrentSubscription, useSubscribeToPlan } from '@/hooks/useSubscription';
+import { BusinessQuoteRequestDialog } from '@/components/features/plans/BusinessQuoteRequestDialog';
 import type { Plan } from '@/hooks/useAdminPlans';
 
 // Helper to get feature display text
@@ -87,6 +88,7 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
   const { toast } = useToast();
   const { mutate: subscribeToPlan, isPending: isSubscribing } = useSubscribeToPlan();
   const { data: currentSubscription } = useCurrentSubscription();
+  const [isQuoteDialogOpen, setIsQuoteDialogOpen] = useState(false);
   const hasActiveAccountSubscription = Boolean(currentSubscription?.has_subscription);
 
   // Get enabled features (only those that have a label, to hide deprecated ones like planning.enabled, support.dedicated, assistance.human)
@@ -115,7 +117,7 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
 
   const handleSelectPlan = () => {
     if (plan.features?.['sales.contact_required']) {
-      globalThis.location.href = 'mailto:contact@party-planner.cg?subject=Demande%20devis%20Plan%20Business';
+      setIsQuoteDialogOpen(true);
       return;
     }
 
@@ -319,6 +321,11 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
           )}
         </div>
       </div>
+      <BusinessQuoteRequestDialog
+        open={isQuoteDialogOpen}
+        onOpenChange={setIsQuoteDialogOpen}
+        planId={String(plan.id)}
+      />
     </Card>
   );
 }

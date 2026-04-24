@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PaymentHistory } from '@/components/features/payment';
 import { useSubscriptions } from '@/hooks/useSubscription';
 import { usePayments, useRetryPayment } from '@/hooks/usePayment';
+import { useMyQuoteRequests } from '@/hooks/useQuoteRequests';
 import { useToast } from '@/hooks/use-toast';
 import type { Subscription } from '@/types';
 
@@ -120,6 +121,7 @@ export function SubscriptionsPage() {
 
   const { data: subscriptions = [], isLoading: isLoadingSubscriptions } = useSubscriptions();
   const { data: payments = [], isLoading: isLoadingPayments } = usePayments();
+  const { data: myQuoteRequests = [], isLoading: isLoadingQuoteRequests } = useMyQuoteRequests();
   const { mutate: retryPayment } = useRetryPayment();
 
   // Filter using new field names with fallbacks
@@ -168,6 +170,7 @@ export function SubscriptionsPage() {
             <CreditCard className="mr-2 h-4 w-4" />
             Paiements ({payments.length})
           </TabsTrigger>
+          <TabsTrigger value="business-requests">Demandes Business ({myQuoteRequests.length})</TabsTrigger>
           
         </TabsList>
 
@@ -239,6 +242,48 @@ export function SubscriptionsPage() {
                 isLoading={isLoadingPayments}
                 onRetry={handleRetryPayment}
               />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="business-requests" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Suivi des demandes Business</CardTitle>
+              <CardDescription>Consultez l’état de vos demandes de devis personnalisées.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingQuoteRequests ? (
+                <SubscriptionListSkeleton />
+              ) : myQuoteRequests.length === 0 ? (
+                <EmptyState
+                  icon={CreditCard}
+                  title="Aucune demande Business"
+                  description="Soumettez une demande depuis la page des plans pour être accompagné."
+                />
+              ) : (
+                <div className="space-y-3">
+                  {myQuoteRequests.map((item) => {
+                    const trackingUrl = `${globalThis.location.origin}/subscriptions?tab=business-requests`;
+                    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(trackingUrl)}`;
+
+                    return (
+                      <div key={item.id} className="rounded-lg border p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="font-semibold">{item.company_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Code: {item.tracking_code} - Étape: {item.current_stage?.name ?? 'N/A'}
+                            </p>
+                            <p className="mt-2 text-sm">{item.business_needs}</p>
+                          </div>
+                          <img src={qrUrl} alt="QR de suivi" className="h-[100px] w-[100px] rounded border" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

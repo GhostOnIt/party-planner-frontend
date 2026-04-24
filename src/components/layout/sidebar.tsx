@@ -16,6 +16,7 @@ import {
   Layers,
   LogOut,
   Megaphone,
+  BriefcaseBusiness,
   LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -63,6 +64,7 @@ const adminNavItems: NavItem[] = [
   { to: '/admin/plans', icon: Layers, labelKey: 'nav.adminPlans' },
   { to: '/admin/templates', icon: FileCheck, labelKey: 'nav.adminTemplates' },
   { to: '/admin/communication', icon: Megaphone, labelKey: 'nav.adminCommunication' },
+  { to: '/admin/quote-requests', icon: BriefcaseBusiness, labelKey: 'nav.adminQuoteRequests' },
   { to: '/admin/activity-logs', icon: Activity, labelKey: 'nav.adminActivityLogs' },
 ];
 

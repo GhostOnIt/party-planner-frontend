@@ -54,6 +54,7 @@
     "adminTemplates": "Templates",
     "adminActivityLogs": "Activity Log",
     "adminCommunication": "Communication",
+    "adminQuoteRequests": "Business Requests",
     "adminLegalPages": "Legal Pages"
   },
   "auth": {
