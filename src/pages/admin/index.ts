@@ -8,3 +8,4 @@ export { AdminTemplatesPage } from './AdminTemplatesPage';
 export { AdminActivityLogsPage } from './AdminActivityLogsPage';
 export { AdminCommunicationPage } from './AdminCommunicationPage';
 export { AdminQuoteRequestsPage } from './AdminQuoteRequestsPage';
+export { AdminQuoteRequestDetailPage } from './AdminQuoteRequestDetailPage';

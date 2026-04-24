@@ -63,6 +63,7 @@ const AdminTemplatesPage = lazy(() => import('@/pages/admin').then(m => ({ defau
 const AdminActivityLogsPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminActivityLogsPage })));
 const AdminCommunicationPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminCommunicationPage })));
 const AdminQuoteRequestsPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminQuoteRequestsPage })));
+const AdminQuoteRequestDetailPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminQuoteRequestDetailPage })));
 
 // Composant de chargement
 function PageLoader() {
@@ -152,6 +153,7 @@ function App() {
                 <Route path="/admin/activity-logs" element={<AdminActivityLogsPage />} />
                 <Route path="/admin/communication" element={<AdminCommunicationPage />} />
                 <Route path="/admin/quote-requests" element={<AdminQuoteRequestsPage />} />
+                <Route path="/admin/quote-requests/:requestId" element={<AdminQuoteRequestDetailPage />} />
               </Route>
             </Route>
 
