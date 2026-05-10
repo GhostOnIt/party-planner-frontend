@@ -59,6 +59,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader } from '@/components/layout/page-header';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import {
   useAdminPlans,
@@ -93,6 +94,9 @@ const planFormSchema = z.object({
 
 type PlanFormValues = z.infer<typeof planFormSchema>;
 
+/** Séparé des fonctionnalités produit : active le flux « Demander un devis » (pas d’abonnement en ligne). */
+const SALES_CONTACT_FEATURE_KEY = 'sales.contact_required' as const;
+
 const defaultLimits: PlanLimits = {
   'events.creations_per_billing_period': 1,
   'guests.max_per_event': 10,
@@ -118,6 +122,8 @@ const defaultFeatures: PlanFeatures = {
   'branding.custom': false,
   'support.whatsapp_priority': false,
   'multi_client.enabled': false,
+  'checkin.tablet': false,
+  [SALES_CONTACT_FEATURE_KEY]: false,
 };
 
 export function AdminPlansPage() {
@@ -664,34 +670,79 @@ export function AdminPlansPage() {
                 </p>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {Object.entries(PLAN_FEATURE_LABELS).map(([key, label]) => {
-                    // Access features using getValues to handle keys with dots properly
-                    const features = form.watch('features') || {};
-                    const currentValue = features[key as keyof typeof features] || false;
+                  {Object.entries(PLAN_FEATURE_LABELS)
+                    .filter(([key]) => key !== SALES_CONTACT_FEATURE_KEY)
+                    .map(([key, label]) => {
+                      const features = form.watch('features') || {};
+                      const currentValue = features[key as keyof typeof features] || false;
 
-                    return (
-                      <div key={key} className="flex items-center space-x-3 rounded-lg border p-3">
-                        <Checkbox
-                          id={`feature-${key}`}
-                          checked={!!currentValue}
-                          onCheckedChange={(checked) => {
-                            const currentFeatures = form.getValues('features') || {};
-                            form.setValue(
-                              'features',
-                              {
-                                ...currentFeatures,
-                                [key]: !!checked,
-                              },
-                              { shouldValidate: true }
-                            );
-                          }}
-                        />
-                        <Label htmlFor={`feature-${key}`} className="flex-1 cursor-pointer">
-                          {label}
-                        </Label>
-                      </div>
-                    );
-                  })}
+                      return (
+                        <div key={key} className="flex items-center space-x-3 rounded-lg border p-3">
+                          <Checkbox
+                            id={`feature-${key}`}
+                            checked={!!currentValue}
+                            onCheckedChange={(checked) => {
+                              const currentFeatures = form.getValues('features') || {};
+                              form.setValue(
+                                'features',
+                                {
+                                  ...currentFeatures,
+                                  [key]: !!checked,
+                                },
+                                { shouldValidate: true }
+                              );
+                            }}
+                          />
+                          <Label htmlFor={`feature-${key}`} className="flex-1 cursor-pointer">
+                            {label}
+                          </Label>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-foreground">Vente et parcours souscription</p>
+                  <Alert>
+                    <AlertTitle>Contact commercial requis</AlertTitle>
+                    <AlertDescription>
+                      Si cette case est cochée, la page tarifs affiche « Sur devis » et « Demander un devis » (comme le plan Business), et la souscription en ligne pour ce plan est désactivée. À laisser décochée pour un plan pilote ou tout accès gratuit avec souscription dans l’app.
+                    </AlertDescription>
+                  </Alert>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {Object.entries(PLAN_FEATURE_LABELS)
+                      .filter(([key]) => key === SALES_CONTACT_FEATURE_KEY)
+                      .map(([key, label]) => {
+                        const features = form.watch('features') || {};
+                        const currentValue = features[key as keyof typeof features] || false;
+
+                        return (
+                          <div
+                            key={key}
+                            className="flex items-center space-x-3 rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900/50 dark:bg-amber-950/20"
+                          >
+                            <Checkbox
+                              id={`feature-${key}`}
+                              checked={!!currentValue}
+                              onCheckedChange={(checked) => {
+                                const currentFeatures = form.getValues('features') || {};
+                                form.setValue(
+                                  'features',
+                                  {
+                                    ...currentFeatures,
+                                    [key]: !!checked,
+                                  },
+                                  { shouldValidate: true }
+                                );
+                              }}
+                            />
+                            <Label htmlFor={`feature-${key}`} className="flex-1 cursor-pointer">
+                              {label}
+                            </Label>
+                          </div>
+                        );
+                      })}
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>
