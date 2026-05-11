@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
+import { FeedbackFab } from '@/components/feedback/FeedbackFab';
 
 export function PrivateRoute() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -9,5 +10,10 @@ export function PrivateRoute() {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      <FeedbackFab />
+    </>
+  );
 }
