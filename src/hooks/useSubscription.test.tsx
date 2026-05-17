@@ -23,6 +23,7 @@ import {
   useQuota,
   useSubscribeToPlan,
   useSubscriptions,
+  type CurrentSubscriptionResponse,
 } from './useSubscription';
 
 const mockedApi = api as unknown as {
@@ -37,14 +38,43 @@ beforeEach(() => {
 
 describe('useCurrentSubscription', () => {
   it('hits /user/subscription and exposes the response payload', async () => {
-    mockedApi.get.mockResolvedValueOnce({
-      data: { plan: { name: 'Pro' }, subscription: { status: 'active' } },
-    });
+    const payload: CurrentSubscriptionResponse = {
+      subscription: {
+        id: 'sub-1',
+        user_id: 'user-1',
+        event_id: 'event-1',
+        plan_type: 'pro',
+        base_price: '15000',
+        guest_count: 100,
+        guest_price_per_unit: '30',
+        total_price: '15000',
+        payment_status: 'paid',
+        payment_method: 'mtn_mobile_money',
+        payment_reference: null,
+        expires_at: '2027-01-01T00:00:00Z',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+      has_subscription: true,
+      quota: {
+        base_quota: 10,
+        topup_credits: 0,
+        total_quota: 10,
+        used: 2,
+        remaining: 8,
+        is_unlimited: false,
+        percentage_used: 20,
+        can_create: true,
+      },
+    };
+
+    mockedApi.get.mockResolvedValueOnce({ data: payload });
 
     const { result } = renderHookWithProviders(() => useCurrentSubscription());
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data?.plan?.name).toBe('Pro');
+    expect(result.current.data?.has_subscription).toBe(true);
+    expect(result.current.data?.subscription?.plan_type).toBe('pro');
     expect(mockedApi.get).toHaveBeenCalledWith('/user/subscription');
   });
 });

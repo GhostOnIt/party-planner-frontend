@@ -37,12 +37,6 @@ const mockedApi = api as unknown as {
 beforeEach(() => {
   mockedApi.get.mockResolvedValue({ data: { data: [] } });
   mockedApi.post.mockResolvedValue({ data: {} });
-
-  // jsdom in older versions may not expose crypto.randomUUID.
-  if (typeof crypto !== 'undefined' && !crypto.randomUUID) {
-    // @ts-expect-error patch for test only
-    crypto.randomUUID = () => '00000000-0000-0000-0000-000000000000';
-  }
 });
 
 describe('usePayments', () => {
