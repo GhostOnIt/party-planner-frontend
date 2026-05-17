@@ -6,6 +6,7 @@ import { PlatformActivityCard } from "@/components/features/admin/platform-activ
 import { PlanDistributionChart } from "@/components/charts/plan-distribution-chart"
 import { AdminEventsTable } from "@/components/features/admin/admin-events-table"
 import { DateFilter } from "@/components/features/dashboard/date-filter"
+import { QuoteRequestsWidget } from "@/components/features/admin/quote-requests-widget"
 
 export function AdminDashboardPage() {
   const [filter, setFilter] = useState("all")
@@ -41,6 +42,11 @@ export function AdminDashboardPage() {
           <RecentUsersCard />
           <RecentPaymentsCard />
           <PlatformActivityCard />
+        </div>
+
+        {/* Quote Requests Widget */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <QuoteRequestsWidget />
         </div>
 
         {/* Second Row: Plan Distribution Chart */}

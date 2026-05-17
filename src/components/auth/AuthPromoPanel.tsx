@@ -15,8 +15,8 @@ export function AuthPromoPanel() {
 
   // Transform API spots for display
   const advertisements = useMemo(() => {
-    if (!spots || spots.length === 0) return [];
-    
+    if (!Array.isArray(spots) || spots.length === 0) return [];
+
     return spots.map((spot) => ({
       id: spot.id,
       title: spot.title || "",

@@ -1,0 +1,39 @@
+# Dépendances installées localement (pnpm-store + symlinks)
+node_modules
+.pnpm-store
+
+# Build artifacts
+dist
+build
+coverage
+
+# Tests / sonar
+sonar-reports
+*.log
+
+# IDE / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# Caches
+.cache
+.npm
+.parcel-cache
+.eslintcache
+
+# Doc / fichiers projet non nécessaires au build
+*.md
+CAHIER_DE_RECETTE_*.csv
+Dockerfile
+.dockerignore

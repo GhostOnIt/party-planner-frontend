@@ -258,7 +258,7 @@ export function EventForm({
               if (value === 'none') {
                 setValue('template_id', undefined);
               } else {
-                setValue('template_id', parseInt(value));
+                setValue('template_id', Number.parseInt(value));
               }
             }}
           >

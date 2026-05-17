@@ -134,7 +134,7 @@ export function EventCard({
             </p>
           </div>
 
-          <div className="flex h-full items-center border-l px-2" onClick={(e) => e.stopPropagation()}>
+          <div className="flex h-full items-center border-l px-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="presentation">
             <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">

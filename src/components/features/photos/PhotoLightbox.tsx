@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Download, Star, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ClickableDiv } from '@/components/ui/clickable-div';
 import { cn, resolveUrl } from '@/lib/utils';
 import type { Photo } from '@/types';
 
@@ -129,14 +130,15 @@ export function PhotoLightbox({
       </div>
 
       {/* Main Image */}
-      <div className="flex h-full w-full items-center justify-center p-16" onClick={onClose}>
+      <ClickableDiv className="flex h-full w-full items-center justify-center p-16" onClick={onClose}>
         <img
           src={resolveUrl(currentPhoto.url)}
           alt={currentPhoto.caption || currentPhoto.original_name}
           className="max-h-full max-w-full object-contain"
           onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
         />
-      </div>
+      </ClickableDiv>
 
       {/* Navigation Buttons */}
       <Button

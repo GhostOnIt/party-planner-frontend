@@ -70,8 +70,8 @@ import type { EventStatus } from '@/types';
 // Utility functions
 const formatBudget = (amount: number | string | null | undefined): string => {
   if (amount === null || amount === undefined) return '0 FCFA';
-  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-  if (isNaN(numAmount)) return '0 FCFA';
+  const numAmount = typeof amount === 'string' ? Number.parseFloat(amount) : amount;
+  if (Number.isNaN(numAmount)) return '0 FCFA';
 
   if (numAmount >= 1000000) {
     return `${(numAmount / 1000000).toFixed(1)}M FCFA`;
@@ -297,20 +297,20 @@ export function EventDetailsPage() {
   const budgetActualRaw = budgetStats?.total_actual ?? null;
   const budgetPaidRaw =
     budgetStats?.total_paid ?? (typeof event.budget_spent === 'string'
-      ? parseFloat(event.budget_spent)
+      ? Number.parseFloat(event.budget_spent)
       : event.budget_spent ?? 0);
 
   const budgetEstimated =
     typeof budgetEstimatedRaw === 'string'
-      ? parseFloat(budgetEstimatedRaw)
+      ? Number.parseFloat(budgetEstimatedRaw)
       : Number(budgetEstimatedRaw) || 0;
   const budgetActual =
     typeof budgetActualRaw === 'string'
-      ? parseFloat(budgetActualRaw)
+      ? Number.parseFloat(budgetActualRaw)
       : Number(budgetActualRaw ?? 0) || 0;
   const budgetPaid =
     typeof budgetPaidRaw === 'string'
-      ? parseFloat(budgetPaidRaw)
+      ? Number.parseFloat(budgetPaidRaw)
       : Number(budgetPaidRaw || 0);
   const budgetRemaining =
     budgetActual > 0

@@ -369,7 +369,7 @@ export function GuestImportModal({
           {/* Step 3: Result */}
           {step === 'result' && importResult && (
             <div className="space-y-4">
-              <Alert variant={importResult.errors.length > 0 ? 'default' : 'default'} className="border-green-500">
+              <Alert variant="default" className="border-green-500">
                 <CheckCircle className="h-4 w-4 text-green-600" />
                 <AlertTitle>Import termine</AlertTitle>
                 <AlertDescription>

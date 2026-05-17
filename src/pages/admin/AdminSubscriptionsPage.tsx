@@ -72,7 +72,7 @@ import { useAdminPlans, formatLimitValue } from '@/hooks/useAdminPlans';
 import type { AdminSubscriptionFilters, PlanType } from '@/types';
 
 function formatCurrency(amount: number | string): string {
-  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  const num = typeof amount === 'string' ? Number.parseFloat(amount) : amount;
   return new Intl.NumberFormat('fr-CM', {
     style: 'currency',
     currency: 'XAF',
@@ -547,7 +547,7 @@ export function AdminSubscriptionsPage() {
               <Label htmlFor="days">Nombre de jours</Label>
               <Select
                 value={extendDays.toString()}
-                onValueChange={(v) => setExtendDays(parseInt(v))}
+                onValueChange={(v) => setExtendDays(Number.parseInt(v))}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -606,7 +606,7 @@ export function AdminSubscriptionsPage() {
               <Label>Nouveau plan</Label>
               <Select
                 value={newPlanId?.toString() || ''}
-                onValueChange={(v) => setNewPlanId(parseInt(v))}
+                onValueChange={(v) => setNewPlanId(Number.parseInt(v))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selectionner un plan" />
@@ -708,7 +708,7 @@ export function AdminSubscriptionsPage() {
                     <span>{formatCurrency(detailsSub.base_price)}</span>
                   </div>
                   {detailsSub.guest_count > 0 &&
-                    parseFloat(String(detailsSub.guest_price_per_unit)) > 0 && (
+                    Number.parseFloat(String(detailsSub.guest_price_per_unit)) > 0 && (
                       <div className="flex justify-between text-sm">
                         <span>
                           Invites ({detailsSub.guest_count} x{' '}
@@ -717,7 +717,7 @@ export function AdminSubscriptionsPage() {
                         <span>
                           {formatCurrency(
                             detailsSub.guest_count *
-                              parseFloat(String(detailsSub.guest_price_per_unit))
+                              Number.parseFloat(String(detailsSub.guest_price_per_unit))
                           )}
                         </span>
                       </div>

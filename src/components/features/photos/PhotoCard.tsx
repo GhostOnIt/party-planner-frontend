@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ClickableDiv } from '@/components/ui/clickable-div';
 import { resolveUrl, cn } from '@/lib/utils';
 import type { Photo } from '@/types';
 
@@ -57,7 +58,7 @@ export function PhotoCard({
     }
   };
   return (
-    <div
+    <ClickableDiv
       className={cn(
         'group relative aspect-square overflow-hidden rounded-lg border bg-muted transition-all',
         isSelected && 'ring-2 ring-primary ring-offset-2',
@@ -92,7 +93,7 @@ export function PhotoCard({
 
       {/* Selection Checkbox */}
       {(selectionMode || isHovered) && onSelect && (
-        <div
+        <ClickableDiv
           className="absolute left-2 top-2 z-10"
           onClick={(e) => {
             e.stopPropagation();
@@ -106,7 +107,7 @@ export function PhotoCard({
               photo.is_featured && 'left-8'
             )}
           />
-        </div>
+        </ClickableDiv>
       )}
 
       {/* Hover Overlay */}
@@ -127,7 +128,7 @@ export function PhotoCard({
               Voir
             </Button>
 
-            <div onClick={(e) => e.stopPropagation()}>
+            <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="presentation">
               <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="secondary" size="icon" className="h-8 w-8">
@@ -181,6 +182,6 @@ export function PhotoCard({
           </div>
         </div>
       )}
-    </div>
+    </ClickableDiv>
   );
 }

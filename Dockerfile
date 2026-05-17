@@ -3,30 +3,33 @@
 # ============================================
 FROM node:20-alpine AS builder
 
-# Installer les dépendances système nécessaires (optionnel, pour certaines dépendances natives)
+# Installer les dépendances système nécessaires (certaines deps natives)
 RUN apk add --no-cache libc6-compat
+
+# Activer pnpm via corepack (inclus dans Node 20+)
+RUN corepack enable && corepack prepare pnpm@10 --activate
 
 # Définir le répertoire de travail
 WORKDIR /app
 
-# Copier les fichiers de dépendances
-COPY package.json package-lock.json* pnpm-lock.yaml* ./
+# Copier les fichiers de lockfile en premier pour profiter du cache Docker
+COPY package.json pnpm-lock.yaml ./
 
-# Installer les dépendances (en utilisant npm ci pour une installation plus rapide et reproductible)
-RUN npm ci --only=production=false
+# Installation reproductible (échoue si le lockfile est désynchronisé)
+RUN pnpm install --frozen-lockfile
 
-# Copier les fichiers source
+# Copier le reste des sources (filtrées par .dockerignore)
 COPY . .
 
-# Build de l'application pour la production
-RUN npm run build
+# Build de production
+RUN pnpm build
 
 # ============================================
 # Stage 2: Runtime - Serveur web léger (nginx)
 # ============================================
 FROM nginx:alpine AS runtime
 
-# Installer les outils nécessaires pour la configuration
+# Installer les outils nécessaires pour le healthcheck
 RUN apk add --no-cache \
     curl \
     && rm -rf /var/cache/apk/*
@@ -38,13 +41,10 @@ RUN addgroup -g 1000 jeffrey && \
 # Copier les fichiers buildés depuis le stage builder
 COPY --from=builder --chown=jeffrey:jeffrey /app/dist /usr/share/nginx/html
 
-# Copier la configuration nginx personnalisée (optionnel)
-# Si vous avez besoin d'une config nginx spécifique, créez un fichier nginx.conf
-# COPY --chown=jeffrey:jeffrey nginx.conf /etc/nginx/conf.d/default.conf
-
 # Créer un fichier de configuration nginx optimisé pour SPA
+# (port 8080 car nginx tourne en non-root et ne peut pas binder < 1024)
 RUN echo 'server { \
-    listen 80; \
+    listen 8080; \
     server_name _; \
     root /usr/share/nginx/html; \
     index index.html; \
@@ -75,20 +75,24 @@ RUN echo 'server { \
     add_header X-XSS-Protection "1; mode=block" always; \
 }' > /etc/nginx/conf.d/default.conf
 
-# Créer le répertoire de logs avec les bonnes permissions
-RUN mkdir -p /var/log/nginx /var/cache/nginx /var/run \
-    && chown -R jeffrey:jeffrey /usr/share/nginx/html /var/log/nginx /var/cache/nginx /var/run
+# Configuration nginx pour tourner en non-root :
+#  - PID file dans /tmp (jeffrey a les droits)
+#  - directive `user` retirée (warnings sinon, et inutile pour non-root)
+#  - conf.d writable (l'entrypoint nginx modifie default.conf pour IPv6)
+RUN sed -i 's|^pid .*|pid /tmp/nginx.pid;|' /etc/nginx/nginx.conf \
+    && sed -i 's|^user .*|# user removed (running as non-root);|' /etc/nginx/nginx.conf \
+    && mkdir -p /var/log/nginx /var/cache/nginx \
+    && chown -R jeffrey:jeffrey \
+        /usr/share/nginx/html \
+        /var/log/nginx \
+        /var/cache/nginx \
+        /etc/nginx/conf.d
 
 # Passer à l'utilisateur non-root
-# Note: nginx nécessite généralement root pour écouter sur le port 80
-# On peut utiliser un port non-privilégié ou configurer nginx différemment
 USER jeffrey
 
 # Exposer le port (nginx en mode non-root nécessite un port > 1024)
 EXPOSE 8080
-
-# Modifier la configuration pour écouter sur le port 8080
-RUN sed -i 's/listen 80;/listen 8080;/' /etc/nginx/conf.d/default.conf
 
 # Commande de démarrage
 CMD ["nginx", "-g", "daemon off;"]

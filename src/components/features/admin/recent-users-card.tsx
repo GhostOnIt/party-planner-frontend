@@ -5,6 +5,7 @@ import { fr } from "date-fns/locale"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useNavigate } from "react-router-dom"
 import { useMemo } from "react"
+import { ClickableDiv } from "@/components/ui/clickable-div"
 
 export function RecentUsersCard() {
   const { data: usersData, isLoading, error } = useAdminUsers({ per_page: 50 })
@@ -76,7 +77,7 @@ export function RecentUsersCard() {
               .slice(0, 2)
 
             return (
-              <div
+              <ClickableDiv
                 key={user.id}
                 onClick={() => navigate(`/admin/users/${user.id}`)}
                 className="flex items-start gap-3 p-3 rounded-lg border border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer"
@@ -96,7 +97,7 @@ export function RecentUsersCard() {
                     Inscrit le {format(parseISO(user.created_at), "dd MMM yyyy", { locale: fr })}
                   </div>
                 </div>
-              </div>
+              </ClickableDiv>
             )
           })
         ) : (

@@ -36,6 +36,7 @@ export function useEvent(eventId: number | string | undefined) {
 interface CreateEventResponse {
   event: Event;
   quota: any;
+  warning?: string;
 }
 
 // Create event
@@ -77,7 +78,7 @@ export function useCreateEvent() {
 
         // The API client interceptor will automatically handle Content-Type for FormData
         const response = await api.post<CreateEventResponse>('/events', formData);
-        return response.data.event;
+        return { event: response.data.event, warning: response.data.warning };
       } else {
         // Sinon, envoyer en JSON normal
         const jsonData: Record<string, string | number | undefined> = {
@@ -90,7 +91,7 @@ export function useCreateEvent() {
         }
 
         const response = await api.post<CreateEventResponse>('/events', jsonData);
-        return response.data.event;
+        return { event: response.data.event, warning: response.data.warning };
       }
     },
     onError: (error: unknown) => {
@@ -179,11 +180,18 @@ export function useCreateEvent() {
         });
       }
     },
-    onSuccess: (event) => {
+    onSuccess: ({ event, warning }) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['user', 'subscription'] });
       queryClient.invalidateQueries({ queryKey: ['user', 'quota'] });
+      if (warning) {
+        toast({
+          title: 'Photo de couverture non uploadée',
+          description: warning,
+          variant: 'default',
+        });
+      }
       navigate(`/events/${event.id}`);
     },
   });
@@ -210,21 +218,36 @@ export function useUpdateEvent(eventId: number | string) {
           }
         });
         formData.append('cover_photo', cover_photo);
-        const response = await api.put<Event>(`/events/${eventId}`, formData);
-        return response.data;
+        const response = await api.put<Event | { event: Event; warning?: string }>(
+          `/events/${eventId}`,
+          formData
+        );
+        const raw = response.data as Event | { event: Event; warning?: string };
+        if (raw && typeof raw === 'object' && 'event' in raw) {
+          return { event: raw.event, warning: raw.warning };
+        }
+        return { event: raw as Event, warning: undefined };
       }
 
       const response = await api.put<Event>(`/events/${eventId}`, eventData);
-      return response.data;
+      return { event: response.data, warning: undefined as string | undefined };
     },
-    onSuccess: () => {
+    onSuccess: ({ warning }) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['events', eventId] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      toast({
-        title: 'Événement modifié',
-        description: 'Les modifications ont été enregistrées avec succès.',
-      });
+      if (warning) {
+        toast({
+          title: 'Photo de couverture non uploadée',
+          description: warning,
+          variant: 'default',
+        });
+      } else {
+        toast({
+          title: 'Événement modifié',
+          description: 'Les modifications ont été enregistrées avec succès.',
+        });
+      }
     },
   });
 }

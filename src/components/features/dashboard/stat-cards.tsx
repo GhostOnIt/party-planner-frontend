@@ -104,7 +104,7 @@ export function StatCards({ filter = "7days", eventTypeFilter = "all", customRan
               <div>
                 <p className="text-[10px] text-[#6b7280] uppercase tracking-wide">{stat.label}</p>
                 <p className="text-lg font-bold text-[#1a1a2e]">
-                  {typeof stat.value === "number" ? stat.value : stat.value}
+                  {stat.value}
                 </p>
               </div>
             </div>

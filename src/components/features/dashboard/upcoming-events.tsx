@@ -4,6 +4,7 @@ import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useNavigate } from "react-router-dom"
+import { ClickableDiv } from "@/components/ui/clickable-div"
 
 const typeColors: Record<string, string> = {
   mariage: "bg-[#E91E8C]",
@@ -82,7 +83,7 @@ export function UpcomingEvents() {
           const typeColor = typeColors[event.type.toLowerCase()] || typeColors.autre
 
           return (
-          <div
+          <ClickableDiv
             key={index}
             onClick={() => navigate(`/events/${event.id}`)}
             className="flex items-start gap-3 p-3 rounded-lg border border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer"
@@ -110,7 +111,7 @@ export function UpcomingEvents() {
                 </div>
               )}
             </div>
-          </div>
+          </ClickableDiv>
           )
         })}
       </div>

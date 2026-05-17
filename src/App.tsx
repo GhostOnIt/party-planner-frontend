@@ -64,6 +64,7 @@ const AdminActivityLogsPage = lazy(() => import('@/pages/admin').then(m => ({ de
 const AdminCommunicationPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminCommunicationPage })));
 const AdminQuoteRequestsPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminQuoteRequestsPage })));
 const AdminQuoteRequestDetailPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminQuoteRequestDetailPage })));
+const PublicOfferPage = lazy(() => import('@/pages/PublicOfferPage').then(m => ({ default: m.PublicOfferPage })));
 
 // Composant de chargement
 function PageLoader() {
@@ -154,6 +155,7 @@ function App() {
                 <Route path="/admin/communication" element={<AdminCommunicationPage />} />
                 <Route path="/admin/quote-requests" element={<AdminQuoteRequestsPage />} />
                 <Route path="/admin/quote-requests/:requestId" element={<AdminQuoteRequestDetailPage />} />
+                <Route path="/admin/settings/quote-stages" element={<Navigate to="/settings?tab=quote-stages" replace />} />
               </Route>
             </Route>
 
@@ -170,6 +172,9 @@ function App() {
 
             {/* Public photo upload page (no auth required) */}
             <Route path="/upload-photo/:eventId/:token" element={<PublicPhotoUploadPage />} />
+
+            {/* Public offer page (no auth required, token-based) */}
+            <Route path="/offers/:clientToken" element={<PublicOfferPage />} />
 
             {/* Redirects */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

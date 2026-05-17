@@ -46,7 +46,9 @@ export function EventActionsMenu({
       ref={menuRef}
       className="absolute right-0 bottom-full mb-2 w-44 bg-white rounded-xl border border-[#e5e7eb] shadow-xl z-30 py-1"
       onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
+      role="presentation"
     >
       {onView && (
         <button

@@ -20,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ClickableDiv } from '@/components/ui/clickable-div';
 import { cn } from '@/lib/utils';
 import type { Notification } from '@/types';
 
@@ -155,7 +156,7 @@ export function NotificationItem({
   };
 
   return (
-    <div
+    <ClickableDiv
       className={cn(
         'flex items-start gap-4 rounded-lg border p-4 transition-colors',
         isRead ? 'bg-background' : 'bg-muted/30',
@@ -219,6 +220,6 @@ export function NotificationItem({
           </div>
         </div>
       </div>
-    </div>
+    </ClickableDiv>
   );
 }

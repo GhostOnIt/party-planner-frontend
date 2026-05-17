@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PaymentHistory } from '@/components/features/payment';
 import { useSubscriptions } from '@/hooks/useSubscription';
 import { usePayments, useRetryPayment } from '@/hooks/usePayment';
-import { useMyQuoteRequests } from '@/hooks/useQuoteRequests';
+import { useMyQuoteRequests, useMyOffers, useRespondToOffer, type CustomOffer } from '@/hooks/useQuoteRequests';
 import { useToast } from '@/hooks/use-toast';
 import type { Subscription } from '@/types';
 
@@ -122,6 +122,8 @@ export function SubscriptionsPage() {
   const { data: subscriptions = [], isLoading: isLoadingSubscriptions } = useSubscriptions();
   const { data: payments = [], isLoading: isLoadingPayments } = usePayments();
   const { data: myQuoteRequests = [], isLoading: isLoadingQuoteRequests } = useMyQuoteRequests();
+  const { data: myOffers = [] } = useMyOffers();
+  const { mutate: respondToOffer, isPending: isRespondingOffer } = useRespondToOffer();
   const { mutate: retryPayment } = useRetryPayment();
 
   // Filter using new field names with fallbacks
@@ -327,6 +329,64 @@ export function SubscriptionsPage() {
                                 )}
                               </div>
                             </div>
+
+                            {/* Offers received */}
+                            {(() => {
+                              const itemOffers = myOffers.filter((o: CustomOffer) => o.quote_request_id === item.id);
+                              if (itemOffers.length === 0) return null;
+                              return (
+                                <div className="mt-4 rounded-md border bg-primary/5 p-3">
+                                  <p className="text-sm font-medium">Offre(s) reçue(s)</p>
+                                  <div className="mt-2 space-y-2">
+                                    {itemOffers.map((offer: CustomOffer) => {
+                                      const price = new Intl.NumberFormat('fr-FR').format(offer.price_amount) + ' ' + offer.price_currency;
+                                      const statusLabels: Record<string, string> = {
+                                        draft: 'Brouillon', sent: 'En attente', accepted: 'Acceptée', rejected: 'Refusée', expired: 'Expirée',
+                                      };
+                                      return (
+                                        <div key={offer.id} className="rounded border bg-background p-3 space-y-2">
+                                          <div className="flex items-start justify-between gap-2">
+                                            <div>
+                                              <p className="font-medium text-sm">{offer.title}</p>
+                                              <p className="text-sm font-semibold text-primary">{price}</p>
+                                            </div>
+                                            <Badge variant={offer.status === 'accepted' ? 'default' : offer.status === 'rejected' ? 'destructive' : 'secondary'}>
+                                              {statusLabels[offer.status] ?? offer.status}
+                                            </Badge>
+                                          </div>
+                                          {offer.features && offer.features.length > 0 && (
+                                            <div className="flex flex-wrap gap-1">
+                                              {offer.features.map((f, i) => (
+                                                <Badge key={i} variant="outline" className="text-xs">{f}</Badge>
+                                              ))}
+                                            </div>
+                                          )}
+                                          {offer.status === 'sent' && (
+                                            <div className="flex gap-2 pt-1">
+                                              <Button
+                                                size="sm"
+                                                disabled={isRespondingOffer}
+                                                onClick={() => respondToOffer({ clientToken: offer.client_token, action: 'accept' })}
+                                              >
+                                                Accepter
+                                              </Button>
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                disabled={isRespondingOffer}
+                                                onClick={() => respondToOffer({ clientToken: offer.client_token, action: 'reject' })}
+                                              >
+                                                Refuser
+                                              </Button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                           <img src={qrUrl} alt="QR de suivi" className="h-[100px] w-[100px] rounded border" />
                         </div>

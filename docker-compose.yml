@@ -10,9 +10,9 @@ services:
       - .:/app
       - /app/node_modules
     ports:
-      - "5173:5173"
+      - "5173:8080"
     environment:
-      VITE_API_URL: http://56.228.69.61:8000/api
+      VITE_API_URL: http://localhost:8000/api
       VITE_APP_NAME: Party Planner
       VITE_PAYMENT_ENV: sandbox
     networks:

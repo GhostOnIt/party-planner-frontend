@@ -205,10 +205,12 @@ export function EventCardGrid({
             </span>
           </div>
           {!event.pending_claim && (
-            <div 
-              className="relative z-40" 
+            <div
+              className="relative z-40"
               onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
+              role="presentation"
             >
               <button
                 onClick={(e) => {

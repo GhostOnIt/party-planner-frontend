@@ -89,7 +89,7 @@ export function transformEventToDisplayFormat(
   // Parse budget_spent (can be string or number from Laravel)
   const budgetSpent =
     typeof event.budget_spent === 'string'
-      ? parseFloat(event.budget_spent) || 0
+      ? Number.parseFloat(event.budget_spent) || 0
       : event.budget_spent || 0;
 
   return {

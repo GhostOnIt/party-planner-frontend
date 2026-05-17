@@ -517,7 +517,7 @@ export function SpotFormDialog({
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          priority: parseInt(e.target.value) || 0,
+                          priority: Number.parseInt(e.target.value) || 0,
                         }))
                       }
                     />

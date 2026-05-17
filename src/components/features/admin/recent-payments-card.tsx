@@ -4,6 +4,7 @@ import { format, parseISO } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useNavigate } from "react-router-dom"
+import { ClickableDiv } from "@/components/ui/clickable-div"
 
 const paymentStatusColors: Record<string, { bg: string; text: string }> = {
   completed: { bg: "bg-[#ECFDF5]", text: "text-[#10B981]" },
@@ -84,7 +85,7 @@ export function RecentPaymentsCard() {
             const userName = user?.name || "Utilisateur inconnu"
 
             return (
-              <div
+              <ClickableDiv
                 key={payment.id}
                 onClick={() => navigate(`/admin/payments`)}
                 className="flex items-start gap-3 p-3 rounded-lg bg-[#F9FAFB] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
@@ -104,7 +105,7 @@ export function RecentPaymentsCard() {
                     {paymentStatusLabels[payment.status] || payment.status}
                   </span>
                 </div>
-              </div>
+              </ClickableDiv>
             )
           })
         ) : (

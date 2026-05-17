@@ -4,6 +4,7 @@ import { format, isToday, isPast } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useNavigate } from "react-router-dom"
+import { ClickableDiv } from "@/components/ui/clickable-div"
 
 const statusLabels = {
   overdue: { label: "En retard", color: "text-red-500" },
@@ -82,7 +83,7 @@ export function UrgentTasks() {
           const eventId = (task.event as any)?.id || task.event_id
 
           return (
-          <div
+          <ClickableDiv
             key={task.id}
             onClick={() => eventId && navigate(`/events/${eventId}?tab=tasks`)}
             className="flex items-start gap-3 p-3 rounded-lg bg-[#F9FAFB] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
@@ -106,8 +107,8 @@ export function UrgentTasks() {
                 </div>
               )}
             </div>
-            
-          </div>
+
+          </ClickableDiv>
           )
         })}
       </div>

@@ -11,6 +11,7 @@ import {
 } from "@/hooks/useNotifications"
 import { formatDistanceToNow } from "date-fns"
 import { fr } from "date-fns/locale"
+import { ClickableDiv } from "@/components/ui/clickable-div"
 
 export function NotificationsDropdown() {
   const [showNotifications, setShowNotifications] = useState(false)
@@ -170,7 +171,7 @@ export function NotificationsDropdown() {
               </div>
             ) : notifications.length > 0 ? (
               notifications.map((notif) => (
-                <div
+                <ClickableDiv
                   key={notif.id}
                   className={cn(
                     "p-4 border-b border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors group cursor-pointer",
@@ -225,7 +226,7 @@ export function NotificationsDropdown() {
                       <p className="text-xs text-[#9ca3af] mt-1">{formatTime(notif.created_at)}</p>
                     </div>
                   </div>
-                </div>
+                </ClickableDiv>
               ))
             ) : (
               <div className="p-8 text-center">

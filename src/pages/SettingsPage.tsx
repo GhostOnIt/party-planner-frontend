@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,6 +21,7 @@ import {
   ClipboardList,
   UserCog,
   Layers,
+  Workflow,
   FileText,
   Pencil,
   Eye,
@@ -52,6 +53,7 @@ import { resolveUrl } from '@/lib/utils';
 import { EventTypesManager } from '@/components/settings/EventTypesManager';
 import { CollaboratorRolesManager } from '@/components/settings/CollaboratorRolesManager';
 import { BudgetCategoriesManager } from '@/components/settings/BudgetCategoriesManager';
+import { QuoteStagesManager } from '@/components/settings/QuoteStagesManager';
 import { strongPasswordSchema } from '@/lib/passwordValidation';
 import {
   CG_PHONE_ERROR_MESSAGE,
@@ -124,6 +126,8 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 export function SettingsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'profile';
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const { toast } = useToast();
@@ -382,8 +386,8 @@ export function SettingsPage() {
     <div className="space-y-6">
       <PageHeader title={t('settings.title')} description={t('settings.description')} />
 
-      <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-7 lg:w-[1000px]' : 'grid-cols-6 lg:w-[850px]'}`}>
+      <Tabs defaultValue={initialTab} className="space-y-6">
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-8 lg:w-[1150px]' : 'grid-cols-6 lg:w-[850px]'}`}>
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.profile')}</span>
@@ -408,6 +412,12 @@ export function SettingsPage() {
             <Layers className="h-4 w-4" />
             <span className="hidden sm:inline">{t('settings.budgetCategories')}</span>
           </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="quote-stages" className="flex items-center gap-2">
+              <Workflow className="h-4 w-4" />
+              <span className="hidden sm:inline whitespace-nowrap">Workflow Devis</span>
+            </TabsTrigger>
+          )}
           {isAdmin && (
             <TabsTrigger value="legal-pages" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
@@ -988,6 +998,17 @@ export function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Quote Workflow Stages Tab (Admin only) */}
+        {isAdmin && (
+          <TabsContent value="quote-stages" className="space-y-6">
+            <Card>
+              <CardContent className="pt-6">
+                <QuoteStagesManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         {/* Legal Pages Tab (Admin only) */}
         {isAdmin && (

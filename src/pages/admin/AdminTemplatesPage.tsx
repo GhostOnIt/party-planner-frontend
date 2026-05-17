@@ -763,7 +763,12 @@ export function AdminTemplatesPage() {
                         placeholder="Nouveau theme"
                         value={newTheme}
                         onChange={(e) => setNewTheme(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTheme())}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addTheme();
+                          }
+                        }}
                       />
                       <Button type="button" variant="outline" onClick={addTheme}>
                         Ajouter
