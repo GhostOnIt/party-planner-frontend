@@ -1,5 +1,6 @@
 import { useEventEntitlements } from './useSubscription';
 import {
+  useEventPermissions,
   useGuestsPermissions,
   useTasksPermissions,
   useBudgetPermissions,
@@ -21,6 +22,8 @@ export function useFeatureAccess(eventId: string) {
   // Récupérer les entitlements du propriétaire de l'événement (pas de l'utilisateur connecté)
   // Cela permet aux collaborateurs d'accéder aux fonctionnalités si le propriétaire a un abonnement actif
   const { data: entitlements, isLoading: isLoadingEntitlements } = useEventEntitlements(eventId);
+  const { data: eventPermissions } = useEventPermissions(eventId);
+  const isOwner = eventPermissions?.is_owner ?? false;
   const guestPermissions = useGuestsPermissions(eventId);
   const tasksPermissions = useTasksPermissions(eventId);
   const budgetPermissions = useBudgetPermissions(eventId);
@@ -62,20 +65,20 @@ export function useFeatureAccess(eventId: string) {
     return getLimit(limitKey) === -1;
   };
 
-  // Accès combiné : fonctionnalité + permission
-  // Pour les admins, on bypass toutes les vérifications
+  // Accès combiné : entitlement du propriétaire + permission de rôle (le propriétaire n'a pas besoin des permissions collaborateur)
   const canAccessGuests = isAdmin
     ? true
-    : canUseFeature('guests.manage') && guestPermissions.hasAnyPermission;
+    : canUseFeature('guests.manage') && (isOwner || guestPermissions.hasAnyPermission);
   const canAccessTasks = isAdmin
     ? true
-    : canUseFeature('tasks.enabled') && tasksPermissions.hasAnyPermission;
+    : canUseFeature('tasks.enabled') && (isOwner || tasksPermissions.hasAnyPermission);
   const canAccessBudget = isAdmin
     ? true
-    : canUseFeature('budget.enabled') && budgetPermissions.hasAnyPermission;
+    : canUseFeature('budget.enabled') && (isOwner || budgetPermissions.hasAnyPermission);
   const canAccessCollaborators = isAdmin
     ? true
-    : canUseFeature('collaborators.manage') && collaboratorsPermissions.hasAnyPermission;
+    : canUseFeature('collaborators.manage') &&
+        (isOwner || collaboratorsPermissions.hasAnyPermission);
 
   // Si admin, retourner tous les accès à true
   if (isAdmin) {
@@ -141,44 +144,47 @@ export function useFeatureAccess(eventId: string) {
     // Accès combinés par fonctionnalité
     guests: {
       canAccess: canAccessGuests,
-      canView: canUseFeature('guests.manage') && guestPermissions.canView,
-      canCreate: canUseFeature('guests.manage') && guestPermissions.canCreate,
-      canEdit: canUseFeature('guests.manage') && guestPermissions.canEdit,
-      canDelete: canUseFeature('guests.manage') && guestPermissions.canDelete,
-      canImport: canUseFeature('guests.import') && guestPermissions.canImport,
-      canExport: canUseFeature('guests.export') && guestPermissions.canExport,
+      canView: canUseFeature('guests.manage') && (isOwner || guestPermissions.canView),
+      canCreate: canUseFeature('guests.manage') && (isOwner || guestPermissions.canCreate),
+      canEdit: canUseFeature('guests.manage') && (isOwner || guestPermissions.canEdit),
+      canDelete: canUseFeature('guests.manage') && (isOwner || guestPermissions.canDelete),
+      canImport: canUseFeature('guests.import') && (isOwner || guestPermissions.canImport),
+      canExport: canUseFeature('guests.export') && (isOwner || guestPermissions.canExport),
       maxPerEvent: getLimit('guests.max_per_event'),
       isUnlimited: isUnlimited('guests.max_per_event'),
       permissions: guestPermissions,
     },
     tasks: {
       canAccess: canAccessTasks,
-      canView: canUseFeature('tasks.enabled') && tasksPermissions.canView,
-      canCreate: canUseFeature('tasks.enabled') && tasksPermissions.canCreate,
-      canEdit: canUseFeature('tasks.enabled') && tasksPermissions.canEdit,
-      canDelete: canUseFeature('tasks.enabled') && tasksPermissions.canDelete,
+      canView: canUseFeature('tasks.enabled') && (isOwner || tasksPermissions.canView),
+      canCreate: canUseFeature('tasks.enabled') && (isOwner || tasksPermissions.canCreate),
+      canEdit: canUseFeature('tasks.enabled') && (isOwner || tasksPermissions.canEdit),
+      canDelete: canUseFeature('tasks.enabled') && (isOwner || tasksPermissions.canDelete),
       permissions: tasksPermissions,
     },
     budget: {
       canAccess: canAccessBudget,
-      canView: canUseFeature('budget.enabled') && budgetPermissions.canView,
-      canCreate: canUseFeature('budget.enabled') && budgetPermissions.canCreate,
-      canEdit: canUseFeature('budget.enabled') && budgetPermissions.canEdit,
-      canDelete: canUseFeature('budget.enabled') && budgetPermissions.canDelete,
-      canExport: canUseFeature('budget.enabled') && budgetPermissions.canExport,
+      canView: canUseFeature('budget.enabled') && (isOwner || budgetPermissions.canView),
+      canCreate: canUseFeature('budget.enabled') && (isOwner || budgetPermissions.canCreate),
+      canEdit: canUseFeature('budget.enabled') && (isOwner || budgetPermissions.canEdit),
+      canDelete: canUseFeature('budget.enabled') && (isOwner || budgetPermissions.canDelete),
+      canExport: canUseFeature('budget.enabled') && (isOwner || budgetPermissions.canExport),
       permissions: budgetPermissions,
     },
     collaborators: {
       canAccess: canAccessCollaborators,
       canView:
-        canUseFeature('collaborators.manage') && collaboratorsPermissions.canView,
+        canUseFeature('collaborators.manage') &&
+        (isOwner || collaboratorsPermissions.canView),
       canInvite:
-        canUseFeature('collaborators.manage') && collaboratorsPermissions.canInvite,
+        canUseFeature('collaborators.manage') &&
+        (isOwner || collaboratorsPermissions.canInvite),
       canEditRoles:
         canUseFeature('collaborators.manage') &&
-        collaboratorsPermissions.canEditRoles,
+        (isOwner || collaboratorsPermissions.canEditRoles),
       canRemove:
-        canUseFeature('collaborators.manage') && collaboratorsPermissions.canRemove,
+        canUseFeature('collaborators.manage') &&
+        (isOwner || collaboratorsPermissions.canRemove),
       isOwner: collaboratorsPermissions.isOwner,
       maxPerEvent: getLimit('collaborators.max_per_event'),
       isUnlimited: isUnlimited('collaborators.max_per_event'),
