@@ -12,32 +12,13 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { usePlans, PLAN_FEATURE_LABELS, formatLimitValue } from '@/hooks/useAdminPlans';
+import { usePlans, formatLimitValue } from '@/hooks/useAdminPlans';
 import { useCurrentSubscription, useSubscribeToPlan } from '@/hooks/useSubscription';
 import { BusinessQuoteRequestDialog } from '@/components/features/plans/BusinessQuoteRequestDialog';
+import { PlanAllFeaturesDialog } from '@/components/features/plans/PlanAllFeaturesDialog';
+import { PlansComparisonTable } from '@/components/features/plans/PlansComparisonTable';
 import type { Plan } from '@/hooks/useAdminPlans';
-
-// Helper to get feature display text
-function getFeatureText(featureKey: string, plan: Plan): string {
-  const label = PLAN_FEATURE_LABELS[featureKey];
-  if (label) return label;
-
-  // Fallback for limit-based features
-  if (featureKey.includes('guests.max_per_event')) {
-    const limit = plan.limits?.['guests.max_per_event'];
-    return `Invités ${formatLimitValue(limit)} par événement`;
-  }
-  if (featureKey.includes('collaborators.max_per_event')) {
-    const limit = plan.limits?.['collaborators.max_per_event'];
-    return `Collaborateurs ${formatLimitValue(limit)} par événement`;
-  }
-  if (featureKey.includes('events.creations_per_billing_period')) {
-    const limit = plan.limits?.['events.creations_per_billing_period'];
-    return `${formatLimitValue(limit)} événements par période`;
-  }
-
-  return featureKey;
-}
+import { getFeatureLabel, getPlanEnabledFeatureKeys } from '@/lib/planFeatures';
 
 // Get icon and colors for plan
 function getPlanStyle(plan: Plan, isPopular: boolean) {
@@ -91,10 +72,9 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
   const [isQuoteDialogOpen, setIsQuoteDialogOpen] = useState(false);
   const hasActiveAccountSubscription = Boolean(currentSubscription?.has_subscription);
 
-  // Get enabled features (only those that have a label, to hide deprecated ones like planning.enabled, support.dedicated, assistance.human)
-  const enabledFeatures = Object.entries(plan.features || {})
-    .filter(([key, enabled]) => enabled && PLAN_FEATURE_LABELS[key])
-    .map(([key]) => key);
+  const enabledFeatures = getPlanEnabledFeatureKeys(plan);
+  const visibleFeatures = enabledFeatures.slice(0, 8);
+  const hiddenFeaturesCount = Math.max(0, enabledFeatures.length - visibleFeatures.length);
 
   // Get key limits
   const eventsLimit = plan.limits?.['events.creations_per_billing_period'];
@@ -304,19 +284,17 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
 
         {/* Features List */}
         <div className="space-y-2.5">
-          {enabledFeatures.slice(0, 8).map((featureKey) => (
+          {visibleFeatures.map((featureKey) => (
             <div key={featureKey} className="flex items-start gap-2.5">
               <div className="shrink-0 mt-0.5">
                 <Check className="w-4 h-4 text-[#4F46E5]" />
               </div>
-              <span className="text-xs text-slate-700 leading-relaxed">{getFeatureText(featureKey, plan)}</span>
+              <span className="text-xs text-slate-700 leading-relaxed">{getFeatureLabel(featureKey, plan)}</span>
             </div>
           ))}
-          {enabledFeatures.length > 8 && (
+          {hiddenFeaturesCount > 0 && (
             <div className="pt-1.5">
-              <span className="text-xs text-[#E91E8C] font-medium">
-                + {enabledFeatures.length - 8} autres fonctionnalités
-              </span>
+              <PlanAllFeaturesDialog plan={plan} hiddenCount={hiddenFeaturesCount} />
             </div>
           )}
         </div>
@@ -511,6 +489,31 @@ export function PlansPage() {
           )}
         </div>
       </section>
+
+      {/* Comparison table */}
+      {plans.length > 0 && (
+        <section id="comparer" className="px-4 pb-16">
+          <div className="container mx-auto max-w-6xl">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl md:text-4xl font-bold mb-3 text-slate-900">
+                Comparer les plans
+              </h2>
+              <p className="text-slate-600 max-w-2xl mx-auto">
+                Limites et fonctionnalités côte à côte pour choisir l&apos;offre adaptée à votre
+                activité.
+              </p>
+            </div>
+            <PlansComparisonTable
+              plans={plans.map((plan) => ({
+                ...plan,
+                is_popular: hasPopularFromApi
+                  ? (plan.is_popular ?? false)
+                  : plan.slug === 'pro',
+              }))}
+            />
+          </div>
+        </section>
+      )}
 
       {/* FAQ Section */}
       <section className="px-4 py-20 bg-slate-50">
