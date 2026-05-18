@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { BUDGET_LABELS } from '@/lib/budgetLabels';
 import { Plus, Download, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -216,7 +217,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
           <div className="grid gap-4 sm:grid-cols-3">
             <Card>
               <CardHeader className="pb-2">
-                <CardDescription>Budget estime</CardDescription>
+                <CardDescription>{BUDGET_LABELS.estimatedTotal}</CardDescription>
                 <CardTitle className="text-2xl">
                   {isLoadingStats ? (
                     <Skeleton className="h-8 w-32" />
@@ -234,7 +235,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardDescription>Depenses reelles</CardDescription>
+                <CardDescription>{BUDGET_LABELS.actualTotal}</CardDescription>
                 <CardTitle className="text-2xl">
                   {isLoadingStats ? <Skeleton className="h-8 w-32" /> : formatCurrency(totalActual)}
                 </CardTitle>
@@ -252,7 +253,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardDescription>Deja paye</CardDescription>
+                <CardDescription>{BUDGET_LABELS.paid}</CardDescription>
                 <CardTitle className="text-2xl">
                   {isLoadingStats ? <Skeleton className="h-8 w-32" /> : formatCurrency(totalPaid)}
                 </CardTitle>

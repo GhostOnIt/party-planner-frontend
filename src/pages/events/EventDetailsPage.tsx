@@ -55,6 +55,7 @@ import { useEvent, useDeleteEvent, useCancelEvent, useUpdateEvent } from '@/hook
 import { useBudgetStats } from '@/hooks/useBudget';
 import { useAuthStore } from '@/stores/authStore';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { BUDGET_LABELS } from '@/lib/budgetLabels';
 import { PermissionGuard } from '@/components/ui/permission-guard';
 import { GuestsPage } from './GuestsPage';
 import { TasksPage } from './TasksPage';
@@ -323,6 +324,8 @@ export function EventDetailsPage() {
   const tasksProgress = getProgressPercent(tasksCompleted, tasksTotal);
   const budgetProgress =
     budgetEstimated > 0 ? getProgressPercent(budgetPaid, budgetEstimated) : 0;
+  const actualPaymentProgress =
+    budgetActual > 0 ? getProgressPercent(budgetPaid, budgetActual) : 0;
 
   const countdown = getDaysUntilEvent(event.date);
   const imageUrl = event.featured_photo?.url || event.featured_photo?.thumbnail_url;
@@ -625,7 +628,7 @@ export function EventDetailsPage() {
                       {formatBudget(budgetEstimated)}
                     </span>
                   </div>
-                  <p className="text-sm font-medium text-[#6b7280] mb-3">Budget estimé</p>
+                  <p className="text-sm font-medium text-[#6b7280] mb-3">{BUDGET_LABELS.estimatedTotal}</p>
                   <div className="space-y-2">
                     <div className="h-2 rounded-full bg-[#f3f4f6] overflow-hidden">
                       <div
@@ -645,9 +648,11 @@ export function EventDetailsPage() {
                           budgetProgress > 100 ? "text-[#EF4444]" : "text-[#F59E0B]"
                         )}
                       >
-                        {formatBudget(budgetPaid)} payé
+                        {formatBudget(budgetPaid)} {BUDGET_LABELS.paid.toLowerCase()}
                       </span>
-                      <span className="text-[#6b7280]">{budgetProgress}%</span>
+                      <span className="text-[#6b7280]">
+                        {BUDGET_LABELS.paidOfEstimated(budgetProgress)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -756,24 +761,24 @@ export function EventDetailsPage() {
                 {featureAccess.budget.canAccess && budgetActual > 0 && (
                   <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
                     <div className="px-6 py-4 border-b border-[#f3f4f6] bg-[#f9fafb]">
-                      <h3 className="font-semibold text-[#1a1a2e]">Aperçu du budget</h3>
+                      <h3 className="font-semibold text-[#1a1a2e]">{BUDGET_LABELS.overviewTitle}</h3>
                     </div>
                     <div className="p-6">
                       <div className="grid grid-cols-3 gap-4 mb-4">
                         <div className="text-center">
-                          <p className="text-xs text-[#6b7280] mb-1">Budget prévu</p>
+                          <p className="text-xs text-[#6b7280] mb-1">{BUDGET_LABELS.actualTotal}</p>
                           <p className="text-lg font-bold text-[#1a1a2e]">
                             {formatBudget(budgetActual)}
                           </p>
                         </div>
                         <div className="text-center">
-                          <p className="text-xs text-[#6b7280] mb-1">Payé</p>
+                          <p className="text-xs text-[#6b7280] mb-1">{BUDGET_LABELS.paid}</p>
                           <p className={cn("text-lg font-bold", budgetProgress > 100 ? "text-[#EF4444]" : "text-[#F59E0B]")}>
                             {formatBudget(budgetPaid)}
                           </p>
                         </div>
                         <div className="text-center">
-                          <p className="text-xs text-[#6b7280] mb-1">Restant</p>
+                          <p className="text-xs text-[#6b7280] mb-1">{BUDGET_LABELS.remainingToPay}</p>
                           <p className={cn("text-lg font-bold", budgetRemaining < 0 ? "text-[#EF4444]" : "text-[#10B981]")}>
                             {formatBudget(budgetRemaining)}
                           </p>
@@ -783,16 +788,18 @@ export function EventDetailsPage() {
                         <div
                           className={cn(
                             "h-full transition-all",
-                            budgetProgress > 100 
+                            actualPaymentProgress > 100 
                               ? "bg-linear-to-r from-[#EF4444] to-[#F87171]" 
-                              : budgetProgress > 80 
+                              : actualPaymentProgress > 80 
                                 ? "bg-linear-to-r from-[#F59E0B] to-[#FBBF24]"
                                 : "bg-linear-to-r from-[#10B981] to-[#34D399]"
                           )}
-                          style={{ width: `${Math.min(budgetProgress, 100)}%` }}
+                          style={{ width: `${Math.min(actualPaymentProgress, 100)}%` }}
                         />
                       </div>
-                      <p className="text-center text-sm text-[#6b7280] mt-2">{budgetProgress}% utilisé</p>
+                      <p className="text-center text-sm text-[#6b7280] mt-2">
+                        {BUDGET_LABELS.paidOfActual(actualPaymentProgress)}
+                      </p>
                     </div>
                   </div>
                 )}

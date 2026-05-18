@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { categoryConfig } from './CategoryBadge';
 import type { BudgetStats, BudgetCategory } from '@/types';
+import { BUDGET_LABELS } from '@/lib/budgetLabels';
 
 interface BudgetChartProps {
   stats: BudgetStats | undefined;
@@ -81,7 +82,7 @@ export function BudgetChart({ stats, isLoading = false }: BudgetChartProps) {
       <CardHeader>
         <CardTitle>Repartition par categorie</CardTitle>
         <CardDescription>
-          Budget estime: {formatCurrency(stats?.total_estimated ?? 0)}
+          {BUDGET_LABELS.estimatedTotal} : {formatCurrency(stats?.total_estimated ?? 0)}
         </CardDescription>
       </CardHeader>
       <CardContent>

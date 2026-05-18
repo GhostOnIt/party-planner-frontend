@@ -2,6 +2,7 @@ import { Wallet, Receipt, CreditCard, TrendingDown, TrendingUp } from 'lucide-re
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { BudgetStats as BudgetStatsType } from '@/types';
+import { BUDGET_LABELS } from '@/lib/budgetLabels';
 import { cn } from '@/lib/utils';
 
 interface BudgetStatsProps {
@@ -30,7 +31,7 @@ export function BudgetStats({ stats, isLoading = false }: BudgetStatsProps) {
 
   const items = [
     {
-      label: 'Budget estime',
+      label: BUDGET_LABELS.estimatedTotal,
       value: formatCurrency(totalEstimated),
       icon: Wallet,
       iconColor: 'text-primary',
@@ -38,7 +39,7 @@ export function BudgetStats({ stats, isLoading = false }: BudgetStatsProps) {
       description: `${stats?.items_count ?? 0} postes`,
     },
     {
-      label: 'Depenses reelles',
+      label: BUDGET_LABELS.actualTotal,
       value: formatCurrency(totalActual),
       icon: Receipt,
       iconColor: isUnderBudget ? 'text-success' : 'text-destructive',
@@ -53,7 +54,7 @@ export function BudgetStats({ stats, isLoading = false }: BudgetStatsProps) {
       },
     },
     {
-      label: 'Deja paye',
+      label: BUDGET_LABELS.paid,
       value: formatCurrency(totalPaid),
       icon: CreditCard,
       iconColor: 'text-info',
