@@ -91,7 +91,10 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
   if (guestsLimit !== undefined) {
     stats.push({ label: 'Invités par événement', value: formatLimitValue(guestsLimit) });
   }
-  if (collaboratorsLimit !== undefined) {
+  if (
+    collaboratorsLimit !== undefined &&
+    plan.features?.['collaborators.manage'] === true
+  ) {
     stats.push({ label: 'Collaborateurs', value: formatLimitValue(collaboratorsLimit) });
   }
 
