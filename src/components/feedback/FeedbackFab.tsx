@@ -43,7 +43,7 @@ export function FeedbackFab() {
       const msg =
         ax.response?.data?.message ??
         (status === 403
-          ? 'Le feedback pilote est réservé aux comptes utilisateur.'
+          ? 'Le feedback est réservé aux comptes utilisateur.'
           : 'Impossible d\'envoyer le message.');
       toast({
         title: 'Erreur',
@@ -96,15 +96,16 @@ export function FeedbackFab() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Feedback phase pilote</DialogTitle>
+            <DialogTitle>Votre avis</DialogTitle>
             <DialogDescription>
-              Partagez vos remarques ou suggestions. Elles sont envoyées à l&apos;équipe par e-mail.
+              Partagez vos remarques, suggestions ou signalements. Votre message est envoyé à
+              l&apos;équipe par e-mail.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2 py-2">
-            <Label htmlFor="pilot-feedback-message">Votre message</Label>
+            <Label htmlFor="user-feedback-message">Votre message</Label>
             <Textarea
-              id="pilot-feedback-message"
+              id="user-feedback-message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Écrivez ici…"
