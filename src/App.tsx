@@ -11,6 +11,7 @@ import { AuthLayout } from '@/layouts/AuthLayout';
 
 // Auth components (chargés immédiatement)
 import { PrivateRoute, PublicRoute, AdminRoute, SessionGuard } from '@/components/auth';
+import { GtmRouteListener } from '@/components/analytics/GtmRouteListener';
 
 // Lazy loading des pages pour améliorer les performances
 // Auth pages
@@ -98,6 +99,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <GtmRouteListener />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route element={<SessionGuard />}>
