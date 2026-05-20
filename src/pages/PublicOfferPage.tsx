@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +30,9 @@ export function PublicOfferPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <p className="text-muted-foreground">Chargement de l'offre...</p>
       </div>
     );
@@ -37,6 +41,9 @@ export function PublicOfferPage() {
   if (isError || !offer) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <Card className="w-full max-w-md">
           <CardContent className="py-10 text-center">
             <X className="mx-auto mb-4 h-12 w-12 text-destructive" />
@@ -65,6 +72,9 @@ export function PublicOfferPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">

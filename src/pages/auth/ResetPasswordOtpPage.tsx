@@ -13,6 +13,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useOtpResetPassword } from '@/hooks/useOtp';
 import { getApiErrorMessage } from '@/api/client';
+import { Seo } from '@/components/seo';
+import { useTranslation } from 'react-i18next';
 import { strongPasswordSchema } from '@/lib/passwordValidation';
 
 interface ResetPasswordLocationState {
@@ -33,6 +35,7 @@ const resetPasswordSchema = z
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 export function ResetPasswordOtpPage() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as ResetPasswordLocationState | null;
@@ -74,6 +77,12 @@ export function ResetPasswordOtpPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+      <Seo
+        title={t('seo.resetPassword.title')}
+        description={t('seo.resetPassword.description')}
+        canonicalPath="/reset-password-otp"
+        noindex
+      />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <img src={logo} alt="Party Planner" className="mx-auto mb-4 h-12 w-12 object-contain" />

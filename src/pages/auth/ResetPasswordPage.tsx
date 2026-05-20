@@ -14,6 +14,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getApiErrorMessage } from '@/api/client';
 import { strongPasswordSchema } from '@/lib/passwordValidation';
 import { AuthPromoPanel } from '@/components/auth/AuthPromoPanel';
+import { Seo } from '@/components/seo';
+import { useTranslation } from 'react-i18next';
 
 const resetPasswordSchema = z
   .object({
@@ -35,6 +37,7 @@ const passwordRequirements = [
 ];
 
 export function ResetPasswordPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const emailFromUrl = searchParams.get('email');
@@ -80,6 +83,12 @@ export function ResetPasswordPage() {
   if (!token) {
     return (
       <div className="flex min-h-screen">
+        <Seo
+          title={t('seo.resetPassword.title')}
+          description={t('seo.resetPassword.description')}
+          canonicalPath="/reset-password"
+          noindex
+        />
         {/* Left Panel - Promo */}
         <div className="hidden lg:block lg:w-1/2 xl:w-[55%]">
           <AuthPromoPanel />
@@ -126,6 +135,12 @@ export function ResetPasswordPage() {
   if (resetSuccess) {
     return (
       <div className="flex min-h-screen">
+        <Seo
+          title={t('seo.resetPassword.title')}
+          description={t('seo.resetPassword.description')}
+          canonicalPath="/reset-password"
+          noindex
+        />
         {/* Left Panel - Promo */}
         <div className="hidden lg:block lg:w-1/2 xl:w-[55%]">
           <AuthPromoPanel />
@@ -170,6 +185,12 @@ export function ResetPasswordPage() {
 
   return (
     <div className="flex min-h-screen">
+      <Seo
+        title={t('seo.resetPassword.title')}
+        description={t('seo.resetPassword.description')}
+        canonicalPath="/reset-password"
+        noindex
+      />
       {/* Left Panel - Promo */}
       <div className="hidden lg:block lg:w-1/2 xl:w-[55%]">
         <AuthPromoPanel />

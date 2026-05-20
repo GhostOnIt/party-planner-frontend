@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { ServerErrorListener } from '@/components/ServerErrorListener';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuthStore } from '@/stores/authStore';
 
 // Layouts (chargés immédiatement car utilisés partout)
 import { MainLayout } from '@/layouts/MainLayout';
@@ -53,6 +54,9 @@ const PublicPhotoUploadPage = lazy(() => import('@/pages/public').then(m => ({ d
 // Legal pages
 const LegalPage = lazy(() => import('@/pages/legal').then(m => ({ default: m.LegalPage })));
 
+// Landing page (marketing)
+const LandingPage = lazy(() => import('@/pages/LandingPage'));
+
 // Admin pages
 const AdminDashboardPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminDashboardPage })));
 const AdminUsersPage = lazy(() => import('@/pages/admin').then(m => ({ default: m.AdminUsersPage })));
@@ -82,6 +86,13 @@ function PageLoader() {
       </div>
     </div>
   );
+}
+
+// Root route: landing page if not authenticated, redirect to dashboard otherwise
+function RootRoute() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  return <LandingPage />;
 }
 
 // Create QueryClient
@@ -117,10 +128,11 @@ function App() {
               </Route>
             </Route>
 
+            {/* Public pricing page - accessible sans auth (mais pas d'achat sans login) */}
+            <Route path="/plans" element={<PlansPage />} />
+
             {/* Protected routes */}
             <Route element={<PrivateRoute />}>
-              {/* Plans page - sans MainLayout (pas de sidebar ni header) */}
-              <Route path="/plans" element={<PlansPage />} />
               <Route path="/subscribe/:slug" element={<SubscribePage />} />
               {/* Check-in tablette - sans MainLayout (meilleure perf sur mobile/tablette) */}
               <Route path="/check-in/:token" element={<CheckInTabletPage />} />
@@ -178,8 +190,8 @@ function App() {
             {/* Public offer page (no auth required, token-based) */}
             <Route path="/offers/:clientToken" element={<PublicOfferPage />} />
 
-            {/* Redirects */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            {/* Landing page (marketing) — redirige vers /dashboard si déjà connecté */}
+            <Route path="/" element={<RootRoute />} />
 
             {/* 404 */}
             <Route path="*" element={<NotFoundPage />} />

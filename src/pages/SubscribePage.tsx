@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Loader2, ArrowLeft, Check, AlertCircle, Crown, ShieldCheck, Sparkles } from 'lucide-react';
+import { Seo } from '@/components/seo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -21,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { paymentTrace } from '@/lib/paymentTrace';
 
 export function SubscribePage() {
+  const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [paymentId, setPaymentId] = useState<string | null>(null);
@@ -195,6 +198,11 @@ export function SubscribePage() {
 
   return (
     <div className="min-h-[60vh] bg-muted/30 py-8 px-4">
+      <Seo
+        title={t('seo.subscribe.title')}
+        description={t('seo.subscribe.description')}
+        noindex
+      />
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <Button variant="ghost" size="sm" className="gap-2 -ml-2 h-auto w-fit px-2 text-muted-foreground" asChild>

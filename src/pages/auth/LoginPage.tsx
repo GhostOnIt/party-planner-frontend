@@ -12,6 +12,8 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getApiErrorMessage, getValidationErrors } from '@/api/client';
 import { AuthPromoPanel } from '@/components/auth/AuthPromoPanel';
+import { Seo } from '@/components/seo';
+import { useTranslation } from 'react-i18next';
 import logo from '@/assets/logo.png';
 
 const loginSchema = z.object({
@@ -37,6 +39,7 @@ function getPrefillEmail(searchParams: URLSearchParams): string {
 }
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect');
   const prefillEmail = getPrefillEmail(searchParams);
@@ -81,6 +84,11 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen">
+      <Seo
+        title={t('seo.login.title')}
+        description={t('seo.login.description')}
+        canonicalPath="/login"
+      />
       {/* Left Panel - Promo */}
       <div className="hidden lg:block lg:w-1/2 xl:w-[55%]">
         <AuthPromoPanel />

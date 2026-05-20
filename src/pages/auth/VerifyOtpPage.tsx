@@ -9,6 +9,8 @@ import { OtpInput } from '@/components/ui/otp-input';
 import { useVerifyOtp, useResendOtp } from '@/hooks/useOtp';
 import { getApiErrorMessage } from '@/api/client';
 import { AuthPromoPanel } from '@/components/auth/AuthPromoPanel';
+import { Seo } from '@/components/seo';
+import { useTranslation } from 'react-i18next';
 import type { OtpChannel } from '@/types';
 
 const VERIFY_OTP_STATE_KEY = 'verify_otp_state';
@@ -61,6 +63,7 @@ const channelLabels: Record<OtpChannel, string> = {
 const OTP_LENGTH = 4;
 
 export function VerifyOtpPage() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const locationState = location.state as VerifyOtpLocationState | null;
@@ -165,6 +168,12 @@ export function VerifyOtpPage() {
   if (verifyOtp.isSuccess && verifyOtp.data?.user && verifyOtp.data?.token) {
     return (
       <div className="flex min-h-screen">
+        <Seo
+          title={t('seo.otp.title')}
+          description={t('seo.otp.description')}
+          canonicalPath="/verify-otp"
+          noindex
+        />
         <div className="hidden lg:block lg:w-1/2 xl:w-[55%]">
           <AuthPromoPanel />
         </div>
@@ -188,6 +197,12 @@ export function VerifyOtpPage() {
 
   return (
     <div className="flex min-h-screen">
+      <Seo
+        title={t('seo.otp.title')}
+        description={t('seo.otp.description')}
+        canonicalPath="/verify-otp"
+        noindex
+      />
       {/* Left Panel - Promo */}
       <div className="hidden lg:block lg:w-1/2 xl:w-[55%]">
         <AuthPromoPanel />

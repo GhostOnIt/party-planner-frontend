@@ -13,6 +13,8 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getApiErrorMessage } from '@/api/client';
 import { AuthPromoPanel } from '@/components/auth/AuthPromoPanel';
+import { Seo } from '@/components/seo';
+import { useTranslation } from 'react-i18next';
 import logo from '@/assets/logo.png';
 
 const forgotPasswordSchema = z.object({
@@ -22,6 +24,7 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export function ForgotPasswordPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const emailParam = searchParams.get('email');
   const [emailSent, setEmailSent] = useState(false);
@@ -61,6 +64,11 @@ export function ForgotPasswordPage() {
   if (emailSent) {
     return (
       <div className="flex min-h-screen">
+        <Seo
+          title={t('seo.forgotPassword.title')}
+          description={t('seo.forgotPassword.description')}
+          canonicalPath="/forgot-password"
+        />
         {/* Left Panel - Promo */}
         <div className="hidden lg:block lg:w-1/2 xl:w-[55%]">
           <AuthPromoPanel />
@@ -118,6 +126,11 @@ export function ForgotPasswordPage() {
 
   return (
     <div className="flex min-h-screen">
+      <Seo
+        title={t('seo.forgotPassword.title')}
+        description={t('seo.forgotPassword.description')}
+        canonicalPath="/forgot-password"
+      />
       {/* Left Panel - Promo */}
       <div className="hidden lg:block lg:w-1/2 xl:w-[55%]">
         <AuthPromoPanel />

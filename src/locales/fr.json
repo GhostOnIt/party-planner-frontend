@@ -265,6 +265,163 @@
       "budget": "Budget total"
     }
   },
+  "seo": {
+    "default": {
+      "title": "Party Planner — Plateforme des organisateurs d'événements",
+      "description": "Party Planner est la plateforme pensée pour les organisateurs d'événements (agences et indépendants). Centralisez vos événements, invités, budgets, devis et paiements mobiles."
+    },
+    "landing": {
+      "title": "Plateforme tout-en-un pour organisateurs d'événements",
+      "description": "Centralisez vos événements, invités, budgets et devis. Pensé pour les agences et organisateurs indépendants au Congo et en Afrique francophone."
+    },
+    "login": {
+      "title": "Connexion",
+      "description": "Connectez-vous à votre espace Party Planner pour gérer vos événements, invités et devis."
+    },
+    "register": {
+      "title": "Créer un compte",
+      "description": "Créez votre compte Party Planner gratuitement et commencez à organiser vos événements en quelques minutes."
+    },
+    "forgotPassword": {
+      "title": "Mot de passe oublié",
+      "description": "Réinitialisez votre mot de passe Party Planner par email ou code OTP."
+    },
+    "resetPassword": {
+      "title": "Réinitialiser le mot de passe",
+      "description": "Choisissez un nouveau mot de passe pour votre compte Party Planner."
+    },
+    "otp": {
+      "title": "Vérification par code OTP",
+      "description": "Saisissez le code à 6 chiffres reçu par email, SMS ou WhatsApp."
+    },
+    "plans": {
+      "title": "Tarifs et abonnements",
+      "description": "Découvrez les offres Party Planner adaptées aux organisateurs indépendants et aux agences événementielles."
+    },
+    "subscribe": {
+      "title": "Souscrire à un abonnement",
+      "description": "Finalisez votre souscription par MTN Mobile Money ou Airtel Money."
+    },
+    "dashboard": {
+      "title": "Tableau de bord",
+      "description": "Vue d'ensemble de vos événements, tâches et indicateurs clés."
+    },
+    "events": {
+      "title": "Mes événements",
+      "description": "Gérez tous vos événements en cours et passés."
+    },
+    "eventCreate": {
+      "title": "Créer un événement",
+      "description": "Planifiez un nouveau mariage, anniversaire, baby shower ou autre célébration."
+    },
+    "eventDetails": {
+      "title": "Détails de l'événement",
+      "description": "Suivez invités, tâches et budget pour cet événement."
+    },
+    "invitations": {
+      "title": "Invitations",
+      "description": "Suivez et gérez vos invitations envoyées."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Centralisez vos notifications et alertes Party Planner."
+    },
+    "subscriptions": {
+      "title": "Mes abonnements",
+      "description": "Historique et gestion de vos abonnements Party Planner."
+    },
+    "profile": {
+      "title": "Mon profil",
+      "description": "Gérez vos informations personnelles et votre photo de profil."
+    },
+    "settings": {
+      "title": "Paramètres",
+      "description": "Configurez votre compte Party Planner, langue, sécurité et préférences."
+    },
+    "notFound": {
+      "title": "Page non trouvée",
+      "description": "La page que vous recherchez n'existe pas ou n'est plus disponible."
+    },
+    "admin": {
+      "title": "Administration",
+      "description": "Espace d'administration Party Planner."
+    }
+  },
+  "landing": {
+    "nav": {
+      "features": "Fonctionnalités",
+      "pricing": "Tarifs",
+      "login": "Connexion",
+      "signup": "Créer un compte"
+    },
+    "hero": {
+      "eyebrow": "Pour agences et organisateurs indépendants",
+      "title": "La plateforme tout-en-un pour les organisateurs d'événements",
+      "subtitle": "Centralisez vos événements, invités, budgets et devis dans un seul outil pensé pour les pros — au Congo et en Afrique francophone.",
+      "ctaPrimary": "Créer un compte",
+      "ctaSecondary": "Voir les tarifs",
+      "trustNote": "Paiements MTN Mobile Money et Airtel Money intégrés"
+    },
+    "features": {
+      "title": "Tout ce qu'il faut pour livrer un événement réussi",
+      "subtitle": "De la planification au jour J, sans jongler entre dix outils.",
+      "items": {
+        "events": {
+          "title": "Gestion d'événements",
+          "description": "Mariages, anniversaires, baby showers, soirées… Suivez chaque événement de la prise de brief au bilan."
+        },
+        "guests": {
+          "title": "Invités et RSVP",
+          "description": "Listes d'invités, accompagnants, restrictions alimentaires, suivi RSVP par email, SMS ou WhatsApp."
+        },
+        "budget": {
+          "title": "Budget par catégorie",
+          "description": "Estimé, réel, payé. Visualisez vos marges en temps réel par poste (lieu, traiteur, déco, animation…)."
+        },
+        "tasks": {
+          "title": "Tâches et collaboration",
+          "description": "Assignez les tâches à votre équipe, fixez des échéances, suivez l'avancement à plusieurs."
+        },
+        "checkin": {
+          "title": "Check-in tablette",
+          "description": "Scannez les QR codes des invités le jour J depuis une tablette. Rapide, fiable, sans réseau capricieux."
+        },
+        "quotes": {
+          "title": "Devis et offres",
+          "description": "Envoyez un devis personnalisé par lien sécurisé. Le client signe et règle en ligne."
+        }
+      }
+    },
+    "audience": {
+      "title": "Pensé pour les pros de l'événementiel",
+      "agencies": {
+        "title": "Agences événementielles",
+        "description": "Centralisez vos clients, devis et événements. Coordonnez votre équipe. Suivez vos marges."
+      },
+      "freelancers": {
+        "title": "Organisateurs indépendants",
+        "description": "Une seule plateforme pour livrer vos prestations avec le sérieux d'une grosse structure."
+      }
+    },
+    "cta": {
+      "title": "Prêt à structurer votre activité ?",
+      "subtitle": "Créez votre compte en moins de deux minutes. Pas de carte bancaire requise.",
+      "button": "Commencer maintenant"
+    },
+    "footer": {
+      "tagline": "La plateforme des organisateurs d'événements en Afrique francophone.",
+      "links": {
+        "product": "Produit",
+        "features": "Fonctionnalités",
+        "pricing": "Tarifs",
+        "company": "Entreprise",
+        "legal": "Légal",
+        "terms": "Conditions d'utilisation",
+        "privacy": "Politique de confidentialité"
+      },
+      "rights": "Tous droits réservés."
+    }
+  },
   "communication": {
     "title": "Communication",
     "description": "Gérez les bannières et sondages de la plateforme",

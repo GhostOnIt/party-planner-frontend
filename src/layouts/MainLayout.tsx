@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { useAuthStore } from '@/stores/authStore';
@@ -41,6 +42,10 @@ export function MainLayout() {
 
   return (
     <div className="min-h-screen bg-[#F5F7FA]">
+      {/* Espace connecté : noindex par défaut. Une page peut surcharger via son propre <Seo>. */}
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <Sidebar isAdmin={user.role === 'admin'} onLogout={handleLogout} />

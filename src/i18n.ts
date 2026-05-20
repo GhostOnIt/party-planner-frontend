@@ -27,4 +27,13 @@ i18n
     },
   });
 
+function syncHtmlLang(lng: string) {
+  if (typeof document === 'undefined') return;
+  const lang = (lng || 'fr').split('-')[0];
+  document.documentElement.setAttribute('lang', lang);
+}
+
+syncHtmlLang(i18n.language);
+i18n.on('languageChanged', syncHtmlLang);
+
 export default i18n;

@@ -14,6 +14,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getApiErrorMessage, getValidationErrors } from '@/api/client';
 import { strongPasswordSchema } from '@/lib/passwordValidation';
 import { AuthPromoPanel } from '@/components/auth/AuthPromoPanel';
+import { Seo } from '@/components/seo';
+import { useTranslation } from 'react-i18next';
 import logo from '@/assets/logo.png';
 
 const registerSchema = z
@@ -51,6 +53,7 @@ function getPrefillEmail(searchParams: URLSearchParams): string {
 }
 
 export function RegisterPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect');
   const prefillEmail = getPrefillEmail(searchParams);
@@ -101,6 +104,11 @@ export function RegisterPage() {
 
   return (
     <div className="flex min-h-screen">
+      <Seo
+        title={t('seo.register.title')}
+        description={t('seo.register.description')}
+        canonicalPath="/register"
+      />
       {/* Left Panel - Promo */}
       <div className="hidden lg:block lg:w-1/2 xl:w-[55%]">
         <AuthPromoPanel />

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, AlertCircle } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import { useAuthStore } from '@/stores/authStore';
 import api from '@/api/client';
 export default function EventCreatedForYouPage() {
@@ -67,6 +68,9 @@ export default function EventCreatedForYouPage() {
 
   const pageWrapper = (content: React.ReactNode) => (
     <div className="min-h-screen bg-muted/50">
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       {content}
     </div>
   );

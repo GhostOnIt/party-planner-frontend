@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import {
   Upload,
   Image as ImageIcon,
@@ -203,6 +204,9 @@ export function PublicPhotoUploadPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <Loader2 className="h-8 w-8 text-slate-300 animate-spin" />
       </div>
     );
@@ -211,6 +215,9 @@ export function PublicPhotoUploadPage() {
   if (error || !photosData) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div className="text-center space-y-4 max-w-md">
           <div className="inline-flex p-4 bg-red-50 rounded-full">
             <AlertTriangle className="h-8 w-8 text-red-400" />
@@ -226,6 +233,9 @@ export function PublicPhotoUploadPage() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 selection:bg-primary/10">
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       {/* Header Minimaliste */}
       <header
         className={cn(

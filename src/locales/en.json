@@ -259,5 +259,162 @@
       "tasks": "Pending tasks",
       "budget": "Total budget"
     }
+  },
+  "seo": {
+    "default": {
+      "title": "Party Planner — Platform for event organizers",
+      "description": "Party Planner is the all-in-one platform built for event organizers (agencies and freelancers). Manage events, guests, budgets, quotes and mobile payments in one place."
+    },
+    "landing": {
+      "title": "All-in-one platform for event organizers",
+      "description": "Centralize your events, guests, budgets and quotes. Built for event agencies and independent planners in Congo and French-speaking Africa."
+    },
+    "login": {
+      "title": "Sign in",
+      "description": "Sign in to your Party Planner account to manage events, guests and quotes."
+    },
+    "register": {
+      "title": "Create an account",
+      "description": "Create your Party Planner account for free and start organizing events in minutes."
+    },
+    "forgotPassword": {
+      "title": "Forgot password",
+      "description": "Reset your Party Planner password by email or OTP code."
+    },
+    "resetPassword": {
+      "title": "Reset password",
+      "description": "Choose a new password for your Party Planner account."
+    },
+    "otp": {
+      "title": "OTP verification",
+      "description": "Enter the 6-digit code sent by email, SMS or WhatsApp."
+    },
+    "plans": {
+      "title": "Pricing and plans",
+      "description": "Discover Party Planner plans for independent organizers and event agencies."
+    },
+    "subscribe": {
+      "title": "Subscribe to a plan",
+      "description": "Complete your subscription using MTN Mobile Money or Airtel Money."
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "Overview of your events, tasks and key metrics."
+    },
+    "events": {
+      "title": "My events",
+      "description": "Manage all your current and past events."
+    },
+    "eventCreate": {
+      "title": "Create event",
+      "description": "Plan a new wedding, birthday, baby shower or other celebration."
+    },
+    "eventDetails": {
+      "title": "Event details",
+      "description": "Track guests, tasks and budget for this event."
+    },
+    "invitations": {
+      "title": "Invitations",
+      "description": "Track and manage your sent invitations."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "All your Party Planner notifications and alerts in one place."
+    },
+    "subscriptions": {
+      "title": "My subscriptions",
+      "description": "History and management of your Party Planner subscriptions."
+    },
+    "profile": {
+      "title": "My profile",
+      "description": "Manage your personal information and profile picture."
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Configure your Party Planner account, language, security and preferences."
+    },
+    "notFound": {
+      "title": "Page not found",
+      "description": "The page you are looking for does not exist or is no longer available."
+    },
+    "admin": {
+      "title": "Administration",
+      "description": "Party Planner admin area."
+    }
+  },
+  "landing": {
+    "nav": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "login": "Sign in",
+      "signup": "Create account"
+    },
+    "hero": {
+      "eyebrow": "For agencies and freelance organizers",
+      "title": "The all-in-one platform for event organizers",
+      "subtitle": "Centralize your events, guests, budgets and quotes in a single tool built for pros — in Congo and French-speaking Africa.",
+      "ctaPrimary": "Create an account",
+      "ctaSecondary": "See pricing",
+      "trustNote": "MTN Mobile Money and Airtel Money payments built in"
+    },
+    "features": {
+      "title": "Everything you need to deliver a successful event",
+      "subtitle": "From planning to the big day, without juggling ten different tools.",
+      "items": {
+        "events": {
+          "title": "Event management",
+          "description": "Weddings, birthdays, baby showers, parties… Track each event from brief to recap."
+        },
+        "guests": {
+          "title": "Guests and RSVP",
+          "description": "Guest lists, plus-ones, dietary restrictions, RSVP tracking via email, SMS or WhatsApp."
+        },
+        "budget": {
+          "title": "Budget by category",
+          "description": "Estimated, actual, paid. See your margins in real time across each category."
+        },
+        "tasks": {
+          "title": "Tasks and collaboration",
+          "description": "Assign tasks to your team, set deadlines, track progress together."
+        },
+        "checkin": {
+          "title": "Tablet check-in",
+          "description": "Scan guest QR codes on the big day from a tablet. Fast, reliable, no flaky network needed."
+        },
+        "quotes": {
+          "title": "Quotes and offers",
+          "description": "Send a custom quote via a secure link. Clients sign and pay online."
+        }
+      }
+    },
+    "audience": {
+      "title": "Built for event professionals",
+      "agencies": {
+        "title": "Event agencies",
+        "description": "Centralize your clients, quotes and events. Coordinate your team. Track your margins."
+      },
+      "freelancers": {
+        "title": "Independent organizers",
+        "description": "One platform to deliver your services with the polish of a large agency."
+      }
+    },
+    "cta": {
+      "title": "Ready to scale your business?",
+      "subtitle": "Create your account in under two minutes. No credit card required.",
+      "button": "Get started"
+    },
+    "footer": {
+      "tagline": "The platform for event organizers across French-speaking Africa.",
+      "links": {
+        "product": "Product",
+        "features": "Features",
+        "pricing": "Pricing",
+        "company": "Company",
+        "legal": "Legal",
+        "terms": "Terms of use",
+        "privacy": "Privacy policy"
+      },
+      "rights": "All rights reserved."
+    }
   }
 }

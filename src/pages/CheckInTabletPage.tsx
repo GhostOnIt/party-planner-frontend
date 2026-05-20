@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Helmet } from 'react-helmet-async';
 import { ArrowLeft } from 'lucide-react';
 
 import api from '@/api/client';
@@ -271,6 +272,9 @@ export default function CheckInTabletPage() {
   if (invitationLoading) {
     return (
       <div className="p-4">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <Skeleton className="h-6 w-60" />
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <Skeleton className="h-28" />
@@ -283,6 +287,9 @@ export default function CheckInTabletPage() {
   if (invitationError || !invitation) {
     return (
       <div className="p-4">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <Card>
           <CardHeader>
             <CardTitle>Check-in</CardTitle>
@@ -304,6 +311,9 @@ export default function CheckInTabletPage() {
 
   return (
     <div className="p-3 sm:p-4 space-y-3">
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Button
           type="button"

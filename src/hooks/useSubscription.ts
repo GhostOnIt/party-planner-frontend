@@ -202,13 +202,14 @@ export interface CurrentSubscriptionResponse {
   };
 }
 
-export function useCurrentSubscription() {
+export function useCurrentSubscription(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['user', 'subscription', 'current'],
     queryFn: async (): Promise<CurrentSubscriptionResponse> => {
       const response = await api.get<CurrentSubscriptionResponse>('/user/subscription');
       return response.data;
     },
+    enabled: options?.enabled ?? true,
   });
 }
 

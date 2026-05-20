@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Check, Crown, Gift, Building2, ArrowLeft, ArrowRight, Zap } from 'lucide-react';
+import { Seo } from '@/components/seo';
+import { FestiveHero } from '@/components/festive';
+import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -67,8 +71,9 @@ interface PricingCardProps {
 function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }: Readonly<PricingCardProps>) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { mutate: subscribeToPlan, isPending: isSubscribing } = useSubscribeToPlan();
-  const { data: currentSubscription } = useCurrentSubscription();
+  const { data: currentSubscription } = useCurrentSubscription({ enabled: isAuthenticated });
   const [isQuoteDialogOpen, setIsQuoteDialogOpen] = useState(false);
   const hasActiveAccountSubscription = Boolean(currentSubscription?.has_subscription);
 
@@ -101,6 +106,12 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
   const handleSelectPlan = () => {
     if (plan.features?.['sales.contact_required']) {
       setIsQuoteDialogOpen(true);
+      return;
+    }
+
+    // Anonymous visitor : redirect to register, then back to /plans after signup
+    if (!isAuthenticated) {
+      navigate(`/register?redirect=${encodeURIComponent(`/subscribe/${plan.slug}`)}`);
       return;
     }
 
@@ -340,8 +351,12 @@ const faqs = [
 ];
 
 export function PlansPage() {
+  const { t } = useTranslation();
   const { data: plansData, isLoading, error } = usePlans();
   const [hoveredPlan, setHoveredPlan] = useState<number | null>(null);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const backHref = isAuthenticated ? '/dashboard' : '/';
+  const backLabel = isAuthenticated ? "Retour à l'application" : "Retour à l'accueil";
 
   // Ensure plans is always an array
   const plans = Array.isArray(plansData) ? plansData.filter((plan) => !plan.is_trial) : [];
@@ -350,12 +365,17 @@ export function PlansPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+        <Seo
+          title={t('seo.plans.title')}
+          description={t('seo.plans.description')}
+          canonicalPath="/plans"
+        />
         <div className="border-b border-slate-100 bg-white/90 px-4 py-3">
           <div className="container mx-auto max-w-6xl">
             <Button variant="ghost" size="sm" className="gap-2 text-slate-600" asChild>
-              <Link to="/dashboard">
+              <Link to={backHref}>
                 <ArrowLeft className="h-4 w-4" />
-                Retour à l&apos;application
+                {backLabel}
               </Link>
             </Button>
           </div>
@@ -388,12 +408,17 @@ export function PlansPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex flex-col">
+        <Seo
+          title={t('seo.plans.title')}
+          description={t('seo.plans.description')}
+          canonicalPath="/plans"
+        />
         <div className="border-b border-slate-100 bg-white/90 px-4 py-3">
           <div className="container mx-auto max-w-6xl">
             <Button variant="ghost" size="sm" className="gap-2 text-slate-600" asChild>
-              <Link to="/dashboard">
+              <Link to={backHref}>
                 <ArrowLeft className="h-4 w-4" />
-                Retour à l&apos;application
+                {backLabel}
               </Link>
             </Button>
           </div>
@@ -407,7 +432,7 @@ export function PlansPage() {
               </p>
             )}
             <Button variant="outline" asChild>
-              <Link to="/dashboard">Retour au tableau de bord</Link>
+              <Link to={backHref}>{backLabel}</Link>
             </Button>
           </div>
         </div>
@@ -417,32 +442,32 @@ export function PlansPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      <Seo
+        title={t('seo.plans.title')}
+        description={t('seo.plans.description')}
+        canonicalPath="/plans"
+      />
       <div className="border-b border-slate-100 bg-white/90 backdrop-blur-sm px-4 py-3">
         <div className="container mx-auto max-w-6xl">
           <Button variant="ghost" size="sm" className="gap-2 text-slate-600 hover:text-slate-900" asChild>
-            <Link to="/dashboard">
+            <Link to={backHref}>
               <ArrowLeft className="h-4 w-4" />
-              Retour à l&apos;application
+              {backLabel}
             </Link>
           </Button>
         </div>
       </div>
-      {/* Hero Section */}
-      <section className="relative py-16 px-4 overflow-hidden">
-        {/* Background decorative elements */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-gradient-to-br from-[#4F46E5]/5 to-[#7C3AED]/5 rounded-full blur-3xl" />
-          <div className="absolute top-20 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-[#E91E8C]/5 to-[#C2185B]/5 rounded-full blur-3xl" />
-        </div>
-
-        <div className="container mx-auto max-w-5xl relative z-10">
+      {/* Hero + Pricing wrapped in one festive container — stars in bg span both, fade out before comparison table */}
+      <FestiveHero shape="star" className="pt-16 pb-20 px-4">
+        {/* Title */}
+        <div className="container mx-auto max-w-5xl relative">
           {/* Top Badge */}
           <div className="flex justify-center mb-6">
-            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-200/80 bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
-              <div className="p-1 rounded-full bg-gradient-to-br from-[#E91E8C] to-[#C2185B]">
-                <Zap className="w-3.5 h-3.5 text-white" />
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-border bg-background/80 backdrop-blur-sm shadow-sm">
+              <div className="p-1 rounded-full bg-primary/10 text-primary">
+                <Zap className="w-3.5 h-3.5" />
               </div>
-              <span className="text-sm font-semibold text-slate-700">
+              <span className="text-sm font-semibold text-foreground">
                 Tarification simple et transparente
               </span>
             </div>
@@ -450,48 +475,48 @@ export function PlansPage() {
 
           {/* Main Heading */}
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-5 text-balance tracking-tight">
-              <span className=" bg-clip-text">
-                Plans tarifaires
-              </span>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold mb-5 text-balance tracking-tight text-foreground">
+              Plans tarifaires
             </h1>
-            <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto text-balance leading-relaxed">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-balance leading-relaxed">
               Commencez immédiatement gratuitement. Passez à un plan supérieur pour plus de
-              fonctionnalités, d'événements et de collaboration.
+              fonctionnalités, d&apos;événements et de collaboration.
             </p>
           </div>
         </div>
-      </section>
 
-      {/* Pricing Cards */}
-      <section className="px-4 pb-20">
-        <div className="container mx-auto max-w-6xl">
+        {/* Pricing Cards — flex+justify-center pour rester centré quelle que soit la quantité de plans */}
+        <div className="container mx-auto max-w-6xl mt-16 relative">
           {plans.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground text-lg">Aucun plan disponible pour le moment.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+            <div className="flex flex-wrap justify-center gap-5">
               {plans.map((plan) => {
                 // Priorité au flag backend ; fallback sur PRO si aucun plan n'est marqué populaire.
                 const isPopular = hasPopularFromApi
                   ? (plan.is_popular ?? false)
                   : plan.slug === 'pro';
                 return (
-                  <PricingCard
+                  <div
                     key={plan.id}
-                    plan={plan}
-                    isPopular={isPopular}
-                    isHovered={hoveredPlan === plan.id}
-                    onMouseEnter={() => setHoveredPlan(plan.id)}
-                    onMouseLeave={() => setHoveredPlan(null)}
-                  />
+                    className="w-full sm:w-[calc(50%-0.625rem)] xl:w-[calc(25%-0.9375rem)] sm:max-w-md xl:max-w-none"
+                  >
+                    <PricingCard
+                      plan={plan}
+                      isPopular={isPopular}
+                      isHovered={hoveredPlan === plan.id}
+                      onMouseEnter={() => setHoveredPlan(plan.id)}
+                      onMouseLeave={() => setHoveredPlan(null)}
+                    />
+                  </div>
                 );
               })}
             </div>
           )}
         </div>
-      </section>
+      </FestiveHero>
 
       {/* Comparison table */}
       {plans.length > 0 && (

@@ -5,15 +5,29 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useLegalPage } from '@/hooks/useLegalPages';
 import { Button } from '@/components/ui/button';
+import { Seo } from '@/components/seo';
+import { useTranslation } from 'react-i18next';
 import logo from '@/assets/logo.png';
 
+function extractDescription(html: string, maxLength = 155): string {
+  if (!html) return '';
+  const text = html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength - 1).trimEnd() + '…';
+}
+
 export function LegalPage() {
+  const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const { data: page, isLoading, error } = useLegalPage(slug || '');
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
+        <Seo canonicalPath={`/legal/${slug ?? ''}`} />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -29,6 +43,12 @@ export function LegalPage() {
   if (error || !page) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-6">
+        <Seo
+          title={t('seo.notFound.title')}
+          description={t('seo.notFound.description')}
+          canonicalPath={`/legal/${slug ?? ''}`}
+          noindex
+        />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -54,6 +74,12 @@ export function LegalPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Seo
+        title={page.title}
+        description={extractDescription(page.content)}
+        canonicalPath={`/legal/${page.slug}`}
+        ogType="article"
+      />
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-6 py-4">

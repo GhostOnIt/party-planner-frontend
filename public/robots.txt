@@ -1,0 +1,36 @@
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /forgot-password
+Allow: /plans
+Allow: /legal/
+
+# Espace connecté / admin (peu utile en SEO, jamais accessible aux bots non connectés)
+Disallow: /dashboard
+Disallow: /events
+Disallow: /invitations
+Disallow: /notifications
+Disallow: /subscriptions
+Disallow: /subscribe/
+Disallow: /profile
+Disallow: /settings
+Disallow: /admin
+Disallow: /admin/
+
+# Pages à jeton (privées, jetables, ne doivent jamais être indexées)
+Disallow: /check-in/
+Disallow: /invite/
+Disallow: /event-created-for-you/
+Disallow: /invitation/
+Disallow: /upload-photo/
+Disallow: /offers/
+
+# OTP / reset-password (jetables)
+Disallow: /otp
+Disallow: /verify-otp
+Disallow: /send-otp
+Disallow: /reset-password
+Disallow: /reset-password-otp
+
+Sitemap: https://www.party-planner.cg/sitemap.xml

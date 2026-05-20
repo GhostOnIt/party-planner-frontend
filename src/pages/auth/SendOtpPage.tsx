@@ -12,6 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useSendOtp } from '@/hooks/useOtp';
 import { getApiErrorMessage } from '@/api/client';
+import { Seo } from '@/components/seo';
+import { useTranslation } from 'react-i18next';
 import {
   CG_PHONE_ERROR_MESSAGE,
   CG_PHONE_FORMAT_HINT,
@@ -48,6 +50,7 @@ const typeLabels: Record<OtpType, { title: string; description: string }> = {
 };
 
 export function SendOtpPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -108,6 +111,12 @@ export function SendOtpPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+      <Seo
+        title={t('seo.otp.title')}
+        description={t('seo.otp.description')}
+        canonicalPath="/send-otp"
+        noindex
+      />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <img src={logo} alt="Party Planner" className="mx-auto mb-4 h-12 w-12 object-contain" />

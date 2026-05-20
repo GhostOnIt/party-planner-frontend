@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { PartyPopper, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -50,6 +51,9 @@ export function InvitationResponsePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div className="container mx-auto max-w-2xl px-4 py-8">
           <div className="space-y-6">
             <Skeleton className="h-64 w-full rounded-lg" />
@@ -64,6 +68,9 @@ export function InvitationResponsePage() {
   if (error || !invitation) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div className="container mx-auto max-w-2xl px-4 py-8">
           <Card className="border-destructive/50">
             <CardContent className="flex flex-col items-center p-8 text-center">
@@ -92,6 +99,9 @@ export function InvitationResponsePage() {
   if (!canRespond) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div className="container mx-auto max-w-2xl px-4 py-8">
           <div className="space-y-6">
             <EventInfoCard event={invitation.event} />
@@ -129,6 +139,9 @@ export function InvitationResponsePage() {
   if ((submittedStatus || hasAlreadyResponded) && !showEditForm) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+        </Helmet>
         <div className="container mx-auto max-w-2xl px-4 py-8">
           <div className="space-y-6">
             {/* Header */}

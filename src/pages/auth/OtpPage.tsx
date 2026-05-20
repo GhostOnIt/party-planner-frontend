@@ -8,6 +8,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { OtpInput } from '@/components/ui/otp-input';
 import { useVerifyOtp, useResendOtp } from '@/hooks/useOtp';
 import { getApiErrorMessage } from '@/api/client';
+import { Seo } from '@/components/seo';
+import { useTranslation } from 'react-i18next';
 import type { OtpChannel, OtpType } from '@/types';
 
 interface OtpLocationState {
@@ -37,6 +39,7 @@ const typeLabels: Record<OtpType, string> = {
 };
 
 export function OtpPage() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as OtpLocationState | null;
@@ -137,6 +140,12 @@ export function OtpPage() {
   if (verified && state.type === 'login') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+        <Seo
+          title={t('seo.otp.title')}
+          description={t('seo.otp.description')}
+          canonicalPath="/otp"
+          noindex
+        />
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
@@ -152,6 +161,12 @@ export function OtpPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
+      <Seo
+        title={t('seo.otp.title')}
+        description={t('seo.otp.description')}
+        canonicalPath="/otp"
+        noindex
+      />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <img src={logo} alt="Party Planner" className="mx-auto mb-4 h-12 w-12 object-contain" />
