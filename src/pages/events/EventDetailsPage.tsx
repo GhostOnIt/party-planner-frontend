@@ -53,6 +53,7 @@ import { DietaryRestrictionsCard } from '@/components/features/guests';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEvent, useDeleteEvent, useCancelEvent, useUpdateEvent } from '@/hooks/useEvents';
 import { useBudgetStats } from '@/hooks/useBudget';
+import { useGuestStats } from '@/hooks/useGuests';
 import { useAuthStore } from '@/stores/authStore';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { BUDGET_LABELS } from '@/lib/budgetLabels';
@@ -209,6 +210,7 @@ export function EventDetailsPage() {
   const queryClient = useQueryClient();
   const { data: event, isLoading, error } = useEvent(id);
   const { data: budgetStats } = useBudgetStats(id!);
+  const { data: guestStats } = useGuestStats(id!);
   const { mutate: deleteEvent, isPending: isDeleting } = useDeleteEvent();
   const { mutate: cancelEvent, isPending: isCancelling } = useCancelEvent();
   const { mutate: updateEvent, isPending: isUpdatingStatus } = useUpdateEvent(id!);
@@ -288,6 +290,10 @@ export function EventDetailsPage() {
   const guestsConfirmed = event.guests_confirmed_count || 0;
   const guestsDeclined = event.guests_declined_count || 0;
   const guestsPending = event.guests_pending_count || 0;
+  // Total personnes attendues (invités + accompagnateurs). Cohérent avec la
+  // carte « Total » de GuestStats. La capacité reste comptée en records.
+  const companionsCount = guestStats?.companions ?? 0;
+  const guestsTotalWithCompanions = guestsTotal + companionsCount;
   const guestsCapacity =
     event.max_guests_allowed || event.expected_guests_count || guestsTotal;
   const tasksTotal = event.tasks_count || 0;
@@ -572,8 +578,8 @@ export function EventDetailsPage() {
                     </div>
                     <span className="text-3xl font-bold text-[#1a1a2e]">
                       {guestsCapacity
-                        ? `${guestsTotal}/${guestsCapacity}`
-                        : guestsTotal}
+                        ? `${guestsTotalWithCompanions}/${guestsCapacity}`
+                        : guestsTotalWithCompanions}
                     </span>
                   </div>
                   <p className="text-sm font-medium text-[#6b7280] mb-3">Invités</p>
@@ -717,7 +723,7 @@ export function EventDetailsPage() {
                             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#6b7280]/10 flex items-center justify-center mx-auto mb-1.5 sm:mb-2">
                               <Users className="w-4 h-4 sm:w-5 sm:h-5 text-[#6b7280]" />
                             </div>
-                            <p className="text-lg sm:text-2xl font-bold text-[#1a1a2e] tabular-nums">{guestsTotal}</p>
+                            <p className="text-lg sm:text-2xl font-bold text-[#1a1a2e] tabular-nums">{guestsTotalWithCompanions}</p>
                             <p className="text-[10px] sm:text-xs text-[#6b7280]">Total</p>
                           </div>
                           <div className="text-center p-3 sm:p-4 rounded-lg sm:rounded-xl bg-[#10B981]/5 min-w-0">
