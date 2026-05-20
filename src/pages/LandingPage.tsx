@@ -19,6 +19,7 @@ import { Seo } from '@/components/seo';
 import { FestiveHero, Confetti } from '@/components/festive';
 import { useAuthStore } from '@/stores/authStore';
 import logo from '@/assets/logo.png';
+import heroBg from '@/assets/video-1.jpg';
 
 const SITE_URL = (import.meta.env.VITE_SITE_URL?.replace(/\/$/, '') ?? 'https://www.party-planner.cg');
 
@@ -120,7 +121,7 @@ export function LandingPage() {
       </header>
 
       {/* Hero */}
-      <FestiveHero>
+      <FestiveHero backgroundImage={heroBg}>
         <div className="container mx-auto px-6 py-24 md:py-32 relative">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -132,17 +133,17 @@ export function LandingPage() {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary ring-1 ring-primary/20 mb-8"
+              className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold text-white ring-1 ring-white/25 backdrop-blur mb-8"
             >
               <PartyPopper className="h-4 w-4" />
               {t('landing.hero.eyebrow')}
             </motion.div>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-[1.05] text-foreground">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-[1.05] text-white drop-shadow-lg">
               {t('landing.hero.title')}
             </h1>
 
-            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-white/85 mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow">
               {t('landing.hero.subtitle')}
             </p>
 
@@ -150,7 +151,7 @@ export function LandingPage() {
               <Link to={isAuthenticated ? '/dashboard' : '/register'} className="w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="w-full sm:w-auto gap-2 text-base font-semibold px-7 py-6"
+                  className="w-full sm:w-auto gap-2 text-base font-semibold px-7 py-6 shadow-lg"
                 >
                   {t(isAuthenticated ? 'landing.hero.ctaPrimaryAuth' : 'landing.hero.ctaPrimary')}
                   <ArrowRight className="h-5 w-5" />
@@ -160,7 +161,7 @@ export function LandingPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="w-full sm:w-auto text-base font-semibold px-7 py-6"
+                  className="w-full sm:w-auto text-base font-semibold px-7 py-6 bg-white/10 text-white border-white/40 hover:bg-white/20 hover:text-white backdrop-blur"
                 >
                   {t('landing.hero.ctaSecondary')}
                 </Button>
@@ -171,7 +172,7 @@ export function LandingPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
-              className="mt-8 flex items-center justify-center gap-2 text-sm text-muted-foreground"
+              className="mt-8 flex items-center justify-center gap-2 text-sm text-white/75"
             >
               <Star className="h-4 w-4 fill-primary text-primary" />
               {t('landing.hero.trustNote')}
@@ -180,8 +181,8 @@ export function LandingPage() {
         </div>
       </FestiveHero>
 
-      {/* Features (no hard border — visual transition is carried by hero's parallax fading out) */}
-      <section id="features" className="relative pt-8 pb-24">
+      {/* Features (fond clair pur, contraste avec le hero teinté et l'audience grise) */}
+      <section id="features" className="relative pt-8 pb-24 bg-background">
         <div className="container mx-auto px-6">
           <div className="max-w-2xl mx-auto text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
@@ -217,7 +218,7 @@ export function LandingPage() {
       </section>
 
       {/* Audience */}
-      <section className="relative py-24 border-t border-border bg-muted/30">
+      <section className="relative py-24 border-t border-border bg-muted/60">
         <div className="container mx-auto px-6">
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-14 text-center max-w-2xl mx-auto">
             {t('landing.audience.title')}
@@ -262,7 +263,7 @@ export function LandingPage() {
       </section>
 
       {/* Final CTA */}
-      <section className="relative py-24 border-t border-border overflow-hidden">
+      <section className="relative py-24 border-t border-border overflow-hidden bg-gradient-to-br from-primary/[0.12] via-background to-primary/[0.06]">
         <Confetti />
         <div className="container mx-auto px-6 text-center max-w-2xl mx-auto relative">
           <motion.div

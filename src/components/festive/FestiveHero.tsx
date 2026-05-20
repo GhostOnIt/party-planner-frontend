@@ -173,9 +173,20 @@ interface FestiveHeroProps {
   className?: string;
   id?: string;
   shape?: FestiveShape;
+  /** URL d'une image de fond cover. Si fournie, ajoute un overlay sombre pour préserver la lisibilité. */
+  backgroundImage?: string;
+  /** Tailwind classes pour l'overlay (par défaut : dégradé noir 70→55→90%). */
+  overlayClassName?: string;
 }
 
-export function FestiveHero({ children, className, id, shape = 'circle' }: FestiveHeroProps) {
+export function FestiveHero({
+  children,
+  className,
+  id,
+  shape = 'circle',
+  backgroundImage,
+  overlayClassName,
+}: FestiveHeroProps) {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -184,6 +195,22 @@ export function FestiveHero({ children, className, id, shape = 'circle' }: Festi
 
   return (
     <section ref={ref} id={id} className={cn('relative overflow-hidden', className)}>
+      {backgroundImage && (
+        <>
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${backgroundImage})` }}
+            aria-hidden="true"
+          />
+          <div
+            className={cn(
+              'absolute inset-0',
+              overlayClassName ?? 'bg-gradient-to-b from-black/70 via-black/55 to-black/90'
+            )}
+            aria-hidden="true"
+          />
+        </>
+      )}
       <HeroParallaxBackground scrollYProgress={scrollYProgress} shape={shape} />
       <Confetti />
       {children}
