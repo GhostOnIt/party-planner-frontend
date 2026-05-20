@@ -59,6 +59,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSpots, useDeleteSpot, useToggleSpotStatus, useCreateSpot, useUpdateSpot } from '@/hooks/useCommunication';
 import { SpotFormDialog } from '@/components/features/admin/spot-form-dialog';
 import { PollResultsDialog } from '@/components/features/admin/poll-results-dialog';
+import { resolveUrl } from '@/lib/utils';
 import type { CommunicationSpot, SpotFilters, SpotType, SpotStatus, DisplayLocation, CreateSpotFormData } from '@/types/communication';
 
 // Helper to get spot status
@@ -429,21 +430,29 @@ export function AdminCommunicationPage() {
                     return (
                       <TableRow key={spot.id}>
                         <TableCell>
-                          {/* Mini preview of the spot */}
-                          <div className="h-12 w-20 rounded-lg bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] p-1.5 flex flex-col justify-center overflow-hidden">
-                            {spot.badge && (
-                              <span className="text-[6px] text-white/80 bg-white/20 rounded-full px-1 py-0.5 self-start truncate max-w-full">
-                                {spot.badge}
+                          <div className="relative h-12 w-20 rounded-lg overflow-hidden bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] flex flex-col justify-center">
+                            {spot.image ? (
+                              <img
+                                src={resolveUrl(spot.image) || spot.image}
+                                alt=""
+                                className="absolute inset-0 h-full w-full object-cover"
+                              />
+                            ) : null}
+                            <div className="relative z-10 p-1.5 flex flex-col justify-center overflow-hidden min-h-[48px]">
+                              {spot.badge && (
+                                <span className="text-[6px] text-white/90 bg-black/35 rounded-full px-1 py-0.5 self-start truncate max-w-full">
+                                  {spot.badge}
+                                </span>
+                              )}
+                              <span className="text-[7px] font-semibold text-white truncate leading-tight mt-0.5 drop-shadow-sm">
+                                {spot.type === 'poll' ? spot.pollQuestion : spot.title || 'Sans titre'}
                               </span>
-                            )}
-                            <span className="text-[7px] font-semibold text-white truncate leading-tight mt-0.5">
-                              {spot.type === 'poll' ? spot.pollQuestion : spot.title || 'Sans titre'}
-                            </span>
-                            {spot.description && (
-                              <span className="text-[5px] text-white/70 truncate leading-tight">
-                                {spot.description}
-                              </span>
-                            )}
+                              {spot.description && !spot.image && (
+                                <span className="text-[5px] text-white/70 truncate leading-tight">
+                                  {spot.description}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>

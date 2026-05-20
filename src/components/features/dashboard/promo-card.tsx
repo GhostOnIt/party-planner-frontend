@@ -32,6 +32,8 @@ interface PromoCardProps {
   onVote?: (optionId: string) => void
   onDismiss?: () => void
   dismissible?: boolean
+  /** Image de fond (URL absolue ou résolue côté app) — bannière / sondage */
+  imageUrl?: string | null
   // Tracking props
   spotId?: string
   onButtonClick?: (buttonType: "primary" | "secondary") => void
@@ -57,6 +59,7 @@ export function PromoCard({
   onVote,
   onDismiss,
   dismissible = true,
+  imageUrl,
   spotId,
   onButtonClick,
 }: PromoCardProps) {
@@ -121,18 +124,35 @@ export function PromoCard({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] p-6 animate-in fade-in slide-in-from-top-4 duration-300">
+    <div
+      className={`relative overflow-hidden rounded-2xl p-6 animate-in fade-in slide-in-from-top-4 duration-300 ${
+        imageUrl ? '' : 'bg-gradient-to-r from-[#4F46E5] to-[#7C3AED]'
+      }`}
+    >
+      {imageUrl ? (
+        <>
+          <img
+            src={imageUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div
+            className="absolute inset-0 bg-gradient-to-r from-[#4F46E5]/88 to-[#7C3AED]/88"
+            aria-hidden
+          />
+        </>
+      ) : null}
       {dismissible && (
         <button
           onClick={handleDismiss}
-          className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors z-10"
+          className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors z-20"
         >
           <X className="w-5 h-5" />
         </button>
       )}
 
       {type === "banner" ? (
-        <div className="max-w-2xl">
+        <div className="relative z-10 max-w-2xl">
           {badge && (
             <div
               className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium mb-4 ${getBadgeStyles()}`}
@@ -166,7 +186,7 @@ export function PromoCard({
           </div>
         </div>
       ) : (
-        <div className="max-w-xl">
+        <div className="relative z-10 max-w-xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium mb-4 bg-white/20 text-white">
             Sondage
           </div>

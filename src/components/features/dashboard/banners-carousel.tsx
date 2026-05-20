@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { TrialBanner } from "./trial-banner"
 import { NonRenewalBanner } from "./non-renewal-banner"
 import { PromoCard } from "./promo-card"
+import { resolveUrl } from "@/lib/utils"
 import { useCurrentSubscription } from "@/hooks/useSubscription"
 import { useAuthStore } from "@/stores/authStore"
 import { useAvailableTrial } from "@/hooks/useAdminPlans"
@@ -174,6 +175,7 @@ export function BannersCarousel({
       badgeType: spot.badgeType,
       title: spot.title,
       description: spot.description,
+      imageUrl: spot.image ? resolveUrl(spot.image) : undefined,
       primaryButton: spot.primaryButton,
       secondaryButton: spot.secondaryButton,
       pollQuestion: spot.pollQuestion,

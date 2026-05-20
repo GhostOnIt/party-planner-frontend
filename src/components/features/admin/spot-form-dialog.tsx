@@ -605,6 +605,7 @@ export function SpotFormDialog({
                 <PromoCard
                   {...previewProps}
                   dismissible={false}
+                  imageUrl={imagePreview ?? undefined}
                 />
               </div>
               <p className="text-xs text-muted-foreground">
