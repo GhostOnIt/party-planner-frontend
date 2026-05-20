@@ -11,9 +11,24 @@ const AUTH_PAGE_PREFIXES = [
   '/forgot-password', '/reset-password', '/reset-password-otp',
 ];
 
+// Pages publiques accessibles sans authentification. Un 401 ici (typiquement
+// causé par SessionGuard probant /user avec un token expiré) ne doit pas
+// forcer la redirection vers /login : on purge l'auth et on laisse le
+// visiteur sur la page en mode déconnecté.
+const PUBLIC_PAGE_PREFIXES = [
+  '/plans', '/legal', '/invitation', '/upload-photo',
+  '/offers', '/invite', '/event-created-for-you',
+];
+
 function isOnAuthPage(): boolean {
   const path = typeof window !== 'undefined' ? window.location.pathname : '';
   return AUTH_PAGE_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
+}
+
+function isOnPublicPage(): boolean {
+  const path = typeof window !== 'undefined' ? window.location.pathname : '';
+  if (path === '/') return true;
+  return PUBLIC_PAGE_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
 }
 
 // Dispatch server error event
@@ -193,6 +208,13 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       const logout = useAuthStore.getState().logout;
       logout();
+
+      // Sur une page publique, on ne navigue pas : l'utilisateur reste sur la
+      // page courante en mode déconnecté (sinon un token périmé empêche
+      // d'afficher la landing, /plans, /legal/*, etc.).
+      if (isOnPublicPage()) {
+        return Promise.reject(error);
+      }
 
       const path = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/dashboard';
       const isValidPath = path && path !== '/login' && path !== '/' && !path.startsWith('/register') && !path.startsWith('/verify-otp') && !path.includes('//') && !path.includes(':');

@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Seo } from '@/components/seo';
 import { FestiveHero, Confetti } from '@/components/festive';
+import { useAuthStore } from '@/stores/authStore';
 import logo from '@/assets/logo.png';
 
 const SITE_URL = (import.meta.env.VITE_SITE_URL?.replace(/\/$/, '') ?? 'https://www.party-planner.cg');
@@ -66,6 +67,7 @@ function JsonLd() {
 
 export function LandingPage() {
   const { t } = useTranslation();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -93,14 +95,25 @@ export function LandingPage() {
               </Link>
             </nav>
             <div className="flex items-center gap-2">
-              <Link to="/login">
-                <Button variant="ghost" size="sm">
-                  {t('landing.nav.login')}
-                </Button>
-              </Link>
-              <Link to="/register">
-                <Button size="sm">{t('landing.nav.signup')}</Button>
-              </Link>
+              {isAuthenticated ? (
+                <Link to="/dashboard">
+                  <Button size="sm" className="gap-2">
+                    {t('landing.nav.dashboard')}
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link to="/login">
+                    <Button variant="ghost" size="sm">
+                      {t('landing.nav.login')}
+                    </Button>
+                  </Link>
+                  <Link to="/register">
+                    <Button size="sm">{t('landing.nav.signup')}</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -134,12 +147,12 @@ export function LandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/register" className="w-full sm:w-auto">
+              <Link to={isAuthenticated ? '/dashboard' : '/register'} className="w-full sm:w-auto">
                 <Button
                   size="lg"
                   className="w-full sm:w-auto gap-2 text-base font-semibold px-7 py-6"
                 >
-                  {t('landing.hero.ctaPrimary')}
+                  {t(isAuthenticated ? 'landing.hero.ctaPrimaryAuth' : 'landing.hero.ctaPrimary')}
                   <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
@@ -263,9 +276,9 @@ export function LandingPage() {
               {t('landing.cta.title')}
             </h2>
             <p className="text-lg text-muted-foreground mb-10">{t('landing.cta.subtitle')}</p>
-            <Link to="/register">
+            <Link to={isAuthenticated ? '/dashboard' : '/register'}>
               <Button size="lg" className="gap-2 text-base font-semibold px-8 py-6">
-                {t('landing.cta.button')}
+                {t(isAuthenticated ? 'landing.cta.buttonAuth' : 'landing.cta.button')}
                 <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>

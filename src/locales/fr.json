@@ -63,6 +63,7 @@
     "login": "Connexion",
     "register": "Inscription",
     "logout": "Deconnexion",
+    "backToHome": "Retour à l'accueil",
     "forgotPassword": "Mot de passe oublie",
     "resetPassword": "Reinitialiser le mot de passe",
     "email": "Email",
@@ -352,13 +353,15 @@
       "features": "Fonctionnalités",
       "pricing": "Tarifs",
       "login": "Connexion",
-      "signup": "Créer un compte"
+      "signup": "Créer un compte",
+      "dashboard": "Mon tableau de bord"
     },
     "hero": {
       "eyebrow": "Pour agences et organisateurs indépendants",
       "title": "La plateforme tout-en-un pour les organisateurs d'événements",
       "subtitle": "Centralisez vos événements, invités, budgets et devis dans un seul outil pensé pour les pros — au Congo et en Afrique francophone.",
       "ctaPrimary": "Créer un compte",
+      "ctaPrimaryAuth": "Aller au tableau de bord",
       "ctaSecondary": "Voir les tarifs",
       "trustNote": "Paiements MTN Mobile Money et Airtel Money intégrés"
     },
@@ -406,7 +409,8 @@
     "cta": {
       "title": "Prêt à structurer votre activité ?",
       "subtitle": "Créez votre compte en moins de deux minutes. Pas de carte bancaire requise.",
-      "button": "Commencer maintenant"
+      "button": "Commencer maintenant",
+      "buttonAuth": "Aller au tableau de bord"
     },
     "footer": {
       "tagline": "La plateforme des organisateurs d'événements en Afrique francophone.",

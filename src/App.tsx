@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { ServerErrorListener } from '@/components/ServerErrorListener';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuthStore } from '@/stores/authStore';
 
 // Layouts (chargés immédiatement car utilisés partout)
 import { MainLayout } from '@/layouts/MainLayout';
@@ -88,10 +87,9 @@ function PageLoader() {
   );
 }
 
-// Root route: landing page if not authenticated, redirect to dashboard otherwise
+// Root route: la landing est toujours visible (même connecté), la LandingPage
+// adapte ses CTAs en fonction de l'état d'auth.
 function RootRoute() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
   return <LandingPage />;
 }
 

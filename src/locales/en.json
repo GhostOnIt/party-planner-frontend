@@ -61,6 +61,7 @@
     "login": "Login",
     "register": "Register",
     "logout": "Logout",
+    "backToHome": "Back to home",
     "forgotPassword": "Forgot password",
     "resetPassword": "Reset password",
     "email": "Email",
@@ -347,13 +348,15 @@
       "features": "Features",
       "pricing": "Pricing",
       "login": "Sign in",
-      "signup": "Create account"
+      "signup": "Create account",
+      "dashboard": "My dashboard"
     },
     "hero": {
       "eyebrow": "For agencies and freelance organizers",
       "title": "The all-in-one platform for event organizers",
       "subtitle": "Centralize your events, guests, budgets and quotes in a single tool built for pros — in Congo and French-speaking Africa.",
       "ctaPrimary": "Create an account",
+      "ctaPrimaryAuth": "Go to dashboard",
       "ctaSecondary": "See pricing",
       "trustNote": "MTN Mobile Money and Airtel Money payments built in"
     },
@@ -401,7 +404,8 @@
     "cta": {
       "title": "Ready to scale your business?",
       "subtitle": "Create your account in under two minutes. No credit card required.",
-      "button": "Get started"
+      "button": "Get started",
+      "buttonAuth": "Go to dashboard"
     },
     "footer": {
       "tagline": "The platform for event organizers across French-speaking Africa.",
