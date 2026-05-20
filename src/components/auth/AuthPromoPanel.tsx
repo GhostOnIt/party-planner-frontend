@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLoginSpots } from "@/hooks/useCommunication";
 import logo from "@/assets/logo.png";
-import { resolveUrl } from "@/lib/utils";
+import { resolveUrl, withImageCacheBust } from "@/lib/utils";
 
 // Fallback image for loading state
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=1920&h=1080&fit=crop";
@@ -22,6 +22,7 @@ export function AuthPromoPanel() {
       title: spot.title || "",
       description: spot.description || "",
       image: spot.image || FALLBACK_IMAGE,
+      updatedAt: spot.updatedAt,
     }));
   }, [spots]);
 
@@ -77,7 +78,9 @@ export function AuthPromoPanel() {
         <motion.div
           key={advertisement.id}
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${resolveUrl(advertisement.image)})` }}
+          style={{
+            backgroundImage: `url(${withImageCacheBust(resolveUrl(advertisement.image) ?? advertisement.image, advertisement.updatedAt)})`,
+          }}
           initial={false}
           animate={{ 
             opacity: index === currentIndex ? 1 : 0,

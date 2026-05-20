@@ -59,7 +59,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSpots, useDeleteSpot, useToggleSpotStatus, useCreateSpot, useUpdateSpot } from '@/hooks/useCommunication';
 import { SpotFormDialog } from '@/components/features/admin/spot-form-dialog';
 import { PollResultsDialog } from '@/components/features/admin/poll-results-dialog';
-import { resolveUrl } from '@/lib/utils';
+import { resolveUrl, withImageCacheBust } from '@/lib/utils';
 import type { CommunicationSpot, SpotFilters, SpotType, SpotStatus, DisplayLocation, CreateSpotFormData } from '@/types/communication';
 
 // Helper to get spot status
@@ -433,7 +433,7 @@ export function AdminCommunicationPage() {
                           <div className="relative h-12 w-20 rounded-lg overflow-hidden bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] flex flex-col justify-center">
                             {spot.image ? (
                               <img
-                                src={resolveUrl(spot.image) || spot.image}
+                                src={withImageCacheBust(resolveUrl(spot.image) || spot.image, spot.updatedAt)}
                                 alt=""
                                 className="absolute inset-0 h-full w-full object-cover"
                               />

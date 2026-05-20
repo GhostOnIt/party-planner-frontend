@@ -92,6 +92,8 @@ export function useCreateSpot() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: communicationKeys.all });
+      void queryClient.refetchQueries({ queryKey: communicationKeys.activeSpots('login') });
+      void queryClient.refetchQueries({ queryKey: communicationKeys.activeSpots('dashboard') });
     },
   });
 }
@@ -105,7 +107,6 @@ export function useUpdateSpot() {
       // Handle file upload if image is a File
       if (data.image instanceof File) {
         const formData = new FormData();
-        formData.append('_method', 'PUT'); // Laravel method spoofing for FormData
         
         formData.append('image', data.image);
         
@@ -139,6 +140,8 @@ export function useUpdateSpot() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: communicationKeys.all });
       queryClient.invalidateQueries({ queryKey: communicationKeys.spot(variables.id) });
+      void queryClient.refetchQueries({ queryKey: communicationKeys.activeSpots('login') });
+      void queryClient.refetchQueries({ queryKey: communicationKeys.activeSpots('dashboard') });
     },
   });
 }
@@ -153,6 +156,8 @@ export function useDeleteSpot() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: communicationKeys.all });
+      void queryClient.refetchQueries({ queryKey: communicationKeys.activeSpots('login') });
+      void queryClient.refetchQueries({ queryKey: communicationKeys.activeSpots('dashboard') });
     },
   });
 }
@@ -248,7 +253,8 @@ export function useActiveSpots(location: DisplayLocation, enabled = true) {
       return response.data.data || response.data || [];
     },
     enabled,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -261,7 +267,8 @@ export function useLoginSpots(enabled = true) {
       return response.data.data || response.data || [];
     },
     enabled,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 }
 
