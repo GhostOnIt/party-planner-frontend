@@ -13,6 +13,7 @@ import {
   Sparkles,
   PartyPopper,
   Star,
+  Quote,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Seo } from '@/components/seo';
@@ -36,6 +37,23 @@ const FEATURES: Feature[] = [
   { key: 'checkin', Icon: ScanLine },
   { key: 'quotes', Icon: FileText },
 ];
+
+// Couleurs d'avatar par testimonial — initiales sur fond coloré (pas de photos placeholder)
+const TESTIMONIALS = [
+  { key: 't1', accent: 'from-[#4F46E5] to-[#7C3AED]' },
+  { key: 't2', accent: 'from-[#10B981] to-[#34D399]' },
+  { key: 't3', accent: 'from-[#E91E8C] to-[#F472B6]' },
+] as const;
+
+function getInitials(fullName: string): string {
+  return fullName
+    .split(/\s+/)
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+}
 
 function JsonLd() {
   const data = {
@@ -258,6 +276,55 @@ export function LandingPage() {
                 {t('landing.audience.freelancers.description')}
               </p>
             </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="relative py-24 border-t border-border bg-background">
+        <div className="container mx-auto px-6">
+          <div className="max-w-2xl mx-auto text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+              {t('landing.testimonials.title')}
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              {t('landing.testimonials.subtitle')}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {TESTIMONIALS.map(({ key, accent }, i) => {
+              const name = t(`landing.testimonials.items.${key}.name`);
+              return (
+                <motion.figure
+                  key={key}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-80px' }}
+                  transition={{ duration: 0.4, delay: i * 0.08 }}
+                  className="relative flex flex-col rounded-2xl bg-card border border-border p-7 shadow-sm hover:shadow-md transition-all"
+                >
+                  <Quote className="absolute -top-3 left-6 h-7 w-7 rounded-full bg-primary p-1.5 text-primary-foreground shadow-sm" />
+                  <blockquote className="flex-1 text-base leading-relaxed text-foreground italic mb-6">
+                    « {t(`landing.testimonials.items.${key}.quote`)} »
+                  </blockquote>
+                  <figcaption className="flex items-center gap-3 border-t border-border pt-5">
+                    <div
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${accent} text-sm font-bold text-white shadow-sm`}
+                      aria-hidden="true"
+                    >
+                      {getInitials(name)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {t(`landing.testimonials.items.${key}.role`)} · {t(`landing.testimonials.items.${key}.agency`)}
+                      </p>
+                    </div>
+                  </figcaption>
+                </motion.figure>
+              );
+            })}
           </div>
         </div>
       </section>

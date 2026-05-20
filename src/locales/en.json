@@ -401,6 +401,30 @@
         "description": "One platform to deliver your services with the polish of a large agency."
       }
     },
+    "testimonials": {
+      "title": "Trusted by event pros",
+      "subtitle": "Agencies and independent organizers rely on Party Planner to deliver their events with confidence.",
+      "items": {
+        "t1": {
+          "quote": "Before Party Planner I was juggling four Excel files and WhatsApp threads for every wedding. Now everything lives in one place — I've gained a full weekend back each month.",
+          "name": "Grâce Mbemba",
+          "role": "Wedding planner",
+          "agency": "Lumière Events, Brazzaville"
+        },
+        "t2": {
+          "quote": "The quote module changed how we work with clients. Couples sign online, pay their deposit through MTN Money, and everything is tracked inside the platform.",
+          "name": "Patrick Ngoma",
+          "role": "Director",
+          "agency": "Atelier 242, Pointe-Noire"
+        },
+        "t3": {
+          "quote": "Tablet check-in saved us on a 400-guest event. No more paper lists, no more mistakes — the team scans and it just works.",
+          "name": "Sandra Loemba",
+          "role": "Event manager",
+          "agency": "Maison Bantoo, Brazzaville"
+        }
+      }
+    },
     "cta": {
       "title": "Ready to scale your business?",
       "subtitle": "Create your account in under two minutes. No credit card required.",
