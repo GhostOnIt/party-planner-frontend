@@ -29,7 +29,7 @@ export function GuestStats({ stats, isLoading = false }: GuestStatsProps) {
   const items = [
     {
       label: 'Total',
-      value: stats?.total ?? 0,
+      value: (stats?.total ?? 0) + (stats?.companions ?? 0),
       icon: Users,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
