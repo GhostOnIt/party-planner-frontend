@@ -41,6 +41,7 @@ export function CollaboratorCard({
 }: CollaboratorCardProps) {
   const { user, role, accepted_at } = collaborator;
   const isPending = !accepted_at;
+  const hasRegisteredUser = Boolean(collaborator.user_id);
 
   return (
     <div className="flex items-center justify-between rounded-lg border p-4">
@@ -70,7 +71,7 @@ export function CollaboratorCard({
           </Badge>
         ))}
 
-        {canManage && !isOwner && (
+        {canManage && !isOwner && hasRegisteredUser && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">

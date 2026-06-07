@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Plus, UserPlus, Users } from 'lucide-react';
+import { Mail, Plus, Send, Trash2, UserPlus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -29,7 +29,9 @@ import {
   useInviteCollaborator,
   useUpdateCollaborator,
   useRemoveCollaborator,
+  useCancelPendingInvitation,
   useResendInvitation,
+  useResendPendingInvitation,
 } from '@/hooks/useCollaborators';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { getAssignableRoles } from '@/utils/collaboratorPermissions';
@@ -63,10 +65,13 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
   const { mutate: updateCollaborator, isPending: isUpdating } = useUpdateCollaborator(eventId!);
   const { mutate: removeCollaborator, isPending: isRemoving } = useRemoveCollaborator(eventId!);
   const { mutate: resendInvitation } = useResendInvitation(eventId!);
+  const { mutate: resendPendingInvitation } = useResendPendingInvitation(eventId!);
+  const { mutate: cancelPendingInvitation } = useCancelPendingInvitation(eventId!);
   const featureAccess = useFeatureAccess(eventId!);
 
   const { data: rolesData } = useCustomRoles(eventId!);
   const collaborators = collaboratorsData?.data || [];
+  const pendingInvitations = collaboratorsData?.pendingInvitations || [];
 
   // Check access using featureAccess (combines entitlements + permissions)
   const canManage = userPermissions?.canManage || false;
@@ -189,6 +194,42 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
     });
   };
 
+  const handleResendPendingInvitation = (invitationId: string, email: string) => {
+    resendPendingInvitation(invitationId, {
+      onSuccess: () => {
+        toast({
+          title: 'Invitation renvoyée',
+          description: `L'invitation a été renvoyée à ${email}.`,
+        });
+      },
+      onError: (error: any) => {
+        toast({
+          title: 'Erreur',
+          description: error?.response?.data?.message ?? "Impossible de renvoyer l'invitation.",
+          variant: 'destructive',
+        });
+      },
+    });
+  };
+
+  const handleCancelPendingInvitation = (invitationId: string, email: string) => {
+    cancelPendingInvitation(invitationId, {
+      onSuccess: () => {
+        toast({
+          title: 'Invitation annulée',
+          description: `L'invitation envoyée à ${email} a été annulée.`,
+        });
+      },
+      onError: (error: any) => {
+        toast({
+          title: 'Erreur',
+          description: error?.response?.data?.message ?? "Impossible d'annuler l'invitation.",
+          variant: 'destructive',
+        });
+      },
+    });
+  };
+
   if (!eventId) {
     return null;
   }
@@ -269,6 +310,62 @@ export function CollaboratorsPage({ eventId: propEventId }: CollaboratorsPagePro
           onRemove={setCollaboratorToRemove}
           onResendInvitation={handleResendInvitation}
         />
+      )}
+
+      {pendingInvitations.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Mail className="h-4 w-4" />
+              Invitations envoyées
+            </CardTitle>
+            <CardDescription>
+              Ces personnes devront se connecter ou créer un compte avec l'adresse invitée.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {pendingInvitations.map((invitation) => (
+              <div
+                key={invitation.invitation_id}
+                className="flex items-center justify-between gap-4 rounded-lg border p-4"
+              >
+                <div>
+                  <p className="font-medium">{invitation.email}</p>
+                  <p className="text-sm text-muted-foreground">
+                    En attente de création ou connexion de compte
+                  </p>
+                </div>
+                {canManage && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        handleResendPendingInvitation(invitation.invitation_id, invitation.email)
+                      }
+                    >
+                      <Send className="mr-2 h-4 w-4" />
+                      Renvoyer
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() =>
+                        handleCancelPendingInvitation(invitation.invitation_id, invitation.email)
+                      }
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Annuler l'invitation</span>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       )}
 
       {/* Rôles personnalisés : gérés dans Paramètres */}

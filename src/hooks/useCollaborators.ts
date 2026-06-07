@@ -13,6 +13,24 @@ import type {
 interface CollaboratorsApiResponse {
   data: Collaborator[];
   collaborators?: Collaborator[];
+  pending_invitations?: PendingCollaborationInvitation[];
+}
+
+export interface PendingCollaborationInvitation {
+  id: string;
+  invitation_id: string;
+  type: 'pending_invitation';
+  email: string;
+  roles?: CollaboratorRole[];
+  role?: CollaboratorRole | null;
+  custom_role_ids?: string[];
+  invited_at?: string;
+  accepted_at: null;
+  user: {
+    id: null;
+    name: string;
+    email: string;
+  };
 }
 
 // Fetch collaborators list
@@ -35,13 +53,16 @@ export function useCollaborators(eventId: string, filters: CollaboratorFilters =
       // Handle { collaborators, pending_invitations? } response
       if (responseData && 'collaborators' in responseData) {
         const collaborators = responseData.collaborators || [];
-        const pendingInvitations = (responseData as { pending_invitations?: unknown[] }).pending_invitations || [];
-        return { data: [...collaborators, ...pendingInvitations], pendingInvitations };
+        const pendingInvitations = responseData.pending_invitations || [];
+        return { data: collaborators, pendingInvitations };
       }
 
       // Handle { data: [...] } response
       if (responseData && 'data' in responseData) {
-        const rd = responseData as { data: unknown[]; pending_invitations?: unknown[] };
+        const rd = responseData as {
+          data: Collaborator[];
+          pending_invitations?: PendingCollaborationInvitation[];
+        };
         return { data: rd.data || [], pendingInvitations: rd.pending_invitations || [] };
       }
 
@@ -115,6 +136,40 @@ export function useRemoveCollaborator(eventId: string) {
     mutationFn: async (userId: string) => {
       await api.delete(`/events/${eventId}/collaborators/${userId}`);
       return userId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events', eventId, 'collaborators'] });
+    },
+  });
+}
+
+// Resend pending invitation for an email that is not registered yet
+export function useResendPendingInvitation(eventId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (invitationId: string) => {
+      const response = await api.post(
+        `/events/${eventId}/collaborators/pending/${invitationId}/resend`
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events', eventId, 'collaborators'] });
+    },
+  });
+}
+
+// Cancel pending invitation for an email that is not registered yet
+export function useCancelPendingInvitation(eventId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (invitationId: string) => {
+      const response = await api.delete(
+        `/events/${eventId}/collaborators/pending/${invitationId}`
+      );
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events', eventId, 'collaborators'] });
