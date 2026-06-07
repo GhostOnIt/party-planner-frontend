@@ -30,7 +30,7 @@ export function useAuthMutation<TData>({ endpoint, includeRememberMe = false }: 
       return response.data;
     },
     onSuccess: (data) => {
-      const redirectTo = resolveRedirectAfterLogin(location);
+      const initialRedirectTo = resolveRedirectAfterLogin(location);
 
       if ('requires_otp' in data && data.requires_otp) {
         const otpData = data as OtpRequiredResponse;
@@ -41,7 +41,7 @@ export function useAuthMutation<TData>({ endpoint, includeRememberMe = false }: 
             type: 'login' as const,
             channel: otpData.channel,
             otp_id: otpData.otp_id,
-            redirect: redirectTo,
+            redirect: initialRedirectTo,
             ...(includeRememberMe && { remember_me: otpData.remember_me ?? false }),
           },
         });
@@ -50,6 +50,9 @@ export function useAuthMutation<TData>({ endpoint, includeRememberMe = false }: 
 
       const authData = data as AuthResponse;
       setAuth(authData.user, authData.token);
+      const redirectTo = initialRedirectTo === '/dashboard' && authData.user.role === 'admin'
+        ? '/admin'
+        : initialRedirectTo;
       navigate(redirectTo, { replace: true });
     },
   });

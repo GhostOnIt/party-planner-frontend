@@ -1,10 +1,13 @@
 import { AlertTriangle, Clock3, ArchiveRestore } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCurrentSubscription } from "@/hooks/useSubscription";
+import { useAuthStore } from "@/stores/authStore";
 
 export function NonRenewalBanner() {
+  const { user } = useAuthStore();
   const { data, isLoading } = useCurrentSubscription();
 
+  if (user?.role === 'admin') return null;
   if (isLoading || !data?.lifecycle) return null;
 
   const phase = data.lifecycle.phase;

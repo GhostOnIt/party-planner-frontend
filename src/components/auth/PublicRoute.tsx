@@ -16,6 +16,7 @@ function resolveRedirect(path: string | null): string | null {
 
 export function PublicRoute() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
   const location = useLocation();
 
   if (isAuthenticated) {
@@ -50,7 +51,8 @@ export function PublicRoute() {
     }
 
     // 4. Fallback: location.state.from (PrivateRoute redirect) or dashboard
-    const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard';
+    const fallback = user?.role === 'admin' ? '/admin' : '/dashboard';
+    const from = (location.state as { from?: Location })?.from?.pathname || fallback;
     return <Navigate to={from} replace />;
   }
 

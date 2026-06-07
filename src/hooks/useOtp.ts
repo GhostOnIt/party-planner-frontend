@@ -42,7 +42,10 @@ export function useVerifyOtp() {
       if (data.user && data.token) {
         setAuth(data.user, data.token);
         const state = location.state as { redirect?: string } | null;
-        const redirectTo = state?.redirect ?? '/dashboard';
+        const fallbackRedirect = data.user.role === 'admin' ? '/admin' : '/dashboard';
+        const redirectTo = state?.redirect && state.redirect !== '/dashboard'
+          ? state.redirect
+          : fallbackRedirect;
         navigate(redirectTo, { replace: true });
       }
     },
@@ -75,7 +78,7 @@ export function useOtpResetPassword() {
     },
     onSuccess: (data) => {
       setAuth(data.user, data.token);
-      navigate('/dashboard');
+      navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
     },
   });
 }

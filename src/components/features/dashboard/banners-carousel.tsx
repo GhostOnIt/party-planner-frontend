@@ -71,9 +71,8 @@ export function BannersCarousel({
   // Vérifier si la promo legacy est disponible
   const hasLegacyPromo = showPromo && promoCardProps
   const lifecyclePhase = currentSubscriptionData?.lifecycle?.phase
-  const hasNonRenewalBanner = ['renewal_due', 'renewal_last_day', 'grace_period', 'archived', 'expired'].includes(
-    lifecyclePhase ?? ''
-  )
+  const hasNonRenewalBanner = !isAdmin
+    && ['renewal_due', 'renewal_last_day', 'grace_period', 'archived', 'expired'].includes(lifecyclePhase ?? '')
 
   // Filtrer les spots non dismissés
   const activeSpots = useMemo(() => {

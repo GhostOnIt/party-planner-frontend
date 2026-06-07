@@ -16,6 +16,7 @@ import { useActiveSpots, useTrackClick, useVote } from "@/hooks/useCommunication
 export function DashboardPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const isAdmin = user?.role === "admin"
 
   const [filter, setFilter] = useState("all")
   const [eventTypeFilter, setEventTypeFilter] = useState("all")
@@ -75,7 +76,7 @@ export function DashboardPage() {
       <div className="mt-6 space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <SubscriptionCard />
+            {!isAdmin && <SubscriptionCard />}
             <UpcomingEvents />
             <UrgentTasks />
           </div>
