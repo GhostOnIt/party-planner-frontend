@@ -157,6 +157,7 @@ export function BudgetList({
             <TableHead className="text-right">Estime</TableHead>
             <TableHead className="text-right">Reel</TableHead>
             <TableHead className="text-center">Paye</TableHead>
+            <TableHead className="text-center">Justif.</TableHead>
             <TableHead className="w-12"></TableHead>
           </TableRow>
         </TableHeader>
@@ -166,9 +167,9 @@ export function BudgetList({
               item.actual_cost !== null &&
               item.actual_cost > item.estimated_cost;
             const paymentStatus = getPaymentStatus(item);
-            const firstAttachment = item.payments
+            const attachments = item.payments
               ?.flatMap((payment) => payment.attachments.map((attachment) => ({ payment, attachment })))
-              [0];
+              ?? [];
 
             return (
               <TableRow
@@ -217,18 +218,33 @@ export function BudgetList({
                   </div>
                 </TableCell>
                 <TableCell className="text-center">
-                  {firstAttachment ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => onPreviewAttachment(item, firstAttachment.payment, firstAttachment.attachment)}
-                      title="Prévisualiser le justificatif"
-                    >
-                      <Paperclip className="h-4 w-4" />
-                      <span className="sr-only">Prévisualiser le justificatif</span>
-                    </Button>
+                  {attachments.length > 0 ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 gap-1 px-2"
+                          title="Voir les justificatifs"
+                        >
+                          <Paperclip className="h-4 w-4" />
+                          <span className="text-xs">{attachments.length}</span>
+                          <span className="sr-only">Voir les justificatifs</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {attachments.map(({ payment, attachment }) => (
+                          <DropdownMenuItem
+                            key={attachment.id}
+                            onClick={() => onPreviewAttachment(item, payment, attachment)}
+                          >
+                            <Paperclip className="mr-2 h-4 w-4" />
+                            {attachment.original_name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   ) : (
                     <span className="text-muted-foreground">-</span>
                   )}
