@@ -255,10 +255,12 @@ export function BudgetList({
                         <Pencil className="mr-2 h-4 w-4" />
                         Modifier
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onMarkPaid(item)}>
-                        <ReceiptText className="mr-2 h-4 w-4" />
-                        Enregistrer un paiement
-                      </DropdownMenuItem>
+                      {item.payment_status !== 'paid' && (
+                        <DropdownMenuItem onClick={() => onMarkPaid(item)}>
+                          <ReceiptText className="mr-2 h-4 w-4" />
+                          Enregistrer un paiement
+                        </DropdownMenuItem>
+                      )}
                       {item.payment_status !== 'unpaid' && (
                         <DropdownMenuItem onClick={() => onMarkUnpaid(item)}>
                           <X className="mr-2 h-4 w-4" />
