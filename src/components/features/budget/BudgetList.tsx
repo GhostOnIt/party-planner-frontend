@@ -1,4 +1,4 @@
-import { Check, MoreHorizontal, Pencil, Trash2, X, CheckCircle2 } from 'lucide-react';
+import { MoreHorizontal, Paperclip, Pencil, ReceiptText, Trash2, X } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -8,6 +8,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -19,7 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { CategoryBadge } from './CategoryBadge';
 import { useBudgetCategories } from '@/hooks/useSettings';
-import type { BudgetItem } from '@/types';
+import type { BudgetItem, BudgetPaymentAttachment, BudgetItemPayment } from '@/types';
 import { cn } from '@/lib/utils';
 
 interface BudgetListProps {
@@ -31,6 +32,7 @@ interface BudgetListProps {
   onDelete: (item: BudgetItem) => void;
   onMarkPaid: (item: BudgetItem) => void;
   onMarkUnpaid: (item: BudgetItem) => void;
+  onPreviewAttachment: (item: BudgetItem, payment: BudgetItemPayment, attachment: BudgetPaymentAttachment) => void;
 }
 
 function formatCurrency(value: number | null): string {
@@ -40,6 +42,17 @@ function formatCurrency(value: number | null): string {
     currency: 'XAF',
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function getPaymentStatus(item: BudgetItem): { label: string; className: string } {
+  switch (item.payment_status) {
+    case 'paid':
+      return { label: 'Payé', className: 'border-emerald-200 bg-emerald-50 text-emerald-700' };
+    case 'partially_paid':
+      return { label: 'Partiel', className: 'border-amber-200 bg-amber-50 text-amber-700' };
+    default:
+      return { label: 'Non payé', className: 'border-slate-200 bg-slate-50 text-slate-700' };
+  }
 }
 
 const DEFAULT_CATEGORY_SLUGS = [
@@ -55,6 +68,7 @@ export function BudgetList({
   onDelete,
   onMarkPaid,
   onMarkUnpaid,
+  onPreviewAttachment,
 }: BudgetListProps) {
   const { data: userCategories = [] } = useBudgetCategories();
   const categoryBySlug = Object.fromEntries(
@@ -92,7 +106,8 @@ export function BudgetList({
               <TableHead>Fournisseur</TableHead>
               <TableHead className="text-right">Estime</TableHead>
               <TableHead className="text-right">Reel</TableHead>
-              <TableHead className="text-center">Paye</TableHead>
+              <TableHead className="text-center">Paiement</TableHead>
+              <TableHead className="text-center">Justif.</TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
           </TableHeader>
@@ -150,6 +165,10 @@ export function BudgetList({
             const isOverBudget =
               item.actual_cost !== null &&
               item.actual_cost > item.estimated_cost;
+            const paymentStatus = getPaymentStatus(item);
+            const firstAttachment = item.payments
+              ?.flatMap((payment) => payment.attachments.map((attachment) => ({ payment, attachment })))
+              [0];
 
             return (
               <TableRow
@@ -186,10 +205,32 @@ export function BudgetList({
                   {formatCurrency(item.actual_cost)}
                 </TableCell>
                 <TableCell className="text-center">
-                  {item.paid ? (
-                    <CheckCircle2 className="h-5 w-5 text-emerald-500 mx-auto" />
+                  <div className="flex flex-col items-center gap-1">
+                    <Badge variant="outline" className={paymentStatus.className}>
+                      {paymentStatus.label}
+                    </Badge>
+                    {Number(item.total_paid ?? 0) > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {formatCurrency(Number(item.total_paid))}
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="text-center">
+                  {firstAttachment ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => onPreviewAttachment(item, firstAttachment.payment, firstAttachment.attachment)}
+                      title="Prévisualiser le justificatif"
+                    >
+                      <Paperclip className="h-4 w-4" />
+                      <span className="sr-only">Prévisualiser le justificatif</span>
+                    </Button>
                   ) : (
-                    <X className="h-5 w-5 text-muted-foreground mx-auto" />
+                    <span className="text-muted-foreground">-</span>
                   )}
                 </TableCell>
                 <TableCell>
@@ -205,16 +246,26 @@ export function BudgetList({
                         <Pencil className="mr-2 h-4 w-4" />
                         Modifier
                       </DropdownMenuItem>
-                      {item.paid ? (
+                      <DropdownMenuItem onClick={() => onMarkPaid(item)}>
+                        <ReceiptText className="mr-2 h-4 w-4" />
+                        Enregistrer un paiement
+                      </DropdownMenuItem>
+                      {item.payment_status !== 'unpaid' && (
                         <DropdownMenuItem onClick={() => onMarkUnpaid(item)}>
                           <X className="mr-2 h-4 w-4" />
-                          Marquer non paye
+                          Annuler les paiements
                         </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem onClick={() => onMarkPaid(item)}>
-                          <Check className="mr-2 h-4 w-4" />
-                          Marquer paye
-                        </DropdownMenuItem>
+                      )}
+                      {item.payments?.flatMap((payment) =>
+                        payment.attachments.map((attachment) => (
+                          <DropdownMenuItem
+                            key={attachment.id}
+                            onClick={() => onPreviewAttachment(item, payment, attachment)}
+                          >
+                            <Paperclip className="mr-2 h-4 w-4" />
+                            Voir {attachment.original_name}
+                          </DropdownMenuItem>
+                        ))
                       )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem

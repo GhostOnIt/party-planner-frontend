@@ -4,3 +4,5 @@ export { BudgetChart } from './BudgetChart';
 export { BudgetFilters, budgetCategories } from './BudgetFilters';
 export { BudgetForm } from './BudgetForm';
 export { BudgetList } from './BudgetList';
+export { BudgetPaymentDialog } from './BudgetPaymentDialog';
+export { BudgetAttachmentPreviewDialog } from './BudgetAttachmentPreviewDialog';

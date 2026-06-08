@@ -36,13 +36,15 @@ import {
   BudgetFilters,
   BudgetForm,
   BudgetList,
+  BudgetPaymentDialog,
+  BudgetAttachmentPreviewDialog,
 } from '@/components/features/budget';
 import {
   useBudget,
   useCreateBudgetItem,
   useUpdateBudgetItem,
   useDeleteBudgetItem,
-  useMarkPaid,
+  useCreateBudgetPayment,
   useMarkUnpaid,
   useExportBudget,
 } from '@/hooks/useBudget';
@@ -50,8 +52,11 @@ import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { PermissionGuard } from '@/components/ui/permission-guard';
 import type {
   BudgetItem,
+  BudgetItemPayment,
+  BudgetPaymentAttachment,
   BudgetFilters as BudgetFiltersType,
   CreateBudgetItemFormData,
+  CreateBudgetPaymentFormData,
   BudgetCategory,
 } from '@/types';
 
@@ -97,6 +102,12 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<BudgetItem | undefined>();
   const [itemToDelete, setItemToDelete] = useState<BudgetItem | null>(null);
+  const [paymentItem, setPaymentItem] = useState<BudgetItem | null>(null);
+  const [previewTarget, setPreviewTarget] = useState<{
+    item: BudgetItem;
+    payment: BudgetItemPayment;
+    attachment: BudgetPaymentAttachment;
+  } | null>(null);
 
   const featureAccess = useFeatureAccess(eventId!);
   const { data: budgetData, isLoading: isLoadingBudget } = useBudget(eventId!, filters);
@@ -106,7 +117,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
   const { mutate: createItem, isPending: isCreating } = useCreateBudgetItem(eventId!);
   const { mutate: updateItem, isPending: isUpdating } = useUpdateBudgetItem(eventId!);
   const { mutate: deleteItem, isPending: isDeleting } = useDeleteBudgetItem(eventId!);
-  const { mutate: markPaid } = useMarkPaid(eventId!);
+  const { mutate: createPayment, isPending: isCreatingPayment } = useCreateBudgetPayment(eventId!);
   const { mutate: markUnpaid } = useMarkUnpaid(eventId!);
   const { mutate: exportBudget, isPending: isExporting } = useExportBudget(eventId!);
 
@@ -169,22 +180,40 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
   };
 
   const handleMarkPaid = (item: BudgetItem) => {
-    markPaid(String(item.id), {
-      onSuccess: () => {
-        toast({
-          title: 'Paiement enregistre',
-          description: `"${item.name}" a ete marque comme paye.`,
-        });
-      },
-    });
+    setPaymentItem(item);
+  };
+
+  const handlePaymentSubmit = (data: CreateBudgetPaymentFormData) => {
+    if (!paymentItem) return;
+
+    createPayment(
+      { itemId: String(paymentItem.id), data },
+      {
+        onSuccess: () => {
+          setPaymentItem(null);
+          toast({
+            title: 'Paiement enregistré',
+            description: `Le paiement de "${paymentItem.name}" a été ajouté.`,
+          });
+        },
+      }
+    );
+  };
+
+  const handlePreviewAttachment = (
+    item: BudgetItem,
+    payment: BudgetItemPayment,
+    attachment: BudgetPaymentAttachment
+  ) => {
+    setPreviewTarget({ item, payment, attachment });
   };
 
   const handleMarkUnpaid = (item: BudgetItem) => {
     markUnpaid(String(item.id), {
       onSuccess: () => {
         toast({
-          title: 'Paiement annule',
-          description: `"${item.name}" a ete marque comme non paye.`,
+          title: 'Paiements annulés',
+          description: `Les paiements de "${item.name}" ont été supprimés.`,
         });
       },
     });
@@ -387,6 +416,7 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
               onDelete={setItemToDelete}
               onMarkPaid={handleMarkPaid}
               onMarkUnpaid={handleMarkUnpaid}
+              onPreviewAttachment={handlePreviewAttachment}
             />
 
             {/* Pagination */}
@@ -445,6 +475,23 @@ export function BudgetPage({ eventId: propEventId }: BudgetPageProps) {
         item={editingItem}
         onSubmit={handleFormSubmit}
         isSubmitting={isCreating || isUpdating}
+      />
+
+      <BudgetPaymentDialog
+        open={!!paymentItem}
+        item={paymentItem}
+        isSubmitting={isCreatingPayment}
+        onOpenChange={(open) => !open && setPaymentItem(null)}
+        onSubmit={handlePaymentSubmit}
+      />
+
+      <BudgetAttachmentPreviewDialog
+        open={!!previewTarget}
+        eventId={eventId}
+        itemId={previewTarget?.item.id ?? null}
+        paymentId={previewTarget?.payment.id ?? null}
+        attachment={previewTarget?.attachment ?? null}
+        onOpenChange={(open) => !open && setPreviewTarget(null)}
       />
 
       {/* Delete Confirmation Dialog */}

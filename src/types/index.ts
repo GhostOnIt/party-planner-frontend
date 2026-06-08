@@ -138,18 +138,63 @@ export interface Task {
 
 // Budget Item
 export interface BudgetItem {
-    id: number;
-  event_id: number;
-  task_id: number | null;
-   category: BudgetCategory;
+  id: string;
+  event_id: string;
+  task_id: string | null;
+  category: BudgetCategory;
   name: string;
   estimated_cost: number;
   actual_cost: number | null;
   paid: boolean;
-  paid_at: string | null;
+  payment_date: string | null;
+  paid_at?: string | null;
   vendor_name: string | null;
   notes: string | null;
+  total_paid: number;
+  remaining_amount: number;
+  payment_status: BudgetPaymentStatus;
+  attachments_count: number;
+  payments?: BudgetItemPayment[];
   created_at: string;
+}
+
+export type BudgetPaymentStatus = 'unpaid' | 'partially_paid' | 'paid';
+
+export type BudgetPaymentMethod = 'cash' | 'mobile_money' | 'bank_transfer' | 'card' | 'other';
+
+export interface BudgetPaymentAttachment {
+  id: string;
+  budget_item_payment_id: string;
+  budget_item_id: string;
+  event_id: string;
+  original_name: string;
+  mime_type: string;
+  size: number;
+  s3_path: string;
+  created_at: string;
+}
+
+export interface BudgetItemPayment {
+  id: string;
+  budget_item_id: string;
+  event_id: string;
+  amount: number;
+  payment_date: string;
+  method: BudgetPaymentMethod | null;
+  reference: string | null;
+  notes: string | null;
+  attachments: BudgetPaymentAttachment[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateBudgetPaymentFormData {
+  amount: number;
+  payment_date: string;
+  method?: BudgetPaymentMethod;
+  reference?: string;
+  notes?: string;
+  file?: File | null;
 }
 
 // Photo
@@ -542,7 +587,13 @@ export interface BudgetStats {
   total_estimated: number;
   total_actual: number;
   total_paid: number;
+  total_unpaid?: number;
   items_count: number;
+  paid_items_count?: number;
+  partially_paid_items_count?: number;
+  unpaid_items_count?: number;
+  payment_proofs_count?: number;
+  missing_proof_paid_items_count?: number;
   by_category: Array<{
     category: BudgetCategory;
     estimated: number;

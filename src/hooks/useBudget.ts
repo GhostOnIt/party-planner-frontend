@@ -6,6 +6,9 @@ import type {
   BudgetFilters,
   CreateBudgetItemFormData,
   BudgetCategory,
+  BudgetItemPayment,
+  BudgetPaymentAttachment,
+  CreateBudgetPaymentFormData,
 } from '@/types';
 
 // Pagination meta type
@@ -167,6 +170,56 @@ export function useMarkPaid(eventId: string) {
       queryClient.invalidateQueries({ queryKey: ['events', eventId, 'budget'] });
     },
   });
+}
+
+// Create a budget item payment, then optionally upload its proof document.
+export function useCreateBudgetPayment(eventId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      itemId,
+      data,
+    }: {
+      itemId: string;
+      data: CreateBudgetPaymentFormData;
+    }) => {
+      const { file, ...payload } = data;
+      const response = await api.post<BudgetItemPayment>(
+        `/events/${eventId}/budget/items/${itemId}/payments`,
+        payload
+      );
+
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        await api.post<BudgetPaymentAttachment>(
+          `/events/${eventId}/budget/items/${itemId}/payments/${response.data.id}/attachments`,
+          formData
+        );
+      }
+
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events', eventId, 'budget'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
+
+export async function getBudgetAttachmentSignedUrl(
+  eventId: string,
+  itemId: string,
+  paymentId: string,
+  attachmentId: string
+): Promise<string> {
+  const response = await api.get<{ url: string }>(
+    `/events/${eventId}/budget/items/${itemId}/payments/${paymentId}/attachments/${attachmentId}/signed-url`
+  );
+
+  return response.data.url;
 }
 
 // Mark item as unpaid
