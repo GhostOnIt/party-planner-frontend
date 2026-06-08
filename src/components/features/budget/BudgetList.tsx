@@ -206,16 +206,9 @@ export function BudgetList({
                   {formatCurrency(item.actual_cost)}
                 </TableCell>
                 <TableCell className="text-center">
-                  <div className="flex flex-col items-center gap-1">
-                    <Badge variant="outline" className={paymentStatus.className}>
-                      {paymentStatus.label}
-                    </Badge>
-                    {Number(item.total_paid ?? 0) > 0 && (
-                      <span className="text-xs text-muted-foreground">
-                        {formatCurrency(Number(item.total_paid))}
-                      </span>
-                    )}
-                  </div>
+                  <Badge variant="outline" className={paymentStatus.className}>
+                    {paymentStatus.label}
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-center">
                   {attachments.length > 0 ? (
