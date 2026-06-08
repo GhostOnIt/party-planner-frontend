@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { type SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -36,16 +36,29 @@ const defaultCategories: { value: BudgetCategory; label: string }[] = [
   { value: 'other', label: categoryConfig.other.label },
 ];
 
+const numberField = z.preprocess((value) => {
+  if (value === '' || value === null || value === undefined) {
+    return 0;
+  }
+
+  if (typeof value === 'string') {
+    return Number(value.replace(',', '.'));
+  }
+
+  return value;
+}, z.number().min(0, 'Le cout doit etre positif'));
+
 const budgetItemSchema = z.object({
   category: z.string().min(1, 'La catégorie est requise'), // Accept any string for custom categories
   name: z.string().min(1, 'Le nom est requis').max(255),
-  estimated_cost: z.number().min(0, 'Le cout doit etre positif'),
-  actual_cost: z.number().min(0, 'Le cout doit etre positif').optional(),
+  estimated_cost: numberField,
+  actual_cost: numberField,
   vendor_name: z.string().optional(),
   notes: z.string().optional(),
 });
 
-type BudgetFormValues = z.infer<typeof budgetItemSchema>;
+type BudgetFormInput = z.input<typeof budgetItemSchema>;
+type BudgetFormValues = z.output<typeof budgetItemSchema>;
 
 interface BudgetFormProps {
   open: boolean;
@@ -82,13 +95,13 @@ export function BudgetForm({
     setValue,
     watch,
     formState: { errors },
-  } = useForm<BudgetFormValues>({
+  } = useForm<BudgetFormInput, unknown, BudgetFormValues>({
     resolver: zodResolver(budgetItemSchema),
     defaultValues: {
       category: (categories[0]?.value || 'other') as string,
       name: '',
       estimated_cost: 0,
-      actual_cost: undefined,
+      actual_cost: 0,
       vendor_name: '',
       notes: '',
     },
@@ -103,8 +116,8 @@ export function BudgetForm({
       reset({
         category: item.category,
         name: item.name,
-        estimated_cost: item.estimated_cost,
-        actual_cost: item.actual_cost ?? undefined,
+        estimated_cost: Number(item.estimated_cost ?? 0),
+        actual_cost: Number(item.actual_cost ?? 0),
         vendor_name: item.vendor_name ?? '',
         notes: item.notes ?? '',
       });
@@ -113,7 +126,7 @@ export function BudgetForm({
         category: (categories[0]?.value || 'other') as string,
         name: '',
         estimated_cost: 0,
-        actual_cost: undefined,
+        actual_cost: 0,
         vendor_name: '',
         notes: '',
       });
@@ -121,7 +134,7 @@ export function BudgetForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only reset on open/item change to avoid wiping user input
   }, [open, item?.id]);
 
-  const handleFormSubmit = (data: BudgetFormValues) => {
+  const handleFormSubmit: SubmitHandler<BudgetFormValues> = (data) => {
     onSubmit({
       category: data.category as BudgetCategory,
       name: data.name,
@@ -189,8 +202,11 @@ export function BudgetForm({
                 id="estimated_cost"
                 type="number"
                 min="0"
-                placeholder="0"
-                {...register('estimated_cost', { valueAsNumber: true })}
+                step="0.01"
+                placeholder="0,00"
+                {...register('estimated_cost', {
+                  setValueAs: (value) => Number(String(value || '0').replace(',', '.')),
+                })}
                 aria-invalid={!!errors.estimated_cost}
               />
               {errors.estimated_cost && (
@@ -206,8 +222,11 @@ export function BudgetForm({
                 id="actual_cost"
                 type="number"
                 min="0"
-                placeholder="0"
-                {...register('actual_cost', { valueAsNumber: true })}
+                step="0.01"
+                placeholder="0,00"
+                {...register('actual_cost', {
+                  setValueAs: (value) => Number(String(value || '0').replace(',', '.')),
+                })}
                 aria-invalid={!!errors.actual_cost}
               />
               {errors.actual_cost && (
