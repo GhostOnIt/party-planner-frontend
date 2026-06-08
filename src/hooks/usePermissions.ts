@@ -98,6 +98,7 @@ export function usePhotosPermissions(eventId: string) {
     canUpload: permissions?.permissions?.includes('photos.upload') || false,
     canDelete: permissions?.permissions?.includes('photos.delete') || false,
     canSetFeatured: permissions?.permissions?.includes('photos.set_featured') || false,
+    canModerate: permissions?.permissions?.includes('photos.moderate') || false,
     hasAnyPermission: permissions?.permissions?.some((p) => p.startsWith('photos.')) || false,
   };
 }

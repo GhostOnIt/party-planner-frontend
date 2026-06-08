@@ -37,6 +37,8 @@ import {
   useDownloadPhoto,
   useDownloadMultiplePhotos,
   useSetFeaturedPhoto,
+  useApprovePhoto,
+  useRejectPhoto,
 } from '@/hooks/usePhotos';
 import { usePhotosPermissions } from '@/hooks/usePermissions';
 import type { Photo, PhotoFilters as PhotoFiltersType } from '@/types';
@@ -71,6 +73,8 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
   const { mutate: downloadMultiplePhotos, isPending: isDownloadingMultiple } =
     useDownloadMultiplePhotos(eventId!);
   const { mutate: setFeaturedPhoto } = useSetFeaturedPhoto(eventId!);
+  const { mutate: approvePhoto } = useApprovePhoto(eventId!);
+  const { mutate: rejectPhoto } = useRejectPhoto(eventId!);
   const photosPermissions = usePhotosPermissions(eventId!);
 
   const photos = useMemo(() => photosData?.data || [], [photosData?.data]);
@@ -228,6 +232,45 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
     });
   };
 
+  const handleApprove = (photo: Photo) => {
+    approvePhoto(photo.id, {
+      onSuccess: () => {
+        toast({
+          title: 'Photo validee',
+          description: 'La photo est maintenant visible par les invites.',
+        });
+      },
+      onError: () => {
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de valider cette photo.',
+          variant: 'destructive',
+        });
+      },
+    });
+  };
+
+  const handleReject = (photo: Photo) => {
+    rejectPhoto(
+      { photoId: photo.id },
+      {
+        onSuccess: () => {
+          toast({
+            title: 'Photo rejetee',
+            description: 'La photo ne sera pas visible dans la galerie publique.',
+          });
+        },
+        onError: () => {
+          toast({
+            title: 'Erreur',
+            description: 'Impossible de rejeter cette photo.',
+            variant: 'destructive',
+          });
+        },
+      }
+    );
+  };
+
   const selectAll = () => {
     setSelectedIds(photos.map((p) => p.id));
   };
@@ -244,7 +287,11 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
     <div className="space-y-6">
       {/* Actions Bar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <PhotoFilters filters={filters} onFiltersChange={setFilters} />
+        <PhotoFilters
+          filters={filters}
+          onFiltersChange={setFilters}
+          canModerate={photosPermissions.canModerate}
+        />
 
         <div className="flex items-center gap-2">
           {selectionMode && (
@@ -320,6 +367,8 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
             onDelete={photosPermissions.canDelete ? handleDelete : undefined}
             onDownload={handleDownload}
             onSetFeatured={photosPermissions.canSetFeatured ? handleSetFeatured : undefined}
+            onApprove={photosPermissions.canModerate ? handleApprove : undefined}
+            onReject={photosPermissions.canModerate ? handleReject : undefined}
             selectionMode={selectionMode}
           />
 

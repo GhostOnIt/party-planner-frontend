@@ -129,7 +129,7 @@ export function PublicPhotoUploadPage() {
           refetch();
           toast({
             title: 'Photos envoyées',
-            description: "Merci d'avoir partagé ces moments !",
+            description: 'Merci ! Elles seront visibles dans la galerie apres validation.',
             className: 'bg-white border-primary/20 text-slate-800',
           });
         },

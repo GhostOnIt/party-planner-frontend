@@ -85,6 +85,11 @@ export function PhotoLightbox({
               <span className="text-xs text-yellow-500">Photo principale</span>
             </div>
           )}
+          {currentPhoto.moderation_status && currentPhoto.moderation_status !== 'approved' && (
+            <span className="rounded-full bg-white/15 px-2 py-0.5 text-xs text-white">
+              {currentPhoto.moderation_status === 'pending' ? 'En attente' : 'Rejetee'}
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -98,7 +103,7 @@ export function PhotoLightbox({
               <Download className="h-5 w-5" />
             </Button>
           )}
-          {onSetFeatured && !currentPhoto.is_featured && (
+          {onSetFeatured && !currentPhoto.is_featured && currentPhoto.moderation_status === 'approved' && (
             <Button
               variant="ghost"
               size="icon"

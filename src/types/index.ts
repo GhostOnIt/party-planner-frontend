@@ -20,6 +20,7 @@ export type PaymentMethod = 'mtn_mobile_money' | 'airtel_money';
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 export type PlanType = 'starter' | 'pro';
 export type PhotoType = 'moodboard' | 'event_photo';
+export type PhotoModerationStatus = 'pending' | 'approved' | 'rejected';
 export type UserRole = 'admin' | 'user';
 
 // User
@@ -210,6 +211,9 @@ export interface Photo {
   size: number;
   mime_type: string;
   is_featured: boolean;
+  moderation_status: PhotoModerationStatus;
+  moderated_at?: string | null;
+  moderation_reason?: string | null;
   uploaded_by: string;
   uploader?: User;
   created_at: string;
@@ -572,6 +576,7 @@ export interface BudgetFilters {
 
 export interface PhotoFilters {
   type?: PhotoType;
+  moderation_status?: PhotoModerationStatus;
   search?: string;
   page?: number;
   per_page?: number;

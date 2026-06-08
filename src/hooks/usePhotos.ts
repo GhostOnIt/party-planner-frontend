@@ -275,6 +275,36 @@ export function useSetFeaturedPhoto(eventId: string) {
   });
 }
 
+export function useApprovePhoto(eventId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (photoId: string) => {
+      const response = await api.post<Photo>(`/events/${eventId}/photos/${photoId}/approve`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events', eventId, 'photos'] });
+    },
+  });
+}
+
+export function useRejectPhoto(eventId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ photoId, reason }: { photoId: string; reason?: string }) => {
+      const response = await api.post<Photo>(`/events/${eventId}/photos/${photoId}/reject`, {
+        reason,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events', eventId, 'photos'] });
+    },
+  });
+}
+
 // Toggle featured status
 export function useToggleFeaturedPhoto(eventId: string) {
   const queryClient = useQueryClient();

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Check, Download, MoreHorizontal, Star, Trash2, ZoomIn } from 'lucide-react';
+import { Check, Download, MoreHorizontal, ShieldCheck, ShieldX, Star, Trash2, ZoomIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
@@ -21,6 +22,8 @@ interface PhotoCardProps {
   onDelete?: (photo: Photo) => void;
   onDownload?: (photo: Photo) => void;
   onSetFeatured?: (photo: Photo) => void;
+  onApprove?: (photo: Photo) => void;
+  onReject?: (photo: Photo) => void;
   selectionMode?: boolean;
 }
 
@@ -32,11 +35,18 @@ export function PhotoCard({
   onDelete,
   onDownload,
   onSetFeatured,
+  onApprove,
+  onReject,
   selectionMode = false,
 }: PhotoCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const moderationLabel = {
+    pending: 'En attente',
+    approved: 'Validee',
+    rejected: 'Rejetee',
+  }[photo.moderation_status || 'approved'];
 
   const handleClick = (e: React.MouseEvent) => {
     // Don't handle click if clicking on interactive elements (buttons, menus, etc.)
@@ -86,9 +96,18 @@ export function PhotoCard({
 
       {/* Featured Badge */}
       {photo.is_featured && (
-        <div className="absolute left-2 top-2 rounded-full bg-yellow-500 p-1">
+        <div className="absolute left-2 top-2 z-10 rounded-full bg-yellow-500 p-1">
           <Star className="h-3 w-3 fill-white text-white" />
         </div>
+      )}
+
+      {photo.moderation_status && photo.moderation_status !== 'approved' && (
+        <Badge
+          variant={photo.moderation_status === 'rejected' ? 'destructive' : 'secondary'}
+          className="absolute right-2 top-2 z-10"
+        >
+          {moderationLabel}
+        </Badge>
       )}
 
       {/* Selection Checkbox */}
@@ -145,7 +164,29 @@ export function PhotoCard({
                     <Download className="mr-2 h-4 w-4" />
                     Telecharger
                   </DropdownMenuItem>
-                  {!photo.is_featured && onSetFeatured && (
+                  {photo.moderation_status === 'pending' && onApprove && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onApprove(photo);
+                      }}
+                    >
+                      <ShieldCheck className="mr-2 h-4 w-4" />
+                      Valider
+                    </DropdownMenuItem>
+                  )}
+                  {photo.moderation_status !== 'rejected' && onReject && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onReject(photo);
+                      }}
+                    >
+                      <ShieldX className="mr-2 h-4 w-4" />
+                      Rejeter
+                    </DropdownMenuItem>
+                  )}
+                  {!photo.is_featured && photo.moderation_status === 'approved' && onSetFeatured && (
                     <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation();

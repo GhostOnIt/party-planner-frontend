@@ -11,6 +11,8 @@ interface PhotoGridProps {
   onDelete?: (photo: Photo) => void;
   onDownload: (photo: Photo) => void;
   onSetFeatured?: (photo: Photo) => void;
+  onApprove?: (photo: Photo) => void;
+  onReject?: (photo: Photo) => void;
   selectionMode?: boolean;
 }
 
@@ -23,6 +25,8 @@ export function PhotoGrid({
   onDelete,
   onDownload,
   onSetFeatured,
+  onApprove,
+  onReject,
   selectionMode = false,
 }: PhotoGridProps) {
   const handleSelect = (id: string) => {
@@ -55,6 +59,8 @@ export function PhotoGrid({
             onDelete={onDelete}
             onDownload={onDownload}
             onSetFeatured={onSetFeatured}
+            onApprove={onApprove}
+            onReject={onReject}
             selectionMode={selectionMode}
           />
       ))}
