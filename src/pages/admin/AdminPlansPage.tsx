@@ -96,6 +96,15 @@ type PlanFormValues = z.infer<typeof planFormSchema>;
 
 /** Séparé des fonctionnalités produit : active le flux « Demander un devis » (pas d’abonnement en ligne). */
 const SALES_CONTACT_FEATURE_KEY = 'sales.contact_required' as const;
+const PUBLIC_CATALOG_SLUGS = ['starter', 'pro', 'business'];
+
+function getPlanPriceLabel(plan: Plan) {
+  if (plan.features?.[SALES_CONTACT_FEATURE_KEY]) {
+    return 'Sur devis';
+  }
+
+  return plan.price === 0 ? 'Gratuit' : `${plan.price.toLocaleString()} FCFA`;
+}
 
 const defaultLimits: PlanLimits = {
   'events.creations_per_billing_period': 1,
@@ -135,6 +144,13 @@ export function AdminPlansPage() {
 
   const { data, isLoading } = useAdminPlans();
   const plans = data?.data || [];
+  const commercialPlans = plans.filter(
+    (plan) => !plan.is_trial && PUBLIC_CATALOG_SLUGS.includes(plan.slug)
+  );
+  const trialPlans = plans.filter((plan) => plan.is_trial);
+  const outOfCatalogPlans = plans.filter(
+    (plan) => !plan.is_trial && !PUBLIC_CATALOG_SLUGS.includes(plan.slug)
+  );
   const { mutate: createPlan, isPending: isCreating } = useCreatePlan();
   const { mutate: updatePlan, isPending: isUpdating } = useUpdatePlan();
   const { mutate: deletePlanMutation, isPending: isDeleting } = useDeletePlan();
@@ -330,7 +346,9 @@ export function AdminPlansPage() {
       <Card>
         <CardHeader>
           <CardTitle>Liste des plans</CardTitle>
-          <CardDescription>{plans.length} plan(s) configures</CardDescription>
+          <CardDescription>
+            {commercialPlans.length} plan(s) commerciaux configurés
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -346,10 +364,10 @@ export function AdminPlansPage() {
                 </div>
               ))}
             </div>
-          ) : plans.length === 0 ? (
+          ) : commercialPlans.length === 0 ? (
             <div className="flex flex-col items-center py-12 text-center">
               <CreditCard className="h-12 w-12 text-muted-foreground/50" />
-              <p className="mt-2 text-muted-foreground">Aucun plan configure</p>
+              <p className="mt-2 text-muted-foreground">Aucun plan commercial configuré</p>
               <Button className="mt-4" onClick={openCreateForm}>
                 <Plus className="mr-2 h-4 w-4" />
                 Creer un plan
@@ -370,7 +388,7 @@ export function AdminPlansPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {plans.map((plan) => (
+                  {commercialPlans.map((plan) => (
                     <TableRow key={plan.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -397,7 +415,7 @@ export function AdminPlansPage() {
                       </TableCell>
                       <TableCell>
                         <span className="font-semibold">
-                          {plan.price === 0 ? 'Gratuit' : `${plan.price.toLocaleString()} FCFA`}
+                          {getPlanPriceLabel(plan)}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -488,6 +506,110 @@ export function AdminPlansPage() {
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Offre d'essai</CardTitle>
+          <CardDescription>
+            Offre temporaire proposée aux nouveaux comptes pendant les 10 premiers jours.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <Skeleton className="h-16 w-full" />
+          ) : trialPlans.length === 0 ? (
+            <div className="flex items-center justify-between rounded-lg border border-dashed p-4">
+              <div>
+                <p className="font-medium">Aucune offre d'essai configurée</p>
+                <p className="text-sm text-muted-foreground">
+                  Créez un plan marqué comme essai si vous souhaitez activer cette offre.
+                </p>
+              </div>
+              <Button variant="outline" onClick={openCreateForm}>
+                <Plus className="mr-2 h-4 w-4" />
+                Configurer
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {trialPlans.map((plan) => (
+                <div
+                  key={plan.id}
+                  className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                      <Gift className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{plan.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {plan.duration_days} jours, usage unique, slug {plan.slug}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {plan.is_active ? (
+                      <Badge className="bg-green-100 text-green-800">
+                        <CheckCircle className="mr-1 h-3 w-3" />
+                        Actif
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">
+                        <XCircle className="mr-1 h-3 w-3" />
+                        Inactif
+                      </Badge>
+                    )}
+                    <Button variant="outline" size="sm" onClick={() => openEditForm(plan)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Modifier
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {outOfCatalogPlans.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Plans hors catalogue</CardTitle>
+            <CardDescription>
+              Ces plans existent en base mais ne sont pas affichés dans la page tarifs.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {outOfCatalogPlans.map((plan) => (
+                <div
+                  key={plan.id}
+                  className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="font-medium">{plan.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      slug {plan.slug}, {getPlanPriceLabel(plan)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {plan.is_active ? (
+                      <Badge className="bg-amber-100 text-amber-800">Actif hors catalogue</Badge>
+                    ) : (
+                      <Badge variant="secondary">Inactif</Badge>
+                    )}
+                    <Button variant="outline" size="sm" onClick={() => openEditForm(plan)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Modifier
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Form Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>

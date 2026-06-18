@@ -326,7 +326,7 @@ const faqs = [
   {
     question: 'Comment fonctionne la facturation ?',
     answer:
-      "Chaque plan est facturé mensuellement. Vous bénéficiez de toutes les fonctionnalités incluses pendant la durée de votre abonnement. L'essai gratuit est disponible une seule fois par compte et peut être activé depuis cette page.",
+      "Chaque plan est facturé mensuellement. Vous bénéficiez de toutes les fonctionnalités incluses pendant la durée de votre abonnement. Les nouveaux comptes peuvent activer l'essai gratuit depuis leur tableau de bord pendant les 10 premiers jours.",
   },
   {
     question: 'Puis-je changer de plan ?',
@@ -479,8 +479,8 @@ export function PlansPage() {
               Plans tarifaires
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-balance leading-relaxed">
-              Commencez immédiatement gratuitement. Passez à un plan supérieur pour plus de
-              fonctionnalités, d&apos;événements et de collaboration.
+              Choisissez l&apos;offre adaptée à votre activité. Les nouveaux comptes peuvent activer
+              un essai de 14 jours depuis leur tableau de bord.
             </p>
           </div>
         </div>
