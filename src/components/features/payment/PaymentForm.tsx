@@ -60,7 +60,7 @@ function getMarketPaymentMethods(country: MarketCountry): PaymentSelectorMethod[
         provider: 'MTN_MOMO_COG',
       },
       {
-        id: 'airtel_money',
+        id: 'pawapay',
         name: 'Airtel Money Congo',
         prefixes: '04, 05',
         color: 'border-red-400 hover:bg-red-50',
