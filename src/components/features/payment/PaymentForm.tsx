@@ -15,7 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PaymentMethodSelector, type PaymentSelectorMethod } from './PaymentMethodSelector';
+import {
+  PaymentMethodSelector,
+  getPaymentMethodKey,
+  type PaymentSelectorMethod,
+} from './PaymentMethodSelector';
 import { getProviderFromPhone } from '@/hooks/usePayment';
 import { isAirtelMoneyUiEnabled } from '@/lib/paymentFeatureFlags';
 import { paymentTrace } from '@/lib/paymentTrace';
@@ -41,8 +45,10 @@ const paymentTestAmount = Number(import.meta.env.VITE_PAYMENT_TEST_AMOUNT || '')
 const paymentTestCurrency = String(import.meta.env.VITE_PAYMENT_TEST_CURRENCY || 'XOF');
 const hasPaymentTestAmount = Number.isFinite(paymentTestAmount) && paymentTestAmount > 0;
 
-const marketCountries: MarketCountry[] = ['COG', 'COD', 'CMR', 'GAB', 'SEN'];
-const initialCountry: MarketCountry = marketCountries.includes(defaultCountry) ? defaultCountry : 'COG';
+const marketCountries: MarketCountry[] = ['COG', 'COD', 'CMR', 'GAB', 'SEN', 'CIV'];
+const initialCountry: MarketCountry = marketCountries.includes(defaultCountry)
+  ? defaultCountry
+  : 'COG';
 
 function getMarketPaymentMethods(country: MarketCountry): PaymentSelectorMethod[] | undefined {
   if (country === 'COG') {
@@ -73,6 +79,32 @@ function getMarketPaymentMethods(country: MarketCountry): PaymentSelectorMethod[
         color: 'border-orange-400 hover:bg-orange-50',
         provider: 'ORANGE_SEN',
       },
+      {
+        id: 'pawapay',
+        name: 'Free Money Sénégal',
+        prefixes: '76',
+        color: 'border-red-400 hover:bg-red-50',
+        provider: 'FREE_SEN',
+      },
+    ];
+  }
+
+  if (country === 'CIV') {
+    return [
+      {
+        id: 'pawapay',
+        name: "Orange Money Côte d'Ivoire",
+        prefixes: '07',
+        color: 'border-orange-400 hover:bg-orange-50',
+        provider: 'ORANGE_CIV',
+      },
+      {
+        id: 'pawapay',
+        name: "MTN Mobile Money Côte d'Ivoire",
+        prefixes: '05',
+        color: 'border-yellow-400 hover:bg-yellow-50',
+        provider: 'MTN_MOMO_CIV',
+      },
     ];
   }
 
@@ -86,9 +118,13 @@ function getMarketPaymentMethods(country: MarketCountry): PaymentSelectorMethod[
   ];
 }
 
-function getDefaultPaymentMethod(country: MarketCountry): PaymentMethod | null {
+function getDefaultPaymentMethodKey(country: MarketCountry): string | null {
   const marketMethods = getMarketPaymentMethods(country);
-  return marketMethods?.[0]?.id ?? (isSandbox || !isAirtelMoneyUiEnabled ? 'mtn_mobile_money' : null);
+  return marketMethods?.[0]
+    ? getPaymentMethodKey(marketMethods[0])
+    : isSandbox || !isAirtelMoneyUiEnabled
+      ? 'mtn_mobile_money'
+      : null;
 }
 
 const isValidPhoneNumber = (phone: string, country: MarketCountry): boolean => {
@@ -112,7 +148,9 @@ const buildPaymentSchema = (country: MarketCountry) =>
       .min(1, 'Numéro de téléphone requis')
       .refine(
         (phone) => isValidPhoneNumber(phone, country),
-        isSandbox ? 'Format invalide. Utilisez 46733123450 (test).' : `Format invalide pour ${PHONE_MARKETS[country].name}.`
+        isSandbox
+          ? 'Format invalide. Utilisez 46733123450 (test).'
+          : `Format invalide pour ${PHONE_MARKETS[country].name}.`
       ),
   });
 
@@ -161,14 +199,20 @@ export function PaymentForm({
   const marketPaymentMethods = getMarketPaymentMethods(selectedCountry);
   const displayAmount = hasPaymentTestAmount ? paymentTestAmount : amount;
   const displayCurrency = hasPaymentTestAmount ? paymentTestCurrency : market.currency || currency;
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(() => getDefaultPaymentMethod(safeInitialCountry));
+  const [selectedMethodKey, setSelectedMethodKey] = useState<string | null>(() =>
+    getDefaultPaymentMethodKey(safeInitialCountry)
+  );
   const [autoDetectedMethod, setAutoDetectedMethod] = useState<PaymentMethod | null>(null);
+  const selectedPaymentMethod =
+    marketPaymentMethods?.find((method) => getPaymentMethodKey(method) === selectedMethodKey) ??
+    null;
+  const selectedMethod = selectedPaymentMethod?.id ?? (selectedMethodKey as PaymentMethod | null);
 
   useEffect(() => {
-    if (!isAirtelMoneyUiEnabled && selectedMethod === 'airtel_money') {
-      setSelectedMethod('mtn_mobile_money');
+    if (!isAirtelMoneyUiEnabled && selectedMethodKey === 'airtel_money') {
+      setSelectedMethodKey('mtn_mobile_money');
     }
-  }, [selectedMethod]);
+  }, [selectedMethodKey]);
 
   const {
     register,
@@ -198,7 +242,7 @@ export function PaymentForm({
   };
 
   useEffect(() => {
-    setSelectedMethod(getDefaultPaymentMethod(selectedCountry));
+    setSelectedMethodKey(getDefaultPaymentMethodKey(selectedCountry));
     setAutoDetectedMethod(null);
     resetField('phone_number', { defaultValue: isSandbox ? '46733123450' : '' });
   }, [resetField, selectedCountry]);
@@ -222,13 +266,13 @@ export function PaymentForm({
         detected = null;
       }
       setAutoDetectedMethod(detected);
-      if (detected && !selectedMethod) {
-        setSelectedMethod(detected);
+      if (detected && !selectedMethodKey) {
+        setSelectedMethodKey(detected);
       }
     } else {
       setAutoDetectedMethod(null);
     }
-  }, [marketPaymentMethods, phoneNumber, selectedMethod]);
+  }, [marketPaymentMethods, phoneNumber, selectedMethodKey]);
 
   const handleFormSubmit = (data: PaymentFormData) => {
     paymentTrace('PaymentForm: submit (avant validation interne)', {
@@ -245,8 +289,8 @@ export function PaymentForm({
     const cleanedSandbox = data.phone_number.replace(/[\s\-\.]/g, '');
     const phone_number = isSandbox
       ? cleanedSandbox
-      : normalizePhoneToInternational(data.phone_number, selectedCountry) ?? data.phone_number;
-    const provider = marketPaymentMethods?.find((method) => method.id === selectedMethod)?.provider;
+      : (normalizePhoneToInternational(data.phone_number, selectedCountry) ?? data.phone_number);
+    const provider = selectedPaymentMethod?.provider;
     paymentTrace('PaymentForm: appel onSubmit parent', {
       method: selectedMethod,
       phoneLen: phone_number.length,
@@ -264,21 +308,15 @@ export function PaymentForm({
   };
 
   // Calculate expiration date based on plan type
-  const expirationDate = planType
-    ? addMonths(new Date(), planDurations[planType].months)
-    : null;
+  const expirationDate = planType ? addMonths(new Date(), planDurations[planType].months) : null;
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {/* Amount Display */}
       <div className="rounded-lg bg-muted p-4 text-center">
         <p className="text-sm text-muted-foreground">Montant a payer</p>
-        <p className="text-3xl font-bold">
-          {formatCurrency(displayAmount, displayCurrency)}
-        </p>
-        {description && (
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-        )}
+        <p className="text-3xl font-bold">{formatCurrency(displayAmount, displayCurrency)}</p>
+        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
         {planType && expirationDate && (
           <div className="mt-3 flex items-center justify-center gap-2 rounded-md bg-primary/10 px-3 py-2 text-sm">
             <Calendar className="h-4 w-4 text-primary" />
@@ -286,8 +324,8 @@ export function PaymentForm({
               Valide jusqu'au{' '}
               <strong className="text-primary">
                 {format(expirationDate, 'dd MMMM yyyy', { locale: fr })}
-              </strong>
-              {' '}({planDurations[planType].label})
+              </strong>{' '}
+              ({planDurations[planType].label})
             </span>
           </div>
         )}
@@ -296,11 +334,7 @@ export function PaymentForm({
       {/* Market Selection */}
       <div className="space-y-2">
         <Label htmlFor="payment_country">Pays</Label>
-        <Select
-          value={selectedCountry}
-          onValueChange={handleCountryChange}
-          disabled={isLoading}
-        >
+        <Select value={selectedCountry} onValueChange={handleCountryChange} disabled={isLoading}>
           <SelectTrigger id="payment_country">
             <SelectValue placeholder="Choisir un pays" />
           </SelectTrigger>
@@ -318,8 +352,8 @@ export function PaymentForm({
       <div className="space-y-2">
         <Label>Methode de paiement</Label>
         <PaymentMethodSelector
-          value={selectedMethod}
-          onChange={setSelectedMethod}
+          value={selectedMethodKey}
+          onChange={(method) => setSelectedMethodKey(getPaymentMethodKey(method))}
           disabled={isLoading}
           methods={marketPaymentMethods}
         />
@@ -329,7 +363,7 @@ export function PaymentForm({
             <button
               type="button"
               className="text-primary underline"
-              onClick={() => setSelectedMethod(autoDetectedMethod)}
+              onClick={() => setSelectedMethodKey(autoDetectedMethod)}
             >
               {autoDetectedMethod === 'mtn_mobile_money' ? 'MTN Mobile Money' : 'Airtel Money'}
             </button>
@@ -357,19 +391,12 @@ export function PaymentForm({
           <p className="text-sm text-destructive">{errors.phone_number.message}</p>
         )}
         <p className="text-xs text-muted-foreground">
-          {isSandbox
-            ? 'Mode test — numéro MTN sandbox prérempli.'
-            : market.hint}
+          {isSandbox ? 'Mode test — numéro MTN sandbox prérempli.' : market.hint}
         </p>
       </div>
 
       {/* Submit Button */}
-      <Button
-        type="submit"
-        className="w-full"
-        size="lg"
-        disabled={isLoading || !selectedMethod}
-      >
+      <Button type="submit" className="w-full" size="lg" disabled={isLoading || !selectedMethod}>
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -399,9 +426,15 @@ export function PaymentForm({
         <div className="rounded-lg bg-yellow-100 border border-yellow-300 p-4 text-sm text-yellow-800">
           <p className="font-medium">🧪 Mode Test - Numeros sandbox MTN:</p>
           <ul className="mt-2 space-y-1 font-mono text-xs">
-            <li><strong>46733123450</strong> - Paiement reussi (auto-approve)</li>
-            <li><strong>46733123451</strong> - Paiement echoue</li>
-            <li><strong>46733123452</strong> - Timeout</li>
+            <li>
+              <strong>46733123450</strong> - Paiement reussi (auto-approve)
+            </li>
+            <li>
+              <strong>46733123451</strong> - Paiement echoue
+            </li>
+            <li>
+              <strong>46733123452</strong> - Timeout
+            </li>
           </ul>
         </div>
       )}
