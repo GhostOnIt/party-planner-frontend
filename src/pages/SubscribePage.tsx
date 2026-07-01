@@ -29,7 +29,6 @@ import { paymentTrace } from '@/lib/paymentTrace';
 
 const defaultMarketCountry = normalizeMarketCountry(import.meta.env.VITE_MARKET_COUNTRY);
 const paymentTestAmount = Number(import.meta.env.VITE_PAYMENT_TEST_AMOUNT || '');
-const paymentTestCurrency = String(import.meta.env.VITE_PAYMENT_TEST_CURRENCY || 'XOF');
 const hasPaymentTestAmount = Number.isFinite(paymentTestAmount) && paymentTestAmount > 0;
 
 function formatCheckoutAmount(amount: number, currency: string): string {
@@ -224,7 +223,7 @@ export function SubscribePage() {
     : [];
   const selectedMarket = PHONE_MARKETS[selectedCountry];
   const checkoutAmount = hasPaymentTestAmount ? paymentTestAmount : plan.price;
-  const checkoutCurrency = hasPaymentTestAmount ? paymentTestCurrency : selectedMarket.currency;
+  const checkoutCurrency = selectedMarket.currency;
   const checkoutAmountLabel = plan.price === 0
     ? 'Gratuit'
     : formatCheckoutAmount(checkoutAmount, checkoutCurrency);

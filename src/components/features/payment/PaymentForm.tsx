@@ -42,7 +42,6 @@ const planDurations: Record<PlanType, { months: number; label: string }> = {
 const isSandbox = import.meta.env.VITE_PAYMENT_ENV === 'sandbox';
 const defaultCountry = normalizeMarketCountry(import.meta.env.VITE_MARKET_COUNTRY);
 const paymentTestAmount = Number(import.meta.env.VITE_PAYMENT_TEST_AMOUNT || '');
-const paymentTestCurrency = String(import.meta.env.VITE_PAYMENT_TEST_CURRENCY || 'XOF');
 const hasPaymentTestAmount = Number.isFinite(paymentTestAmount) && paymentTestAmount > 0;
 
 const marketCountries: MarketCountry[] = ['COG', 'COD', 'CMR', 'GAB', 'SEN', 'CIV'];
@@ -104,6 +103,18 @@ function getMarketPaymentMethods(country: MarketCountry): PaymentSelectorMethod[
         prefixes: '05',
         color: 'border-yellow-400 hover:bg-yellow-50',
         provider: 'MTN_MOMO_CIV',
+      },
+    ];
+  }
+
+  if (country === 'GAB') {
+    return [
+      {
+        id: 'pawapay',
+        name: 'Airtel Money Gabon',
+        prefixes: '06, 07',
+        color: 'border-red-400 hover:bg-red-50',
+        provider: 'AIRTEL_GAB',
       },
     ];
   }
@@ -198,7 +209,7 @@ export function PaymentForm({
   const market = PHONE_MARKETS[selectedCountry];
   const marketPaymentMethods = getMarketPaymentMethods(selectedCountry);
   const displayAmount = hasPaymentTestAmount ? paymentTestAmount : amount;
-  const displayCurrency = hasPaymentTestAmount ? paymentTestCurrency : market.currency || currency;
+  const displayCurrency = market.currency || currency;
   const [selectedMethodKey, setSelectedMethodKey] = useState<string | null>(() =>
     getDefaultPaymentMethodKey(safeInitialCountry)
   );
