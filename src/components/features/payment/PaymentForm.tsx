@@ -69,7 +69,7 @@ function getMarketPaymentMethods(country: MarketCountry): PaymentSelectorMethod[
       {
         id: 'pawapay',
         name: 'Orange Money Sénégal',
-        prefixes: '77, 78',
+        prefixes: '71, 77, 78',
         color: 'border-orange-400 hover:bg-orange-50',
         provider: 'ORANGE_SEN',
       },

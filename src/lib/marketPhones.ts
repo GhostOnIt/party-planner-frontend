@@ -52,9 +52,9 @@ export const PHONE_MARKETS: Record<MarketCountry, PhoneMarket> = {
     name: 'Sénégal',
     currency: 'XOF',
     callingCode: '221',
-    nationalRegex: /^7[05678]\d{7}$/,
-    hint: '+221 ou 00221, puis 9 chiffres commençant par 70, 75, 76, 77 ou 78.',
-    example: '+221773456789',
+    nationalRegex: /^7[015678]\d{7}$/,
+    hint: '+221 ou 00221, puis 9 chiffres commençant par 70, 71, 75, 76, 77 ou 78.',
+    example: '+221710485421',
   },
   CIV: {
     iso2: 'CI',
