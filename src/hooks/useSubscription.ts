@@ -243,7 +243,7 @@ export function useSubscribeToPlan() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { plan_id: number }) => {
+    mutationFn: async (data: { plan_id: number; country?: string }) => {
       const response = await api.post('/subscriptions/subscribe', data);
       return response.data;
     },

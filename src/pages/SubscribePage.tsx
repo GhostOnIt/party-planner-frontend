@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Loader2, ArrowLeft, Check, AlertCircle, Crown, ShieldCheck, Sparkles } from 'lucide-react';
 import { Seo } from '@/components/seo';
@@ -42,6 +42,7 @@ export function SubscribePage() {
   const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const [subscriptionCreated, setSubscriptionCreated] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
@@ -49,9 +50,11 @@ export function SubscribePage() {
   const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Évite le clignotement du bouton entre subscribe et initiate (isPending repasse à false) — cause typique de removeChild/insertBefore avec Radix. */
   const [paymentFlowBusy, setPaymentFlowBusy] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<MarketCountry>(defaultMarketCountry);
+  const [selectedCountry, setSelectedCountry] = useState<MarketCountry>(() =>
+    normalizeMarketCountry(searchParams.get('country') ?? defaultMarketCountry)
+  );
 
-  const { data: plans, isLoading: isLoadingPlans } = usePlans();
+  const { data: plans, isLoading: isLoadingPlans } = usePlans(selectedCountry);
   const plan = plans?.find(p => p.slug === slug && p.is_active && !p.is_trial);
 
   const subscribeMutation = useSubscribeToPlan();
@@ -101,7 +104,10 @@ export function SubscribePage() {
     setPaymentFlowBusy(true);
     try {
       paymentTrace('SubscribePage: mutateAsync subscribe (création abonnement)', { plan_id: plan.id });
-      const subscriptionResult = await subscribeMutation.mutateAsync({ plan_id: plan.id });
+      const subscriptionResult = await subscribeMutation.mutateAsync({
+        plan_id: plan.id,
+        country: data.country,
+      });
       paymentTrace('SubscribePage: souscription OK', {
         requires_payment: subscriptionResult.requires_payment,
         subscriptionId: subscriptionResult.subscription?.id,
@@ -158,6 +164,11 @@ export function SubscribePage() {
     setRedirectCountdown(null);
     setInlineError(reason ?? 'Le paiement n\'a pas pu être effectué. Veuillez réessayer.');
     setPaymentId(null);
+  };
+
+  const handleCountryChange = (country: MarketCountry) => {
+    setSelectedCountry(country);
+    setSearchParams({ country });
   };
 
   if (isLoadingPlans) {
@@ -379,7 +390,7 @@ export function SubscribePage() {
                   <PaymentForm
                     amount={plan.price}
                     country={selectedCountry}
-                    onCountryChange={setSelectedCountry}
+                    onCountryChange={handleCountryChange}
                     onSubmit={handlePaymentSubmit}
                     isLoading={paymentFlowBusy}
                     description={`Abonnement ${plan.name} - ${plan.duration_label}`}

@@ -90,6 +90,12 @@ const planFormSchema = z.object({
     'photos.max_per_event': z.number(),
   }),
   features: z.record(z.string(), z.boolean()), // Accept any string key including dots
+  market_prices: z.record(
+    z.string(),
+    z.object({
+      price: z.number().min(0, 'Le prix doit etre positif'),
+    })
+  ),
 });
 
 type PlanFormValues = z.infer<typeof planFormSchema>;
@@ -97,13 +103,25 @@ type PlanFormValues = z.infer<typeof planFormSchema>;
 /** Séparé des fonctionnalités produit : active le flux « Demander un devis » (pas d’abonnement en ligne). */
 const SALES_CONTACT_FEATURE_KEY = 'sales.contact_required' as const;
 const PUBLIC_CATALOG_SLUGS = ['starter', 'pro', 'business'];
+const MARKET_PRICES = [
+  { country: 'COG', name: 'Congo-Brazzaville', currency: 'XAF' },
+  { country: 'COD', name: 'RDC', currency: 'CDF' },
+  { country: 'CMR', name: 'Cameroun', currency: 'XAF' },
+  { country: 'GAB', name: 'Gabon', currency: 'XAF' },
+  { country: 'SEN', name: 'Sénégal', currency: 'XOF' },
+  { country: 'CIV', name: "Côte d'Ivoire", currency: 'XOF' },
+] as const;
+
+function defaultMarketPrices(price = 0) {
+  return Object.fromEntries(MARKET_PRICES.map((market) => [market.country, { price }]));
+}
 
 function getPlanPriceLabel(plan: Plan) {
   if (plan.features?.[SALES_CONTACT_FEATURE_KEY]) {
     return 'Sur devis';
   }
 
-  return plan.price === 0 ? 'Gratuit' : `${plan.price.toLocaleString()} FCFA`;
+  return plan.price === 0 ? 'Gratuit' : plan.formatted_price;
 }
 
 const defaultLimits: PlanLimits = {
@@ -171,6 +189,7 @@ export function AdminPlansPage() {
       sort_order: 0,
       limits: defaultLimits as any,
       features: defaultFeatures,
+      market_prices: defaultMarketPrices(0),
     },
   });
 
@@ -188,6 +207,7 @@ export function AdminPlansPage() {
       sort_order: plans.length,
       limits: defaultLimits as any,
       features: defaultFeatures,
+      market_prices: defaultMarketPrices(0),
     });
     setUnlimitedFlags({});
     setEditPlan(null);
@@ -223,6 +243,14 @@ export function AdminPlansPage() {
         'photos.max_per_event': limits['photos.max_per_event'] ?? 5,
       },
       features: { ...defaultFeatures, ...plan.features },
+      market_prices: Object.fromEntries(
+        MARKET_PRICES.map((market) => [
+          market.country,
+          {
+            price: plan.market_prices?.[market.country]?.price ?? plan.base_price ?? plan.price,
+          },
+        ])
+      ),
     });
     setEditPlan(plan);
     setFormOpen(true);
@@ -265,6 +293,7 @@ export function AdminPlansPage() {
       sort_order: data.sort_order,
       limits: transformedLimits,
       features: data.features,
+      market_prices: data.market_prices,
     };
 
     if (editPlan) {
@@ -678,12 +707,15 @@ export function AdminPlansPage() {
 
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
-                    <Label htmlFor="price">Prix (FCFA)</Label>
+                    <Label htmlFor="price">Prix de base / fallback</Label>
                     <Input
                       id="price"
                       type="number"
                       {...form.register('price', { valueAsNumber: true })}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Utilisé si aucun prix pays n'est défini.
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="duration_days">Duree (jours)</Label>
@@ -700,6 +732,32 @@ export function AdminPlansPage() {
                       type="number"
                       {...form.register('sort_order', { valueAsNumber: true })}
                     />
+                  </div>
+                </div>
+
+                <div className="space-y-3 rounded-lg border p-4">
+                  <div>
+                    <h3 className="text-sm font-medium">Prix par pays</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Les devises sont fixées par marché et ne sont pas modifiables.
+                    </p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {MARKET_PRICES.map((market) => (
+                      <div key={market.country} className="space-y-2">
+                        <Label htmlFor={`market-${market.country}`}>
+                          {market.name} ({market.currency})
+                        </Label>
+                        <Input
+                          id={`market-${market.country}`}
+                          type="number"
+                          min={0}
+                          {...form.register(`market_prices.${market.country}.price` as const, {
+                            valueAsNumber: true,
+                          })}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
 

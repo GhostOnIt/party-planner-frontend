@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Check, Crown, Gift, Building2, ArrowLeft, ArrowRight, Zap } from 'lucide-react';
 import { Seo } from '@/components/seo';
@@ -14,6 +14,13 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { usePlans, formatLimitValue } from '@/hooks/useAdminPlans';
@@ -23,6 +30,9 @@ import { PlanAllFeaturesDialog } from '@/components/features/plans/PlanAllFeatur
 import { PlansComparisonTable } from '@/components/features/plans/PlansComparisonTable';
 import type { Plan } from '@/hooks/useAdminPlans';
 import { getFeatureLabel, getPlanEnabledFeatureKeys } from '@/lib/planFeatures';
+import { PHONE_MARKETS, normalizeMarketCountry, type MarketCountry } from '@/lib/marketPhones';
+
+const PLAN_MARKETS: MarketCountry[] = ['COG', 'COD', 'CMR', 'GAB', 'SEN', 'CIV'];
 
 // Get icon and colors for plan
 function getPlanStyle(plan: Plan, isPopular: boolean) {
@@ -66,9 +76,10 @@ interface PricingCardProps {
   isHovered: boolean;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
+  selectedCountry: MarketCountry;
 }
 
-function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }: Readonly<PricingCardProps>) {
+function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave, selectedCountry }: Readonly<PricingCardProps>) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -111,7 +122,7 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
 
     // Anonymous visitor : redirect to register, then back to /plans after signup
     if (!isAuthenticated) {
-      navigate(`/register?redirect=${encodeURIComponent(`/subscribe/${plan.slug}`)}`);
+      navigate(`/register?redirect=${encodeURIComponent(`/subscribe/${plan.slug}?country=${selectedCountry}`)}`);
       return;
     }
 
@@ -127,7 +138,7 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
     if (plan.is_trial && plan.price === 0) {
       // Trial plan - subscribe directly (no payment needed)
       subscribeToPlan(
-        { plan_id: plan.id },
+        { plan_id: plan.id, country: selectedCountry },
         {
           onSuccess: () => {
             toast({
@@ -150,7 +161,7 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
       );
     } else {
       // Paid plan - navigate to subscribe page
-      navigate(`/subscribe/${plan.slug}`);
+      navigate(`/subscribe/${plan.slug}?country=${selectedCountry}`);
     }
   };
 
@@ -174,7 +185,7 @@ function PricingCard({ plan, isPopular, isHovered, onMouseEnter, onMouseLeave }:
       <span className="text-4xl font-bold text-slate-900">
         {plan.price.toLocaleString('fr-FR')}
       </span>
-      <span className="text-base text-slate-600">FCFA</span>
+      <span className="text-base text-slate-600">{plan.currency ?? PHONE_MARKETS[selectedCountry].currency}</span>
       <span className="text-xs text-slate-500">{plan.duration_label}</span>
     </>
   );
@@ -352,7 +363,11 @@ const faqs = [
 
 export function PlansPage() {
   const { t } = useTranslation();
-  const { data: plansData, isLoading, error } = usePlans();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedCountry, setSelectedCountry] = useState<MarketCountry>(() =>
+    normalizeMarketCountry(searchParams.get('country') ?? undefined)
+  );
+  const { data: plansData, isLoading, error } = usePlans(selectedCountry);
   const [hoveredPlan, setHoveredPlan] = useState<number | null>(null);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const backHref = isAuthenticated ? '/dashboard' : '/';
@@ -361,6 +376,12 @@ export function PlansPage() {
   // Ensure plans is always an array
   const plans = Array.isArray(plansData) ? plansData.filter((plan) => !plan.is_trial) : [];
   const hasPopularFromApi = plans.some((plan) => plan.is_popular);
+
+  const handleCountryChange = (value: string) => {
+    const nextCountry = normalizeMarketCountry(value);
+    setSelectedCountry(nextCountry);
+    setSearchParams({ country: nextCountry });
+  };
 
   if (isLoading) {
     return (
@@ -482,6 +503,20 @@ export function PlansPage() {
               Choisissez l&apos;offre adaptée à votre activité. Les nouveaux comptes peuvent activer
               un essai de 14 jours depuis leur tableau de bord.
             </p>
+            <div className="mx-auto mt-8 max-w-xs text-left">
+              <Select value={selectedCountry} onValueChange={handleCountryChange}>
+                <SelectTrigger aria-label="Pays de tarification">
+                  <SelectValue placeholder="Choisir un pays" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PLAN_MARKETS.map((country) => (
+                    <SelectItem key={country} value={country}>
+                      {PHONE_MARKETS[country].name} ({PHONE_MARKETS[country].currency})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
@@ -509,6 +544,7 @@ export function PlansPage() {
                       isHovered={hoveredPlan === plan.id}
                       onMouseEnter={() => setHoveredPlan(plan.id)}
                       onMouseLeave={() => setHoveredPlan(null)}
+                      selectedCountry={selectedCountry}
                     />
                   </div>
                 );

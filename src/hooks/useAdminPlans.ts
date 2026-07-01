@@ -10,6 +10,9 @@ export interface Plan {
   slug: string;
   description: string | null;
   price: number;
+  base_price?: number;
+  currency?: string;
+  country?: string;
   formatted_price: string;
   duration_days: number;
   duration_label: string;
@@ -20,6 +23,7 @@ export interface Plan {
   sort_order: number;
   limits: PlanLimits;
   features: PlanFeatures;
+  market_prices?: Record<string, PlanMarketPrice>;
   created_at: string;
   updated_at: string;
   // Statistics (added by API)
@@ -33,6 +37,13 @@ export interface PlanLimits {
   'collaborators.max_per_event'?: number;
   'photos.max_per_event'?: number;
   [key: string]: number | undefined;
+}
+
+export interface PlanMarketPrice {
+  country: string;
+  currency: string;
+  price: number;
+  formatted_price?: string;
 }
 
 export interface PlanFeatures {
@@ -75,6 +86,7 @@ export interface CreatePlanData {
   sort_order?: number;
   limits?: PlanLimits;
   features?: PlanFeatures;
+  market_prices?: Record<string, { price: number }>;
 }
 
 export interface UpdatePlanData extends Partial<CreatePlanData> {}
@@ -187,11 +199,11 @@ export function useTogglePlanActive() {
  * Get public plans (for pricing page)
  * Automatically filters out one-time-use plans already used by the user
  */
-export function usePlans() {
+export function usePlans(country?: string) {
   return useQuery({
-    queryKey: ['plans'],
+    queryKey: ['plans', country ?? 'default'],
     queryFn: async (): Promise<Plan[]> => {
-      const response = await api.get('/plans');
+      const response = await api.get('/plans', { params: country ? { country } : undefined });
       // Handle different response structures
       const data = response.data?.data ?? response.data ?? [];
       // Ensure it's always an array
