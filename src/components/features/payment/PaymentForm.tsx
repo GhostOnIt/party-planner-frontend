@@ -41,7 +41,7 @@ const paymentTestAmount = Number(import.meta.env.VITE_PAYMENT_TEST_AMOUNT || '')
 const paymentTestCurrency = String(import.meta.env.VITE_PAYMENT_TEST_CURRENCY || 'XOF');
 const hasPaymentTestAmount = isSandbox && Number.isFinite(paymentTestAmount) && paymentTestAmount > 0;
 
-const marketCountries: MarketCountry[] = ['COG', 'COD', 'CMR', 'GAB'];
+const marketCountries: MarketCountry[] = ['COG', 'COD', 'CMR', 'GAB', 'SEN'];
 const initialCountry: MarketCountry = marketCountries.includes(defaultCountry) ? defaultCountry : 'COG';
 
 function getMarketPaymentMethods(country: MarketCountry): PaymentSelectorMethod[] | undefined {
@@ -60,6 +60,18 @@ function getMarketPaymentMethods(country: MarketCountry): PaymentSelectorMethod[
         prefixes: '04, 05',
         color: 'border-red-400 hover:bg-red-50',
         provider: 'AIRTEL_COG',
+      },
+    ];
+  }
+
+  if (country === 'SEN') {
+    return [
+      {
+        id: 'pawapay',
+        name: 'Orange Money Sénégal',
+        prefixes: '77, 78',
+        color: 'border-orange-400 hover:bg-orange-50',
+        provider: 'ORANGE_SEN',
       },
     ];
   }
