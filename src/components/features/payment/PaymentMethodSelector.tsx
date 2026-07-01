@@ -24,6 +24,13 @@ export type PaymentSelectorMethod = {
 
 export const getPaymentMethodKey = (method: PaymentSelectorMethod) => method.provider ?? method.id;
 
+type ProviderMark = {
+  label: string;
+  sublabel?: string;
+  className: string;
+  labelClassName?: string;
+};
+
 const paymentMethods: PaymentSelectorMethod[] = [
   {
     id: 'mtn_mobile_money',
@@ -46,6 +53,81 @@ const defaultLogos: Partial<Record<PaymentMethod, string>> = {
   airtel_money: airtelMoneyLogo,
 };
 
+const getProviderLogo = (method: PaymentSelectorMethod) => {
+  const provider = method.provider ?? '';
+
+  if (provider.includes('MTN')) {
+    return momoMtnLogo;
+  }
+
+  if (provider.includes('AIRTEL')) {
+    return airtelMoneyLogo;
+  }
+
+  return method.logo ?? defaultLogos[method.id];
+};
+
+const getProviderMark = (method: PaymentSelectorMethod): ProviderMark => {
+  const provider = method.provider ?? '';
+
+  if (provider.includes('ORANGE')) {
+    return {
+      label: 'Orange',
+      sublabel: 'Money',
+      className: 'bg-black text-orange-400',
+      labelClassName: 'text-[10px]',
+    };
+  }
+
+  if (provider.includes('FREE')) {
+    return {
+      label: 'Free',
+      sublabel: 'Money',
+      className: 'border border-red-200 bg-white text-red-600',
+    };
+  }
+
+  if (provider.includes('VODACOM')) {
+    return {
+      label: 'voda',
+      sublabel: 'com',
+      className: 'bg-red-600 text-white',
+    };
+  }
+
+  if (provider.includes('WAVE')) {
+    return {
+      label: 'Wave',
+      className: 'bg-sky-500 text-white',
+    };
+  }
+
+  return {
+    label: method.name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase(),
+    className: 'bg-primary/10 text-primary',
+  };
+};
+
+function PaymentProviderMark({ mark }: { mark: ProviderMark }) {
+  return (
+    <span
+      className={cn(
+        'flex h-12 w-12 flex-col items-center justify-center rounded-lg text-center font-bold leading-none',
+        mark.className
+      )}
+    >
+      <span className={cn('text-[11px]', mark.labelClassName)}>{mark.label}</span>
+      {mark.sublabel && <span className="mt-0.5 text-[8px] uppercase">{mark.sublabel}</span>}
+    </span>
+  );
+}
+
 export function PaymentMethodSelector({
   value,
   onChange,
@@ -59,7 +141,8 @@ export function PaymentMethodSelector({
         const isUnavailable = method.id === 'airtel_money' && !airtelAvailable;
         const methodKey = getPaymentMethodKey(method);
         const isSelected = value === methodKey && !isUnavailable;
-        const logo = method.logo ?? defaultLogos[method.id];
+        const logo = getProviderLogo(method);
+        const mark = getProviderMark(method);
 
         return (
           <button
@@ -83,9 +166,7 @@ export function PaymentMethodSelector({
                   className="h-full w-full rounded-lg object-contain"
                 />
               ) : (
-                <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
-                  OM
-                </span>
+                <PaymentProviderMark mark={mark} />
               )}
             </div>
             <div className="min-w-0 flex-1">
