@@ -39,7 +39,7 @@ const isSandbox = import.meta.env.VITE_PAYMENT_ENV === 'sandbox';
 const defaultCountry = normalizeMarketCountry(import.meta.env.VITE_MARKET_COUNTRY);
 const paymentTestAmount = Number(import.meta.env.VITE_PAYMENT_TEST_AMOUNT || '');
 const paymentTestCurrency = String(import.meta.env.VITE_PAYMENT_TEST_CURRENCY || 'XOF');
-const hasPaymentTestAmount = isSandbox && Number.isFinite(paymentTestAmount) && paymentTestAmount > 0;
+const hasPaymentTestAmount = Number.isFinite(paymentTestAmount) && paymentTestAmount > 0;
 
 const marketCountries: MarketCountry[] = ['COG', 'COD', 'CMR', 'GAB', 'SEN'];
 const initialCountry: MarketCountry = marketCountries.includes(defaultCountry) ? defaultCountry : 'COG';
@@ -132,6 +132,7 @@ interface PaymentFormProps {
   description?: string;
   planType?: PlanType;
   country?: MarketCountry;
+  onCountryChange?: (country: MarketCountry) => void;
 }
 
 const formatCurrency = (amount: number, currency: string) => {
@@ -152,6 +153,7 @@ export function PaymentForm({
   description,
   planType,
   country = initialCountry,
+  onCountryChange,
 }: PaymentFormProps) {
   const safeInitialCountry = marketCountries.includes(country) ? country : initialCountry;
   const [selectedCountry, setSelectedCountry] = useState<MarketCountry>(safeInitialCountry);
@@ -183,6 +185,17 @@ export function PaymentForm({
   });
 
   const phoneNumber = watch('phone_number');
+
+  useEffect(() => {
+    const nextCountry = marketCountries.includes(country) ? country : initialCountry;
+    setSelectedCountry((current) => (current === nextCountry ? current : nextCountry));
+  }, [country]);
+
+  const handleCountryChange = (value: string) => {
+    const nextCountry = normalizeMarketCountry(value);
+    setSelectedCountry(nextCountry);
+    onCountryChange?.(nextCountry);
+  };
 
   useEffect(() => {
     setSelectedMethod(getDefaultPaymentMethod(selectedCountry));
@@ -285,7 +298,7 @@ export function PaymentForm({
         <Label htmlFor="payment_country">Pays</Label>
         <Select
           value={selectedCountry}
-          onValueChange={(value) => setSelectedCountry(normalizeMarketCountry(value))}
+          onValueChange={handleCountryChange}
           disabled={isLoading}
         >
           <SelectTrigger id="payment_country">

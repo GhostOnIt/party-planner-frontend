@@ -39,6 +39,11 @@ const paymentMethods: PaymentSelectorMethod[] = [
   },
 ];
 
+const defaultLogos: Partial<Record<PaymentMethod, string>> = {
+  mtn_mobile_money: momoMtnLogo,
+  airtel_money: airtelMoneyLogo,
+};
+
 export function PaymentMethodSelector({
   value,
   onChange,
@@ -51,6 +56,7 @@ export function PaymentMethodSelector({
       {methods.map((method) => {
         const isUnavailable = method.id === 'airtel_money' && !airtelAvailable;
         const isSelected = value === method.id && !isUnavailable;
+        const logo = method.logo ?? defaultLogos[method.id];
 
         return (
           <button
@@ -70,9 +76,9 @@ export function PaymentMethodSelector({
             )}
           >
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden">
-              {method.logo ? (
+              {logo ? (
                 <img
-                  src={method.logo}
+                  src={logo}
                   alt={method.name}
                   className="h-full w-full rounded-lg object-contain"
                 />

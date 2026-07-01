@@ -19,9 +19,25 @@ import { useSubscribeToPlan } from '@/hooks/useSubscription';
 import { useInitiatePayment } from '@/hooks/usePayment';
 import { getApiErrorMessage } from '@/api/client';
 import type { PaymentMethod } from '@/types';
-import type { MarketCountry } from '@/lib/marketPhones';
+import {
+  PHONE_MARKETS,
+  normalizeMarketCountry,
+  type MarketCountry,
+} from '@/lib/marketPhones';
 import { cn } from '@/lib/utils';
 import { paymentTrace } from '@/lib/paymentTrace';
+
+const defaultMarketCountry = normalizeMarketCountry(import.meta.env.VITE_MARKET_COUNTRY);
+const paymentTestAmount = Number(import.meta.env.VITE_PAYMENT_TEST_AMOUNT || '');
+const paymentTestCurrency = String(import.meta.env.VITE_PAYMENT_TEST_CURRENCY || 'XOF');
+const hasPaymentTestAmount = Number.isFinite(paymentTestAmount) && paymentTestAmount > 0;
+
+function formatCheckoutAmount(amount: number, currency: string): string {
+  if (currency === 'XAF' || currency === 'FCFA') {
+    return `${amount.toLocaleString('fr-FR')} FCFA`;
+  }
+  return `${amount.toLocaleString('fr-FR')} ${currency}`;
+}
 
 export function SubscribePage() {
   const { t } = useTranslation();
@@ -34,6 +50,7 @@ export function SubscribePage() {
   const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Évite le clignotement du bouton entre subscribe et initiate (isPending repasse à false) — cause typique de removeChild/insertBefore avec Radix. */
   const [paymentFlowBusy, setPaymentFlowBusy] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<MarketCountry>(defaultMarketCountry);
 
   const { data: plans, isLoading: isLoadingPlans } = usePlans();
   const plan = plans?.find(p => p.slug === slug && p.is_active && !p.is_trial);
@@ -71,6 +88,7 @@ export function SubscribePage() {
     provider?: string;
   }) => {
     setInlineError(null);
+    setSelectedCountry(data.country);
     paymentTrace('SubscribePage: handlePaymentSubmit — entrée', {
       planId: plan?.id,
       slug,
@@ -204,6 +222,12 @@ export function SubscribePage() {
         ([, value]) => value !== undefined && value !== null
       )
     : [];
+  const selectedMarket = PHONE_MARKETS[selectedCountry];
+  const checkoutAmount = hasPaymentTestAmount ? paymentTestAmount : plan.price;
+  const checkoutCurrency = hasPaymentTestAmount ? paymentTestCurrency : selectedMarket.currency;
+  const checkoutAmountLabel = plan.price === 0
+    ? 'Gratuit'
+    : formatCheckoutAmount(checkoutAmount, checkoutCurrency);
 
   return (
     <div className="min-h-[60vh] bg-muted/30 py-8 px-4">
@@ -266,12 +290,10 @@ export function SubscribePage() {
               <CardContent className="space-y-5">
                 <div className="rounded-xl bg-muted/50 p-4 text-center">
                   <div className="text-3xl font-bold tracking-tight">
-                    {plan.price === 0
-                      ? 'Gratuit'
-                      : `${plan.price.toLocaleString('fr-FR')} FCFA`}
+                    {checkoutAmountLabel}
                   </div>
                   <div className="text-sm text-muted-foreground mt-1">
-                    {plan.duration_label}
+                    {selectedMarket.name} · {plan.duration_label}
                   </div>
                 </div>
 
@@ -322,7 +344,7 @@ export function SubscribePage() {
                 <CardDescription>
                   {paymentId
                     ? 'Suivez le statut de votre paiement en temps réel.'
-                    : 'Saisissez votre numéro de téléphone pour recevoir la demande de paiement Mobile Money (MTN ou Airtel).'}
+                    : `Choisissez votre pays puis saisissez votre numéro pour recevoir la demande de paiement Mobile Money.`}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -333,7 +355,7 @@ export function SubscribePage() {
                   </Alert>
                 )}
 
-                {subscriptionCreated && (
+                {subscriptionCreated && !inlineError && (
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
@@ -357,6 +379,8 @@ export function SubscribePage() {
                 ) : (
                   <PaymentForm
                     amount={plan.price}
+                    country={selectedCountry}
+                    onCountryChange={setSelectedCountry}
                     onSubmit={handlePaymentSubmit}
                     isLoading={paymentFlowBusy}
                     description={`Abonnement ${plan.name} - ${plan.duration_label}`}
