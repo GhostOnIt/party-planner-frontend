@@ -31,8 +31,8 @@ import {
 } from '@/hooks/useSubscription';
 import { useInitiatePayment } from '@/hooks/usePayment';
 import { getApiErrorMessage } from '@/api/client';
-import { cgPhoneToNationalDigits } from '@/lib/cgPhone';
 import type { PlanType, PaymentMethod } from '@/types';
+import type { MarketCountry } from '@/lib/marketPhones';
 
 interface EventSubscriptionPageProps {
   eventId?: string;
@@ -116,23 +116,24 @@ export function EventSubscriptionPage({ eventId }: EventSubscriptionPageProps) {
     }
   };
 
-  const handlePaymentSubmit = (data: { phone_number: string; method: PaymentMethod }) => {
+  const handlePaymentSubmit = (data: {
+    phone_number: string;
+    method: PaymentMethod;
+    country: MarketCountry;
+    currency: string;
+    provider?: string;
+  }) => {
     if (!selectedPlan) return;
-
-    let cleanPhone = data.phone_number.replace(/[\s\-()]/g, '');
-
-    if (!cleanPhone.startsWith('467')) {
-      const national = cgPhoneToNationalDigits(data.phone_number);
-      cleanPhone = national ?? cleanPhone.replace(/^\+?242/, '').replace(/^00242/, '');
-    }
 
     const payload = {
       event_id: Number(eventId),
-      phone_number: cleanPhone,
+      phone_number: data.phone_number,
       plan_type: selectedPlan,
       method: data.method,
+      provider: data.provider,
+      country: data.country,
       amount: planPrices[selectedPlan],
-      currency: currency,
+      currency: data.currency || currency,
     };
 
     console.log('Payment payload:', payload);

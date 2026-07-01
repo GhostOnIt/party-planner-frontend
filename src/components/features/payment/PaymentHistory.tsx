@@ -50,6 +50,7 @@ const statusConfig: Record<
 const methodLabels: Record<PaymentMethod, string> = {
   mtn_mobile_money: 'MTN Mobile Money',
   airtel_money: 'Airtel Money',
+  pawapay: 'pawaPay',
 };
 
 const formatCurrency = (amount: number) => {

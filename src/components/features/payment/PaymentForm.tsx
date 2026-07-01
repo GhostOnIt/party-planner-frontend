@@ -8,16 +8,17 @@ import { Phone, CreditCard, Loader2, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PaymentMethodSelector } from './PaymentMethodSelector';
+import { PaymentMethodSelector, type PaymentSelectorMethod } from './PaymentMethodSelector';
 import { getProviderFromPhone } from '@/hooks/usePayment';
-import {
-  CG_PHONE_ERROR_MESSAGE,
-  CG_PHONE_FORMAT_HINT,
-  isValidCgPhone,
-  normalizeCgPhoneToInternational,
-} from '@/lib/cgPhone';
 import { isAirtelMoneyUiEnabled } from '@/lib/paymentFeatureFlags';
 import { paymentTrace } from '@/lib/paymentTrace';
+import {
+  PHONE_MARKETS,
+  isValidPhoneForMarket,
+  normalizeMarketCountry,
+  normalizePhoneToInternational,
+  type MarketCountry,
+} from '@/lib/marketPhones';
 import type { PaymentMethod, PlanType } from '@/types';
 
 // Plan duration in months
@@ -28,9 +29,9 @@ const planDurations: Record<PlanType, { months: number; label: string }> = {
 
 // Check if we're in sandbox mode (via VITE_PAYMENT_ENV variable)
 const isSandbox = import.meta.env.VITE_PAYMENT_ENV === 'sandbox';
+const defaultCountry = normalizeMarketCountry(import.meta.env.VITE_MARKET_COUNTRY);
 
-// Validate phone number (Congo +242 / 00242 + 06|05|04 + 7 chiffres, ou sandbox MTN)
-const isValidPhoneNumber = (phone: string): boolean => {
+const isValidPhoneNumber = (phone: string, country: MarketCountry): boolean => {
   const cleaned = phone.replace(/[\s\-\.]/g, '');
 
   if (isSandbox && /^467\d{8}$/.test(cleaned)) {
@@ -38,28 +39,39 @@ const isValidPhoneNumber = (phone: string): boolean => {
   }
 
   if (!isSandbox) {
-    return isValidCgPhone(phone);
+    return isValidPhoneForMarket(phone, country);
   }
 
   return false;
 };
 
-const paymentSchema = z.object({
-  phone_number: z
-    .string()
-    .min(1, 'Numéro de téléphone requis')
-    .refine(isValidPhoneNumber, isSandbox ? 'Format invalide. Utilisez 46733123450 (test).' : CG_PHONE_ERROR_MESSAGE),
-});
+const buildPaymentSchema = (country: MarketCountry) =>
+  z.object({
+    phone_number: z
+      .string()
+      .min(1, 'Numéro de téléphone requis')
+      .refine(
+        (phone) => isValidPhoneNumber(phone, country),
+        isSandbox ? 'Format invalide. Utilisez 46733123450 (test).' : `Format invalide pour ${PHONE_MARKETS[country].name}.`
+      ),
+  });
 
-type PaymentFormData = z.infer<typeof paymentSchema>;
+type PaymentFormData = z.infer<ReturnType<typeof buildPaymentSchema>>;
 
 interface PaymentFormProps {
   amount: number;
   currency?: string;
-  onSubmit: (data: { phone_number: string; method: PaymentMethod }) => void;
+  onSubmit: (data: {
+    phone_number: string;
+    method: PaymentMethod;
+    country: MarketCountry;
+    currency: string;
+    provider?: string;
+  }) => void;
   isLoading?: boolean;
   description?: string;
   planType?: PlanType;
+  country?: MarketCountry;
 }
 
 const formatCurrency = (amount: number, currency: string) => {
@@ -79,9 +91,31 @@ export function PaymentForm({
   isLoading = false,
   description,
   planType,
+  country = defaultCountry,
 }: PaymentFormProps) {
+  const market = PHONE_MARKETS[country];
+  const marketPaymentMethods: PaymentSelectorMethod[] | undefined =
+    country === 'SEN'
+      ? [
+          {
+            id: 'pawapay',
+            name: 'Orange Money Sénégal',
+            prefixes: '77, 78',
+            color: 'border-orange-400 hover:bg-orange-50',
+          },
+        ]
+      : country === 'CIV'
+        ? [
+            {
+              id: 'pawapay',
+              name: "Orange Money Côte d'Ivoire",
+              prefixes: '07',
+              color: 'border-orange-400 hover:bg-orange-50',
+            },
+          ]
+        : undefined;
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(() =>
-    isSandbox || !isAirtelMoneyUiEnabled ? 'mtn_mobile_money' : null
+    marketPaymentMethods?.[0]?.id ?? (isSandbox || !isAirtelMoneyUiEnabled ? 'mtn_mobile_money' : null)
   );
   const [autoDetectedMethod, setAutoDetectedMethod] = useState<PaymentMethod | null>(null);
 
@@ -97,7 +131,7 @@ export function PaymentForm({
     watch,
     formState: { errors },
   } = useForm<PaymentFormData>({
-    resolver: zodResolver(paymentSchema),
+    resolver: zodResolver(buildPaymentSchema(country)),
     defaultValues: {
       phone_number: isSandbox ? '46733123450' : '',
     },
@@ -135,15 +169,29 @@ export function PaymentForm({
     const cleanedSandbox = data.phone_number.replace(/[\s\-\.]/g, '');
     const phone_number = isSandbox
       ? cleanedSandbox
-      : normalizeCgPhoneToInternational(data.phone_number) ?? data.phone_number;
+      : normalizePhoneToInternational(data.phone_number, country) ?? data.phone_number;
+    const provider = selectedMethod === 'pawapay' && country === 'SEN'
+      ? 'ORANGE_SEN'
+      : selectedMethod === 'pawapay' && country === 'CIV'
+        ? 'ORANGE_CIV'
+        : selectedMethod === 'mtn_mobile_money'
+      ? `MTN_MOMO_${country}`
+      : selectedMethod === 'airtel_money'
+        ? `AIRTEL_${country}`
+        : undefined;
     paymentTrace('PaymentForm: appel onSubmit parent', {
       method: selectedMethod,
       phoneLen: phone_number.length,
       isSandbox,
+      country,
+      provider,
     });
     onSubmit({
       phone_number,
       method: selectedMethod,
+      country,
+      currency,
+      provider,
     });
   };
 
@@ -184,6 +232,7 @@ export function PaymentForm({
           value={selectedMethod}
           onChange={setSelectedMethod}
           disabled={isLoading}
+          methods={marketPaymentMethods}
         />
         {autoDetectedMethod && autoDetectedMethod !== selectedMethod && (
           <p className="text-sm text-muted-foreground">
@@ -209,7 +258,7 @@ export function PaymentForm({
             type="tel"
             inputMode="tel"
             autoComplete="tel"
-            placeholder={isSandbox ? '46733123450' : '+242061234567'}
+            placeholder={isSandbox ? '46733123450' : market.example}
             className="pl-10"
             {...register('phone_number')}
             disabled={isLoading}
@@ -221,7 +270,7 @@ export function PaymentForm({
         <p className="text-xs text-muted-foreground">
           {isSandbox
             ? 'Mode test — numéro MTN sandbox prérempli.'
-            : CG_PHONE_FORMAT_HINT}
+            : market.hint}
         </p>
       </div>
 

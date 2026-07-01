@@ -37,6 +37,8 @@ interface InitiatePaymentData {
   phone_number: string;
   plan_type?: PlanType;
   method?: PaymentMethod;
+  provider?: string;
+  country?: string;
   amount?: number;
   currency?: string;
   description?: string;
@@ -118,10 +120,13 @@ export function useInitiatePayment() {
       const { method, idempotency_key, ...rest } = data;
       const idempotencyKey = idempotency_key ?? crypto.randomUUID();
       const paymentData = { ...rest, idempotency_key: idempotencyKey };
+      const paymentProvider = String(import.meta.env.VITE_PAYMENT_PROVIDER || '').toLowerCase();
 
       // Use specific provider endpoint if method is provided
       let endpoint = '/payments/initiate';
-      if (method === 'mtn_mobile_money') {
+      if (paymentProvider === 'pawapay') {
+        endpoint = '/payments/pawapay/initiate';
+      } else if (method === 'mtn_mobile_money') {
         endpoint = '/payments/mtn/initiate';
       } else if (method === 'airtel_money') {
         endpoint = '/payments/airtel/initiate';

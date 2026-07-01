@@ -16,7 +16,7 @@ export type BudgetCategory =
   | 'transportation'
   | 'other';
 export type CollaboratorRole = 'owner' | 'coordinator' | 'guest_manager' | 'planner' | 'accountant' | 'supervisor' | 'reporter' | 'editor' | 'viewer';
-export type PaymentMethod = 'mtn_mobile_money' | 'airtel_money';
+export type PaymentMethod = 'mtn_mobile_money' | 'airtel_money' | 'pawapay';
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 export type PlanType = 'starter' | 'pro';
 export type PhotoType = 'moodboard' | 'event_photo';

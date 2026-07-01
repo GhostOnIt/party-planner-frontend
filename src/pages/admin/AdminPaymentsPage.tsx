@@ -53,11 +53,13 @@ const paymentStatusColors: Record<PaymentStatus, string> = {
 const paymentMethodLabels: Record<PaymentMethod, string> = {
   mtn_mobile_money: 'MTN Mobile Money',
   airtel_money: 'Airtel Money',
+  pawapay: 'pawaPay',
 };
 
 const paymentMethodColors: Record<PaymentMethod, string> = {
   mtn_mobile_money: 'bg-yellow-50 text-yellow-700 border-yellow-200',
   airtel_money: 'bg-red-50 text-red-700 border-red-200',
+  pawapay: 'bg-blue-50 text-blue-700 border-blue-200',
 };
 
 export function AdminPaymentsPage() {

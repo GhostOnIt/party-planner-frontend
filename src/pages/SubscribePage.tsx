@@ -19,6 +19,7 @@ import { useSubscribeToPlan } from '@/hooks/useSubscription';
 import { useInitiatePayment } from '@/hooks/usePayment';
 import { getApiErrorMessage } from '@/api/client';
 import type { PaymentMethod } from '@/types';
+import type { MarketCountry } from '@/lib/marketPhones';
 import { cn } from '@/lib/utils';
 import { paymentTrace } from '@/lib/paymentTrace';
 
@@ -62,7 +63,13 @@ export function SubscribePage() {
     return () => globalThis.clearTimeout(timer);
   }, [redirectCountdown]);
 
-  const handlePaymentSubmit = async (data: { phone_number: string; method: PaymentMethod }) => {
+  const handlePaymentSubmit = async (data: {
+    phone_number: string;
+    method: PaymentMethod;
+    country: MarketCountry;
+    currency: string;
+    provider?: string;
+  }) => {
     setInlineError(null);
     paymentTrace('SubscribePage: handlePaymentSubmit — entrée', {
       planId: plan?.id,
@@ -96,6 +103,8 @@ export function SubscribePage() {
         amount: plan.price,
         currency: 'XAF',
         method: data.method,
+        country: data.country,
+        provider: data.provider,
         phone_number: data.phone_number,
         description: `Abonnement ${plan.name}`,
         subscription_id: subscriptionResult.subscription?.id,

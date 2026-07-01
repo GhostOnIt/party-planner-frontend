@@ -10,15 +10,18 @@ interface PaymentMethodSelectorProps {
   disabled?: boolean;
   /** Surcharge pour les tests ; par défaut suit VITE_ENABLE_AIRTEL_MONEY */
   airtelAvailable?: boolean;
+  methods?: PaymentSelectorMethod[];
 }
 
-const paymentMethods: {
+export type PaymentSelectorMethod = {
   id: PaymentMethod;
   name: string;
   prefixes: string;
   color: string;
-  logo: string;
-}[] = [
+  logo?: string;
+};
+
+const paymentMethods: PaymentSelectorMethod[] = [
   {
     id: 'mtn_mobile_money',
     name: 'MTN Mobile Money',
@@ -40,10 +43,11 @@ export function PaymentMethodSelector({
   onChange,
   disabled = false,
   airtelAvailable = isAirtelMoneyUiEnabled,
+  methods = paymentMethods,
 }: PaymentMethodSelectorProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      {paymentMethods.map((method) => {
+      {methods.map((method) => {
         const isUnavailable = method.id === 'airtel_money' && !airtelAvailable;
         const isSelected = value === method.id && !isUnavailable;
 
@@ -65,11 +69,17 @@ export function PaymentMethodSelector({
             )}
           >
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden">
-              <img
-                src={method.logo}
-                alt={method.name}
-                className="h-full w-full rounded-lg object-contain"
-              />
+              {method.logo ? (
+                <img
+                  src={method.logo}
+                  alt={method.name}
+                  className="h-full w-full rounded-lg object-contain"
+                />
+              ) : (
+                <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
+                  OM
+                </span>
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <p className="font-medium">{method.name}</p>
