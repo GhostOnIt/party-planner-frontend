@@ -8,6 +8,13 @@ import { Phone, CreditCard, Loader2, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { PaymentMethodSelector, type PaymentSelectorMethod } from './PaymentMethodSelector';
 import { getProviderFromPhone } from '@/hooks/usePayment';
 import { isAirtelMoneyUiEnabled } from '@/lib/paymentFeatureFlags';
@@ -30,6 +37,42 @@ const planDurations: Record<PlanType, { months: number; label: string }> = {
 // Check if we're in sandbox mode (via VITE_PAYMENT_ENV variable)
 const isSandbox = import.meta.env.VITE_PAYMENT_ENV === 'sandbox';
 const defaultCountry = normalizeMarketCountry(import.meta.env.VITE_MARKET_COUNTRY);
+const paymentTestAmount = Number(import.meta.env.VITE_PAYMENT_TEST_AMOUNT || '');
+const paymentTestCurrency = String(import.meta.env.VITE_PAYMENT_TEST_CURRENCY || 'XOF');
+const hasPaymentTestAmount = Number.isFinite(paymentTestAmount) && paymentTestAmount > 0;
+
+const marketCountries: MarketCountry[] = ['COG', 'SEN', 'CIV', 'COD', 'CMR', 'GAB'];
+
+function getMarketPaymentMethods(country: MarketCountry): PaymentSelectorMethod[] | undefined {
+  if (country === 'SEN') {
+    return [
+      {
+        id: 'pawapay',
+        name: 'Orange Money Sénégal',
+        prefixes: '77, 78',
+        color: 'border-orange-400 hover:bg-orange-50',
+      },
+    ];
+  }
+
+  if (country === 'CIV') {
+    return [
+      {
+        id: 'pawapay',
+        name: "Orange Money Côte d'Ivoire",
+        prefixes: '07',
+        color: 'border-orange-400 hover:bg-orange-50',
+      },
+    ];
+  }
+
+  return undefined;
+}
+
+function getDefaultPaymentMethod(country: MarketCountry): PaymentMethod | null {
+  const marketMethods = getMarketPaymentMethods(country);
+  return marketMethods?.[0]?.id ?? (isSandbox || !isAirtelMoneyUiEnabled ? 'mtn_mobile_money' : null);
+}
 
 const isValidPhoneNumber = (phone: string, country: MarketCountry): boolean => {
   const cleaned = phone.replace(/[\s\-\.]/g, '');
@@ -93,30 +136,12 @@ export function PaymentForm({
   planType,
   country = defaultCountry,
 }: PaymentFormProps) {
-  const market = PHONE_MARKETS[country];
-  const marketPaymentMethods: PaymentSelectorMethod[] | undefined =
-    country === 'SEN'
-      ? [
-          {
-            id: 'pawapay',
-            name: 'Orange Money Sénégal',
-            prefixes: '77, 78',
-            color: 'border-orange-400 hover:bg-orange-50',
-          },
-        ]
-      : country === 'CIV'
-        ? [
-            {
-              id: 'pawapay',
-              name: "Orange Money Côte d'Ivoire",
-              prefixes: '07',
-              color: 'border-orange-400 hover:bg-orange-50',
-            },
-          ]
-        : undefined;
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(() =>
-    marketPaymentMethods?.[0]?.id ?? (isSandbox || !isAirtelMoneyUiEnabled ? 'mtn_mobile_money' : null)
-  );
+  const [selectedCountry, setSelectedCountry] = useState<MarketCountry>(country);
+  const market = PHONE_MARKETS[selectedCountry];
+  const marketPaymentMethods = getMarketPaymentMethods(selectedCountry);
+  const displayAmount = hasPaymentTestAmount ? paymentTestAmount : amount;
+  const displayCurrency = hasPaymentTestAmount ? paymentTestCurrency : market.currency || currency;
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(() => getDefaultPaymentMethod(country));
   const [autoDetectedMethod, setAutoDetectedMethod] = useState<PaymentMethod | null>(null);
 
   useEffect(() => {
@@ -129,9 +154,11 @@ export function PaymentForm({
     register,
     handleSubmit,
     watch,
+    resetField,
+    trigger,
     formState: { errors },
   } = useForm<PaymentFormData>({
-    resolver: zodResolver(buildPaymentSchema(country)),
+    resolver: zodResolver(buildPaymentSchema(selectedCountry)),
     defaultValues: {
       phone_number: isSandbox ? '46733123450' : '',
     },
@@ -139,8 +166,25 @@ export function PaymentForm({
 
   const phoneNumber = watch('phone_number');
 
+  useEffect(() => {
+    setSelectedMethod(getDefaultPaymentMethod(selectedCountry));
+    setAutoDetectedMethod(null);
+    resetField('phone_number', { defaultValue: isSandbox ? '46733123450' : '' });
+  }, [resetField, selectedCountry]);
+
+  useEffect(() => {
+    if (phoneNumber) {
+      void trigger('phone_number');
+    }
+  }, [phoneNumber, selectedCountry, trigger]);
+
   // Auto-detect payment method from phone number (pas d’Airtel tant que non activé)
   useEffect(() => {
+    if (marketPaymentMethods) {
+      setAutoDetectedMethod(null);
+      return;
+    }
+
     if (phoneNumber && phoneNumber.length >= 3) {
       let detected = getProviderFromPhone(phoneNumber);
       if (detected === 'airtel_money' && !isAirtelMoneyUiEnabled) {
@@ -153,14 +197,15 @@ export function PaymentForm({
     } else {
       setAutoDetectedMethod(null);
     }
-  }, [phoneNumber, selectedMethod]);
+  }, [marketPaymentMethods, phoneNumber, selectedMethod]);
 
   const handleFormSubmit = (data: PaymentFormData) => {
     paymentTrace('PaymentForm: submit (avant validation interne)', {
       amount,
-      currency,
+      currency: displayCurrency,
       planType,
       hasMethod: !!selectedMethod,
+      country: selectedCountry,
     });
     if (!selectedMethod) {
       paymentTrace('PaymentForm: abandon — aucune méthode sélectionnée');
@@ -169,28 +214,28 @@ export function PaymentForm({
     const cleanedSandbox = data.phone_number.replace(/[\s\-\.]/g, '');
     const phone_number = isSandbox
       ? cleanedSandbox
-      : normalizePhoneToInternational(data.phone_number, country) ?? data.phone_number;
-    const provider = selectedMethod === 'pawapay' && country === 'SEN'
+      : normalizePhoneToInternational(data.phone_number, selectedCountry) ?? data.phone_number;
+    const provider = selectedMethod === 'pawapay' && selectedCountry === 'SEN'
       ? 'ORANGE_SEN'
-      : selectedMethod === 'pawapay' && country === 'CIV'
+      : selectedMethod === 'pawapay' && selectedCountry === 'CIV'
         ? 'ORANGE_CIV'
         : selectedMethod === 'mtn_mobile_money'
-      ? `MTN_MOMO_${country}`
+      ? `MTN_MOMO_${selectedCountry}`
       : selectedMethod === 'airtel_money'
-        ? `AIRTEL_${country}`
+        ? `AIRTEL_${selectedCountry}`
         : undefined;
     paymentTrace('PaymentForm: appel onSubmit parent', {
       method: selectedMethod,
       phoneLen: phone_number.length,
       isSandbox,
-      country,
+      country: selectedCountry,
       provider,
     });
     onSubmit({
       phone_number,
       method: selectedMethod,
-      country,
-      currency,
+      country: selectedCountry,
+      currency: displayCurrency,
       provider,
     });
   };
@@ -206,7 +251,7 @@ export function PaymentForm({
       <div className="rounded-lg bg-muted p-4 text-center">
         <p className="text-sm text-muted-foreground">Montant a payer</p>
         <p className="text-3xl font-bold">
-          {formatCurrency(amount, currency)}
+          {formatCurrency(displayAmount, displayCurrency)}
         </p>
         {description && (
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
@@ -223,6 +268,27 @@ export function PaymentForm({
             </span>
           </div>
         )}
+      </div>
+
+      {/* Market Selection */}
+      <div className="space-y-2">
+        <Label htmlFor="payment_country">Pays</Label>
+        <Select
+          value={selectedCountry}
+          onValueChange={(value) => setSelectedCountry(normalizeMarketCountry(value))}
+          disabled={isLoading}
+        >
+          <SelectTrigger id="payment_country">
+            <SelectValue placeholder="Choisir un pays" />
+          </SelectTrigger>
+          <SelectContent>
+            {marketCountries.map((marketCountry) => (
+              <SelectItem key={marketCountry} value={marketCountry}>
+                {PHONE_MARKETS[marketCountry].name} ({PHONE_MARKETS[marketCountry].currency})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Payment Method Selection */}
@@ -289,7 +355,7 @@ export function PaymentForm({
         ) : (
           <>
             <CreditCard className="mr-2 h-4 w-4" />
-            Payer {formatCurrency(amount, currency)}
+            Payer {formatCurrency(displayAmount, displayCurrency)}
           </>
         )}
       </Button>
