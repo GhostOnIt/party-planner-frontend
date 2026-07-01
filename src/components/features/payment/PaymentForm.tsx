@@ -69,6 +69,44 @@ function getMarketPaymentMethods(country: MarketCountry): PaymentSelectorMethod[
     ];
   }
 
+  if (country === 'COD') {
+    return [
+      {
+        id: 'pawapay',
+        name: 'Airtel Money RDC',
+        prefixes: '97',
+        color: 'border-red-400 hover:bg-red-50',
+        provider: 'AIRTEL_COD',
+      },
+      {
+        id: 'pawapay',
+        name: 'Orange Money RDC',
+        prefixes: '89',
+        color: 'border-orange-400 hover:bg-orange-50',
+        provider: 'ORANGE_COD',
+      },
+      {
+        id: 'pawapay',
+        name: 'Vodacom M-Pesa RDC',
+        prefixes: '81',
+        color: 'border-red-500 hover:bg-red-50',
+        provider: 'VODACOM_MPESA_COD',
+      },
+    ];
+  }
+
+  if (country === 'CMR') {
+    return [
+      {
+        id: 'pawapay',
+        name: 'MTN Mobile Money Cameroun',
+        prefixes: '65',
+        color: 'border-yellow-400 hover:bg-yellow-50',
+        provider: 'MTN_MOMO_CMR',
+      },
+    ];
+  }
+
   if (country === 'SEN') {
     return [
       {
@@ -122,7 +160,7 @@ function getMarketPaymentMethods(country: MarketCountry): PaymentSelectorMethod[
   return [
     {
       id: 'pawapay',
-      name: `Mobile Money ${PHONE_MARKETS[country].name}`,
+      name: `Mobile Money ${PHONE_MARKETS[country as MarketCountry]?.name ?? 'local'}`,
       prefixes: 'Selon opérateur mobile local',
       color: 'border-primary hover:bg-primary/5',
     },
