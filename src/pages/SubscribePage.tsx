@@ -101,7 +101,7 @@ export function SubscribePage() {
 
       const paymentResult = await initiatePaymentMutation.mutateAsync({
         amount: plan.price,
-        currency: 'XAF',
+        currency: data.currency,
         method: data.method,
         country: data.country,
         provider: data.provider,
@@ -357,7 +357,6 @@ export function SubscribePage() {
                 ) : (
                   <PaymentForm
                     amount={plan.price}
-                    currency="XAF"
                     onSubmit={handlePaymentSubmit}
                     isLoading={paymentFlowBusy}
                     description={`Abonnement ${plan.name} - ${plan.duration_label}`}

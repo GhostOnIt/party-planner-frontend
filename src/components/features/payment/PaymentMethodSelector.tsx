@@ -19,6 +19,7 @@ export type PaymentSelectorMethod = {
   prefixes: string;
   color: string;
   logo?: string;
+  provider?: string;
 };
 
 const paymentMethods: PaymentSelectorMethod[] = [

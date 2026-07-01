@@ -39,34 +39,39 @@ const isSandbox = import.meta.env.VITE_PAYMENT_ENV === 'sandbox';
 const defaultCountry = normalizeMarketCountry(import.meta.env.VITE_MARKET_COUNTRY);
 const paymentTestAmount = Number(import.meta.env.VITE_PAYMENT_TEST_AMOUNT || '');
 const paymentTestCurrency = String(import.meta.env.VITE_PAYMENT_TEST_CURRENCY || 'XOF');
-const hasPaymentTestAmount = Number.isFinite(paymentTestAmount) && paymentTestAmount > 0;
+const hasPaymentTestAmount = isSandbox && Number.isFinite(paymentTestAmount) && paymentTestAmount > 0;
 
-const marketCountries: MarketCountry[] = ['COG', 'SEN', 'CIV', 'COD', 'CMR', 'GAB'];
+const marketCountries: MarketCountry[] = ['COG', 'COD', 'CMR', 'GAB'];
+const initialCountry: MarketCountry = marketCountries.includes(defaultCountry) ? defaultCountry : 'COG';
 
 function getMarketPaymentMethods(country: MarketCountry): PaymentSelectorMethod[] | undefined {
-  if (country === 'SEN') {
+  if (country === 'COG') {
     return [
       {
-        id: 'pawapay',
-        name: 'Orange Money Sénégal',
-        prefixes: '77, 78',
-        color: 'border-orange-400 hover:bg-orange-50',
+        id: 'mtn_mobile_money',
+        name: 'MTN Mobile Money Congo',
+        prefixes: '06',
+        color: 'border-yellow-400 hover:bg-yellow-50',
+        provider: 'MTN_MOMO_COG',
+      },
+      {
+        id: 'airtel_money',
+        name: 'Airtel Money Congo',
+        prefixes: '04, 05',
+        color: 'border-red-400 hover:bg-red-50',
+        provider: 'AIRTEL_COG',
       },
     ];
   }
 
-  if (country === 'CIV') {
-    return [
-      {
-        id: 'pawapay',
-        name: "Orange Money Côte d'Ivoire",
-        prefixes: '07',
-        color: 'border-orange-400 hover:bg-orange-50',
-      },
-    ];
-  }
-
-  return undefined;
+  return [
+    {
+      id: 'pawapay',
+      name: `Mobile Money ${PHONE_MARKETS[country].name}`,
+      prefixes: 'Selon opérateur mobile local',
+      color: 'border-primary hover:bg-primary/5',
+    },
+  ];
 }
 
 function getDefaultPaymentMethod(country: MarketCountry): PaymentMethod | null {
@@ -134,14 +139,15 @@ export function PaymentForm({
   isLoading = false,
   description,
   planType,
-  country = defaultCountry,
+  country = initialCountry,
 }: PaymentFormProps) {
-  const [selectedCountry, setSelectedCountry] = useState<MarketCountry>(country);
+  const safeInitialCountry = marketCountries.includes(country) ? country : initialCountry;
+  const [selectedCountry, setSelectedCountry] = useState<MarketCountry>(safeInitialCountry);
   const market = PHONE_MARKETS[selectedCountry];
   const marketPaymentMethods = getMarketPaymentMethods(selectedCountry);
   const displayAmount = hasPaymentTestAmount ? paymentTestAmount : amount;
   const displayCurrency = hasPaymentTestAmount ? paymentTestCurrency : market.currency || currency;
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(() => getDefaultPaymentMethod(country));
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(() => getDefaultPaymentMethod(safeInitialCountry));
   const [autoDetectedMethod, setAutoDetectedMethod] = useState<PaymentMethod | null>(null);
 
   useEffect(() => {
@@ -215,15 +221,7 @@ export function PaymentForm({
     const phone_number = isSandbox
       ? cleanedSandbox
       : normalizePhoneToInternational(data.phone_number, selectedCountry) ?? data.phone_number;
-    const provider = selectedMethod === 'pawapay' && selectedCountry === 'SEN'
-      ? 'ORANGE_SEN'
-      : selectedMethod === 'pawapay' && selectedCountry === 'CIV'
-        ? 'ORANGE_CIV'
-        : selectedMethod === 'mtn_mobile_money'
-      ? `MTN_MOMO_${selectedCountry}`
-      : selectedMethod === 'airtel_money'
-        ? `AIRTEL_${selectedCountry}`
-        : undefined;
+    const provider = marketPaymentMethods?.find((method) => method.id === selectedMethod)?.provider;
     paymentTrace('PaymentForm: appel onSubmit parent', {
       method: selectedMethod,
       phoneLen: phone_number.length,

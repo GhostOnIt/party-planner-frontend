@@ -195,7 +195,7 @@ export function usePlans() {
       // Handle different response structures
       const data = response.data?.data ?? response.data ?? [];
       // Ensure it's always an array
-      return Array.isArray(data) ? data : [];
+      return Array.isArray(data) ? data.map(normalizePlanFromApi) : [];
     },
   });
 }
@@ -252,10 +252,11 @@ export const PLAN_LIMIT_LABELS: Record<string, string> = {
 /**
  * Format a limit value for display
  */
-export function formatLimitValue(value: number | undefined): string {
-  if (value === undefined || value === null) return '0';
-  if (value === -1) return 'Illimité';
-  return value.toString();
+export function formatLimitValue(value: unknown): string {
+  const normalized = normalizeLimitValue(value);
+  if (normalized === undefined || normalized === null) return '0';
+  if (normalized === -1) return 'Illimité';
+  return normalized.toLocaleString('fr-FR');
 }
 
 /**
@@ -263,5 +264,52 @@ export function formatLimitValue(value: number | undefined): string {
  */
 export function isUnlimited(value: number | undefined): boolean {
   return value === -1;
+}
+
+function normalizePlanFromApi(plan: Plan): Plan {
+  return {
+    ...plan,
+    limits: normalizePlanLimits(plan.limits),
+  };
+}
+
+export function normalizePlanLimits(limits: unknown): PlanLimits {
+  const source = isRecord(limits) ? limits : {};
+
+  return {
+    'events.creations_per_billing_period': normalizeLimitValue(
+      source['events.creations_per_billing_period'] ?? getNestedLimitValue(source.events, 'creations_per_billing_period')
+    ),
+    'guests.max_per_event': normalizeLimitValue(
+      source['guests.max_per_event'] ?? getNestedLimitValue(source.guests, 'max_per_event')
+    ),
+    'collaborators.max_per_event': normalizeLimitValue(
+      source['collaborators.max_per_event'] ?? getNestedLimitValue(source.collaborators, 'max_per_event')
+    ),
+    'photos.max_per_event': normalizeLimitValue(
+      source['photos.max_per_event'] ?? getNestedLimitValue(source.photos, 'max_per_event')
+    ),
+  };
+}
+
+function getNestedLimitValue(value: unknown, key: string): unknown {
+  if (!isRecord(value)) return undefined;
+  return value[key] ?? value.value ?? value.limit;
+}
+
+function normalizeLimitValue(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : undefined;
+  }
+  if (isRecord(value)) {
+    return normalizeLimitValue(value.value ?? value.limit ?? value.max ?? value.count);
+  }
+  return undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
