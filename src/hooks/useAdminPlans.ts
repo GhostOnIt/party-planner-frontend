@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
 
 // ============== Types ==============
@@ -202,6 +202,7 @@ export function useTogglePlanActive() {
 export function usePlans(country?: string) {
   return useQuery({
     queryKey: ['plans', country ?? 'default'],
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<Plan[]> => {
       const response = await api.get('/plans', { params: country ? { country } : undefined });
       // Handle different response structures
