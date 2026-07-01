@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import { isAirtelMoneyUiEnabled } from '@/lib/paymentFeatureFlags';
 import type { PaymentMethod } from '@/types';
+import { CheckCircle2 } from 'lucide-react';
 import momoMtnLogo from '@/assets/momo_mtn_logo.png';
 import airtelMoneyLogo from '@/assets/airtel_money_logo.png';
 
@@ -152,12 +153,17 @@ export function PaymentMethodSelector({
             disabled={disabled || isUnavailable}
             aria-disabled={isUnavailable}
             className={cn(
-              'flex items-center gap-4 rounded-lg border-2 p-4 text-left transition-all',
+              'relative flex items-center gap-4 rounded-lg border-2 p-4 text-left transition-all',
               disabled && 'cursor-not-allowed opacity-50',
               isUnavailable && 'cursor-not-allowed border-muted bg-muted/30 opacity-60 grayscale',
-              isSelected ? 'border-primary ring-2 ring-primary/20' : !isUnavailable && method.color
+              isSelected
+                ? 'border-primary bg-primary/10 shadow-sm ring-2 ring-primary ring-offset-2'
+                : !isUnavailable && method.color
             )}
           >
+            {isSelected && (
+              <CheckCircle2 className="absolute right-3 top-3 h-5 w-5 text-primary" />
+            )}
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden">
               {logo ? (
                 <img
