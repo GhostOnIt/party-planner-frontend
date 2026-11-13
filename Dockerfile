@@ -22,6 +22,13 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 # Build de production
+ARG VITE_API_URL
+ARG VITE_SITE_URL
+ARG VITE_PAYMENT_ENV=sandbox
+ENV VITE_API_URL=$VITE_API_URL \
+    VITE_SITE_URL=$VITE_SITE_URL \
+    VITE_PAYMENT_ENV=$VITE_PAYMENT_ENV
+RUN test -n "$VITE_API_URL"
 RUN pnpm build
 
 # ============================================
@@ -72,6 +79,7 @@ RUN echo 'server { \
     # Headers de sécurité \
     add_header X-Frame-Options "SAMEORIGIN" always; \
     add_header X-Content-Type-Options "nosniff" always; \
+    add_header X-Robots-Tag "noindex, nofollow" always; \
     add_header X-XSS-Protection "1; mode=block" always; \
 }' > /etc/nginx/conf.d/default.conf
 
