@@ -69,6 +69,13 @@ RUN echo 'server { \
     } \
     \
     # Gestion des routes SPA (fallback vers index.html) \
+    location /api/ { \
+        proxy_pass https://staging-backend-staging-9ae6d257.up.railway.app; \
+        proxy_ssl_server_name on; \
+        proxy_set_header Host staging-backend-staging-9ae6d257.up.railway.app; \
+        proxy_set_header X-Forwarded-Proto https; \
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
+    } \
     location / { \
         try_files $uri $uri/ /index.html; \
     } \
