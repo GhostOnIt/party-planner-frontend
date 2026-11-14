@@ -4,6 +4,18 @@ import userEvent from '@testing-library/user-event';
 import { EventCreatedGuide } from './EventCreatedGuide';
 
 describe('Next step after event creation', () => {
+  it('brings the next action into view after navigation from a long form', () => {
+    const scrollIntoView = vi.fn();
+    const original = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    try {
+      render(<EventCreatedGuide canAddGuests onGuests={vi.fn()} onDismiss={vi.fn()} />);
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+    } finally {
+      HTMLElement.prototype.scrollIntoView = original;
+    }
+  });
+
   it('explains that invitations have not been sent and opens guests on request', async () => {
     const onGuests = vi.fn();
     render(<EventCreatedGuide canAddGuests onGuests={onGuests} onDismiss={vi.fn()} />);

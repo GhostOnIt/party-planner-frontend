@@ -362,6 +362,7 @@ export function EventForm({
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
+                locale={fr}
                 mode="single"
                 selected={selectedDate ? new Date(selectedDate) : undefined}
                 onSelect={(date) => {
