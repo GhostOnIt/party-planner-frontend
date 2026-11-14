@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useToast } from '@/hooks/use-toast';
+import { photoUploadError } from '@/lib/photoUpload';
 import { cn } from '@/lib/utils';
 import {
   PhotoGrid,
@@ -111,14 +112,14 @@ export function PhotosPage({ eventId: propEventId }: PhotosPageProps) {
           setShowUploader(false);
           const count = data?.photos?.length ?? 0;
           toast({
-            title: 'Photos ajoutees',
-            description: `${count} photo(s) ajoutee(s) avec succes.`,
+            title: 'Photos ajoutées',
+            description: `${count} photo(s) ajoutée(s) avec succès.`,
           });
         },
-        onError: () => {
+        onError: (error) => {
           toast({
             title: 'Erreur',
-            description: 'Une erreur est survenue lors du telechargement.',
+            description: photoUploadError(error),
             variant: 'destructive',
           });
         },

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Photo, PhotoFilters } from '@/types';
+import { PHOTO_UPLOAD_TIMEOUT_MS } from '@/lib/photoUpload';
 
 // Pagination meta type
 interface PaginationMeta {
@@ -119,7 +120,8 @@ export function useUploadPhotos(eventId: string) {
 
       const response = await api.post<{ message: string; photos: Photo[] }>(
         `/events/${eventId}/photos`,
-        formData
+        formData,
+        { timeout: PHOTO_UPLOAD_TIMEOUT_MS }
       );
       return response.data;
     },

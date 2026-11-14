@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { MAX_PHOTOS_PER_UPLOAD, MAX_PHOTO_SIZE_MB } from '@/lib/photoUpload';
 
 interface PhotoUploaderProps {
   open: boolean;
@@ -28,8 +29,8 @@ interface FilePreview {
 }
 
 const DEFAULT_ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-const DEFAULT_MAX_SIZE_MB = 10;
-const DEFAULT_MAX_FILES = 20;
+const DEFAULT_MAX_SIZE_MB = MAX_PHOTO_SIZE_MB;
+const DEFAULT_MAX_FILES = MAX_PHOTOS_PER_UPLOAD;
 
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -52,15 +53,25 @@ export function PhotoUploader({
   const [isDragging, setIsDragging] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
+  useEffect(() => {
+    if (!open) {
+      setFiles((current) => {
+        current.forEach(({ preview }) => URL.revokeObjectURL(preview));
+        return current.length ? [] : current;
+      });
+      setErrors([]);
+    }
+  }, [open]);
+
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
   const validateFile = useCallback(
     (file: File): string | null => {
       if (!acceptedTypes.includes(file.type)) {
-        return `"${file.name}" n'est pas un type de fichier accepte`;
+        return `« ${file.name} » n’est pas une image acceptée. Formats autorisés : JPEG, PNG, GIF et WebP.`;
       }
       if (file.size > maxSizeBytes) {
-        return `"${file.name}" depasse la taille maximale de ${maxSizeMB}MB`;
+        return `« ${file.name} » dépasse la taille maximale de ${maxSizeMB} Mo par photo.`;
       }
       return null;
     },
@@ -169,8 +180,8 @@ export function PhotoUploader({
         <DialogHeader>
           <DialogTitle>Ajouter des photos</DialogTitle>
           <DialogDescription>
-            Glissez-deposez vos photos ou cliquez pour selectionner des fichiers.
-            Maximum {maxFiles} photos, {maxSizeMB}MB par fichier.
+            Glissez-déposez vos photos ou cliquez pour sélectionner des fichiers.
+            Maximum {maxFiles} photos par envoi, {maxSizeMB} Mo par photo. Formats JPEG, PNG, GIF et WebP.
           </DialogDescription>
         </DialogHeader>
 
@@ -271,7 +282,7 @@ export function PhotoUploader({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">Telechargement en cours...</span>
+              <span className="text-sm">Envoi en cours… Les fichiers volumineux peuvent prendre quelques instants.</span>
             </div>
             <Progress value={undefined} className="h-2" />
           </div>
@@ -288,12 +299,12 @@ export function PhotoUploader({
             {isUploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Telechargement...
+                Envoi…
               </>
             ) : (
               <>
                 <Upload className="mr-2 h-4 w-4" />
-                Telecharger {files.length > 0 && `(${files.length})`}
+                Envoyer {files.length > 0 && `(${files.length})`}
               </>
             )}
           </Button>

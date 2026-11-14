@@ -55,6 +55,8 @@ RUN echo 'server { \
     server_name _; \
     root /usr/share/nginx/html; \
     index index.html; \
+    client_max_body_size 210m; \
+    client_body_timeout 180s; \
     \
     # Compression gzip \
     gzip on; \
@@ -70,6 +72,8 @@ RUN echo 'server { \
     \
     # Gestion des routes SPA (fallback vers index.html) \
     location /api/ { \
+        proxy_read_timeout 180s; \
+        proxy_send_timeout 180s; \
         proxy_pass https://staging-backend-staging-9ae6d257.up.railway.app; \
         proxy_ssl_server_name on; \
         proxy_set_header Host staging-backend-staging-9ae6d257.up.railway.app; \
