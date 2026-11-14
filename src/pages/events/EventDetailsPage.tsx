@@ -67,6 +67,7 @@ import { getApiErrorMessage } from '@/api/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { resolveUrl } from '@/lib/utils';
+import { EventCreatedGuide } from '@/components/onboarding/EventCreatedGuide';
 import type { EventStatus } from '@/types';
 
 // Utility functions
@@ -348,6 +349,13 @@ export function EventDetailsPage() {
   return (
     <div className="min-h-screen bg-[#F5F7FA]">
       {/* Hero Section */}
+      {searchParams.get('created') === '1' && String(event.user_id) === String(user?.id) && (
+        <EventCreatedGuide
+          canAddGuests={featureAccess.guests.canCreate}
+          onGuests={() => setSearchParams({ tab: 'guests' }, { replace: true })}
+          onDismiss={() => setSearchParams({ tab: 'overview' }, { replace: true })}
+        />
+      )}
       <div className="relative">
         {/* Background Image or Gradient */}
         <div className="h-64 w-full overflow-hidden">

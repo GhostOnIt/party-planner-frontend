@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
+import { useEvents } from '@/hooks/useEvents';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +23,10 @@ const STORAGE_PREFIX = 'pp_onboarding_v1_';
 export function OnboardingRunner() {
   const { user } = useAuthStore();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { data: events, isLoading, isError } = useEvents({ per_page: 1 });
+  const guidePage = ['/dashboard', '/events', '/events/create'].includes(location.pathname);
+  const hasNoEvents = !!events && events.total === 0;
 
   const [firstEventOpen, setFirstEventOpen] = useState(false);
   const [guestOpen, setGuestOpen] = useState(false);
@@ -29,7 +35,9 @@ export function OnboardingRunner() {
     if (!user?.id) return;
     const k = (s: string) => `${STORAGE_PREFIX}${user.id}_${s}`;
 
-    if (location.pathname === '/events' && !localStorage.getItem(k('first_event'))) {
+    if (guidePage && hasNoEvents && !isLoading && !isError
+      && !localStorage.getItem(k('first_event_v2'))
+      && !sessionStorage.getItem(k('first_event_deferred'))) {
       setFirstEventOpen(true);
     } else {
       setFirstEventOpen(false);
@@ -40,48 +48,65 @@ export function OnboardingRunner() {
     } else {
       setGuestOpen(false);
     }
-  }, [user?.id, location.pathname]);
+  }, [user?.id, location.pathname, guidePage, hasNoEvents, isLoading, isError]);
 
   if (!user?.id) return null;
 
   const k = (s: string) => `${STORAGE_PREFIX}${user.id}_${s}`;
+  const deferGuide = () => {
+    sessionStorage.setItem(k('first_event_deferred'), '1');
+    setFirstEventOpen(false);
+  };
 
   return (
     <>
+      {guidePage && (
+        <div className="mb-3 flex justify-end">
+          <Button variant="ghost" size="sm" onClick={() => setFirstEventOpen(true)}>
+            Revoir le guide de création
+          </Button>
+        </div>
+      )}
       {firstEventOpen && (
         <AlertDialog
           open={firstEventOpen}
           onOpenChange={(o) => {
             if (!o) {
-              localStorage.setItem(k('first_event'), '1');
-              setFirstEventOpen(false);
+              deferGuide();
             }
           }}
         >
-        <AlertDialogContent>
+        <AlertDialogContent className="max-h-[85dvh] overflow-y-auto">
           <AlertDialogHeader>
-            <AlertDialogTitle>Premier événement</AlertDialogTitle>
-            <AlertDialogDescription>
-              Utilisez le bouton « Nouvel événement » pour créer votre fête, mariage ou séminaire. Vous pourrez
-              ensuite gérer les invités, le budget et les tâches au même endroit.
+            <AlertDialogTitle>Votre événement, pas à pas</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <p>Préparez votre événement en trois étapes.</p>
+                <ol className="list-decimal space-y-3 pl-5">
+                  <li><strong>Vérifier votre accès.</strong> Avant le formulaire, nous vérifierons votre forfait et vos créations disponibles. Un essai sera proposé si vous y avez droit.</li>
+                  <li><strong>Décrire votre événement.</strong> Préparez son nom, son type, sa date, son heure et son lieu. La description, le modèle et la photo sont facultatifs.</li>
+                  <li><strong>Ajouter vos invités.</strong> Après la création, vous pourrez préparer votre liste et envoyer les invitations quand vous serez prêt.</li>
+                </ol>
+                <p>La création ne déclenche aucun envoi d’invitation. Vous pourrez modifier les informations ensuite.</p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
               onClick={() => {
-                localStorage.setItem(k('first_event'), '1');
-                setFirstEventOpen(false);
+                deferGuide();
               }}
             >
               Plus tard
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                localStorage.setItem(k('first_event'), '1');
+                localStorage.setItem(k('first_event_v2'), 'started');
                 setFirstEventOpen(false);
+                navigate('/events/create');
               }}
             >
-              Compris
+              Créer mon événement
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

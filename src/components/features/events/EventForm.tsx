@@ -215,6 +215,13 @@ export function EventForm({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      {!event && !duplicateMode && (
+        <div className="rounded-lg border bg-muted/30 p-4 text-sm space-y-1">
+          <p className="font-medium">Étape 2 sur 3 — Décrire votre événement</p>
+          <p>Indiquez son nom, son type, sa date, son heure et son lieu. La description, le thème et la photo sont facultatifs.</p>
+          <p>Aucune invitation n’est envoyée à cette étape.</p>
+        </div>
+      )}
       {/* Title */}
       <div className="space-y-2">
         <Label htmlFor="title">Titre de l'evenement *</Label>
@@ -251,7 +258,8 @@ export function EventForm({
       {/* Template Selection */}
       {selectedType && templates.length > 0 && (
         <div className="space-y-2">
-          <Label htmlFor="template">Template (optionnel)</Label>
+          <Label htmlFor="template">Modèle d’événement (facultatif)</Label>
+          <p className="text-sm text-muted-foreground">Un modèle prépare une liste de tâches et des catégories de budget pour vous aider à démarrer. Sans modèle, vous les ajouterez vous-même.</p>
           <Select
             value={selectedTemplateId?.toString() || 'none'}
             onValueChange={(value) => {
@@ -263,10 +271,10 @@ export function EventForm({
             }}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Aucun template (création manuelle)" />
+              <SelectValue placeholder="Sans modèle — préparer moi-même" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Aucun template</SelectItem>
+              <SelectItem value="none">Sans modèle — préparer moi-même</SelectItem>
               {templates.map((template) => (
                 <SelectItem key={template.id} value={template.id.toString()}>
                   {template.name}

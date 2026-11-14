@@ -110,7 +110,7 @@ export function useCreateEvent() {
               await subscribeMutation.mutateAsync({ plan_id: trialData.data!.id });
               toast({
                 title: 'Essai activé',
-                description: 'Votre essai gratuit a été activé. Vous pouvez maintenant créer un événement.',
+                description: 'Votre essai est activé. Vos informations sont conservées : cliquez de nouveau sur Créer l’événement.',
               });
               // Refresh pour mettre à jour le quota
               queryClient.invalidateQueries({ queryKey: ['user', 'subscription'] });
@@ -192,7 +192,7 @@ export function useCreateEvent() {
           variant: 'default',
         });
       }
-      navigate(`/events/${event.id}`);
+      navigate(`/events/${event.id}?created=1`);
     },
   });
 }

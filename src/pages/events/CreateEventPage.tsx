@@ -7,15 +7,19 @@ import { PageHeader } from '@/components/layout/page-header';
 import { EventForm } from '@/components/features/events';
 import { useCreateEvent } from '@/hooks/useEvents';
 import { getApiErrorMessage } from '@/api/client';
+import { useAuthStore } from '@/stores/authStore';
+import { EventCreationAccess } from '@/components/onboarding/EventCreationAccess';
 
 export function CreateEventPage() {
   const { mutate: createEvent, isPending, error } = useCreateEvent();
+  const { user } = useAuthStore();
+  const form = <EventForm onSubmit={(data, _duplicateOptions) => createEvent(data)} isSubmitting={isPending} />;
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="Nouvel événement"
-        description="Remplissez les informations ci-dessous pour créer votre événement"
+        description="Vérifiez votre accès, décrivez votre événement, puis ajoutez vos invités."
         breadcrumbs={[{ label: 'Événements', href: '/events' }, { label: 'Nouveau' }]}
       />
 
@@ -33,7 +37,7 @@ export function CreateEventPage() {
           <CardHeader>
             <CardTitle>Informations de l'événement</CardTitle>
             <CardDescription>
-              Remplissez les informations ci-dessous pour créer votre événement
+              Les champs marqués * sont obligatoires. Vous pourrez modifier ces informations ensuite.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -43,7 +47,7 @@ export function CreateEventPage() {
               </Alert>
             ) : null}
 
-            <EventForm onSubmit={(data, _duplicateOptions) => createEvent(data)} isSubmitting={isPending} />
+            {user?.role === 'admin' ? form : <EventCreationAccess>{form}</EventCreationAccess>}
           </CardContent>
         </Card>
       </div>
