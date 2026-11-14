@@ -43,8 +43,18 @@ export function SubscriptionCard() {
           <Crown className="w-5 h-5 text-[#E91E8C]" />
           <span className="font-semibold text-[#1a1a2e]">Mon abonnement</span>
         </div>
-        <p className="text-sm text-[#6b7280]">Aucun abonnement actif</p>
+        <p className="text-sm text-[#6b7280]">Votre abonnement n’a pas pu être chargé. Réessayez dans quelques instants.</p>
       </div>
+    )
+  }
+
+  if (!data.has_subscription) {
+    return (
+      <section className="bg-white rounded-xl p-5 border border-[#e5e7eb] space-y-3" aria-label="Mon abonnement">
+        <h3 className="font-semibold">Aucun abonnement actif</h3>
+        <p className="text-sm text-muted-foreground">Avant de créer votre premier événement, vérifiez les accès disponibles. Un essai vous sera proposé si vous y avez droit.</p>
+        <button onClick={() => navigate('/events/create')} className="font-medium text-primary underline">Préparer mon premier événement</button>
+      </section>
     )
   }
 

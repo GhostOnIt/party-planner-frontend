@@ -224,7 +224,7 @@ export function EventForm({
       )}
       {/* Title */}
       <div className="space-y-2">
-        <Label htmlFor="title">Titre de l'evenement *</Label>
+        <Label htmlFor="title">Titre de l’événement *</Label>
         <Input
           id="title"
           placeholder="Ex: Mariage de Sophie et Thomas"
@@ -236,12 +236,12 @@ export function EventForm({
 
       {/* Type */}
       <div className="space-y-2">
-        <Label>Type d'evenement *</Label>
+        <Label htmlFor="event-type">Type d’événement *</Label>
         <Select
           value={selectedType}
           onValueChange={(value) => setValue('type', value as EventType)}
         >
-          <SelectTrigger>
+          <SelectTrigger id="event-type">
             <SelectValue placeholder="Selectionnez un type" />
           </SelectTrigger>
           <SelectContent>
@@ -270,7 +270,7 @@ export function EventForm({
               }
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger id="template">
               <SelectValue placeholder="Sans modèle — préparer moi-même" />
             </SelectTrigger>
             <SelectContent>
@@ -343,10 +343,11 @@ export function EventForm({
       {/* Date and Time */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label>Date *</Label>
+          <Label htmlFor="event-date">Date *</Label>
           <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
             <PopoverTrigger asChild>
               <Button
+                id="event-date"
                 variant="outline"
                 className={cn(
                   'w-full justify-start text-left font-normal',
